@@ -20,6 +20,11 @@
   },
   "homepage": "https://github.com/pierotofy/node-OpenDroneMap#readme",
   "dependencies": {
-    "express": "^4.14.0"
+    "express": "^4.14.0",
+    "multer": "^1.1.0",
+    "node-uuid": "^1.4.7"
+  },
+  "devDependencies": {
+    "nodemon": "^1.9.2"
   }
 }
