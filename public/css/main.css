@@ -1,3 +1,39 @@
 .row:first-child{
 	margin-top: 30px;
 }
+
+.task{
+	border: 1px solid #ecf0f1;
+	padding: 8px;
+	position: relative;
+	margin-bottom: 16px;
+}
+
+.task .statusIcon{
+	position: absolute;
+	right: 8px;
+	top: 8px;
+}
+
+.spinning{
+	-webkit-animation: spin 3s infinite linear;
+	-moz-animation: spin 3s infinite linear;
+	animation: spin 3s infinite linear;
+}
+
+@-moz-keyframes spin {
+    from { -moz-transform: rotate(0deg); }
+    to { -moz-transform: rotate(360deg); }
+}
+@-webkit-keyframes spin {
+    from { -webkit-transform: rotate(0deg); }
+    to { -webkit-transform: rotate(360deg); }
+}
+@keyframes spin {
+    from {transform:rotate(0deg);}
+    to {transform:rotate(360deg);}
+}
+
+.task .actionButtons{
+	text-align: right;
+}

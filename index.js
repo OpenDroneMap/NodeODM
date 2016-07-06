@@ -7,6 +7,9 @@ let app = express();
 let addRequestId = require('./libs/express-request-id')();
 let multer = require('multer');
 
+let taskManager = new (require('./libs/taskManager'))();
+let Task = require('./libs/Task');
+
 app.use(express.static('public'));
 
 let upload = multer({
@@ -30,12 +33,27 @@ let upload = multer({
 });
 
 app.post('/newTask', addRequestId, upload.array('images'), (req, res, next) => {
-	console.log(`Received ${req.files.length} files`);
-	if (req.files.length){
+	if (req.files.length === 0) res.json({error: "Need at least 1 file."});
+	else{
+		console.log(`Received ${req.files.length} files`);
 
+		// Move to data
+		fs.rename(`tmp/${req.id}`, `data/${req.id}`, (err) => {
+			if (!err){
+				taskManager.addNew(new Task(req.id, req.body.name));
+				res.json({uuid: req.id, success: true});
+			}else{
+				res.json({error: "Could not move images folder."});
+			}
+		});
 	}
-	console.log("Name: " + req.body.name);
-	res.json({uuid: req.id, success: true});
+});
+
+app.get('/taskInfo/:uuid', (req, res, next) => {
+	let task = taskManager.find(req.params.uuid);
+	if (task){
+		res.json(task.getInfo());
+	}else res.json({error: `${req.params.uuid} not found`});
 });
 
 app.listen(3000, () => {
