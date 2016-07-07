@@ -12,7 +12,33 @@ module.exports = class TaskManager{
 		this.tasks[task.uuid] = task;
 	}
 
-	find(uuid){
-		return this.tasks[uuid];
+	cancel(uuid, cb){
+		let task;
+		if (task = this.find(uuid, cb)){
+			task.cancel(cb);
+		}
+	}
+
+	remove(uuid, cb){
+		this.cancel(uuid, err => {
+			if (!err){
+				delete(this.tasks[uuid]);
+				// TODO: other cleanup
+				cb(null);
+			}else cb(err);
+		});
+	}
+
+	restart(uuid, cb){
+		let task;
+		if (task = this.find(uuid, cb)){
+			task.restart(cb);
+		}
+	}
+
+	find(uuid, errCb){
+		let task = this.tasks[uuid];
+		if (!task && errCb) errCb(new Error(`${uuid} not found`));
+		return task;
 	}
 };

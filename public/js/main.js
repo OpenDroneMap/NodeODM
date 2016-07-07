@@ -28,71 +28,141 @@ $(function(){
         this.uuid = uuid;
         this.loading = ko.observable(true);
         this.info = ko.observable({});
+
+        var statusCodes = {
+            10: {
+                descr: "Queued",
+                icon: "glyphicon-hourglass"
+            },
+            20: {
+                descr: "Running",
+                icon: "glyphicon-refresh spinning"
+            },
+            30: {
+                descr: "Failed",
+                icon: "glyphicon-remove-circle"
+            },
+            40: {
+                descr: "Completed",
+                icon: "glyphicon-ok-circle"
+            },
+            50: {
+                descr: "Canceled",
+                icon: "glyphicon-ban-circle"
+            }
+        };
+
         this.statusDescr = ko.pureComputed(function(){
             if (this.info().status && this.info().status.code){
-                switch(this.info().status.code){
-                    case 10: return "Queued";
-                    case 20: return "Running";
-                    case 30: return "Failed";
-                    case 40: return "Completed";
-                    default: return "Unknown (Status Code: " + this.info().status.code + ")";
-                }
+                if(statusCodes[this.info().status.code]){
+                    return statusCodes[this.info().status.code].descr;
+                }else return "Unknown (Status Code: " + this.info().status.code + ")";
             }else return "-";
         }, this);
+        this.icon = ko.pureComputed(function(){
+            if (this.info().status && this.info().status.code){
+                if(statusCodes[this.info().status.code]){
+                    console.log(statusCodes[this.info().status.code].icon);
+                    return statusCodes[this.info().status.code].icon;
+                }else return "glyphicon-question-sign";
+            }else return "";
+        }, this);
+        this.canceled = ko.pureComputed(function(){
+            return this.info().status && this.info().status.code === 50;
+        }, this);
 
+        this.refreshInfo();
+    }
+    Task.prototype.refreshInfo = function(){
         var self = this;
-        var url = "/taskInfo/" + uuid;
+        var url = "/taskInfo/" + this.uuid;
         $.get(url)
          .done(self.info)
          .fail(function(){
             self.info({error: url + " is unreachable."});
          })
          .always(function(){ self.loading(false); });
-    }
-    Task.prototype.remove = function() {
-        taskList.remove(this);
     };
+    Task.prototype.remove = function() {
+        var self = this;
+        var url = "/removeTask";
+
+        $.post(url, {
+            uuid: this.uuid
+        })
+        .done(function(json){
+            if (json.success || self.info().error){
+                taskList.remove(self);
+            }else{
+                self.info({error: json.error});
+            }
+        })
+        .fail(function(){
+            self.info({error: url + " is unreachable."});
+        });
+    };
+
+    function genApiCall(url){
+        return function(){
+            var self = this;
+
+            $.post(url, {
+                uuid: this.uuid
+            })
+            .done(function(json){
+                if (json.success){
+                    self.refreshInfo();
+                }else{
+                    self.info({error: json.error});
+                }
+            })
+            .fail(function(){
+                self.info({error: url + " is unreachable."});
+            });
+        }
+    };
+    Task.prototype.cancel = genApiCall("/cancelTask");
+    Task.prototype.restart = genApiCall("/restartTask");
 
     var taskList = new TaskList();
     ko.applyBindings(taskList);
 
-
     // Handle uploads
     $("#images").fileinput({
-    	uploadUrl: '/newTask',
-    	showPreview: false,
+        uploadUrl: '/newTask',
+        showPreview: false,
         allowedFileExtensions: ['jpg', 'jpeg'],
         elErrorContainer: '#errorBlock',
         showUpload: false,
         uploadAsync: false,
         uploadExtraData: function(){
-        	return {
-        		name: $("#taskName").val()
-        	};
+            return {
+                name: $("#taskName").val()
+            };
         }
     });
 
     $("#btnUpload").click(function(){
-    	var btnUploadLabel = $("#btnUpload").val();
-    	$("#btnUpload").attr('disabled', true)
-    					.val("Uploading...");
+        $("#btnUpload").attr('disabled', true)
+                        .val("Uploading...");
 
-    	$("#images")
-    		.fileinput('upload')
-			.on('filebatchuploadsuccess', function(e, params){
-				$("#images").fileinput('reset');
+        // Start upload
+        $("#images").fileinput('upload');
+    });     
 
-                // TODO: this is called multiple times
-                // consider switching file upload plugin.
-                if (params.response.success && params.response.uuid){
-                    taskList.addNew(new Task(params.response.uuid));
-                }
-			})
-			.on('filebatchuploadcomplete', function(){
-				$("#btnUpload").removeAttr('disabled')
-								.val(btnUploadLabel);
-			})
-			.on('filebatchuploaderror', function(e, data, msg){
-			});
-    });		
+    var btnUploadLabel = $("#btnUpload").val();
+    $("#images")
+        .on('filebatchuploadsuccess', function(e, params){
+            $("#images").fileinput('reset');
+
+            if (params.response.success && params.response.uuid){
+                taskList.addNew(new Task(params.response.uuid));
+            }
+        })
+        .on('filebatchuploadcomplete', function(){
+            $("#btnUpload").removeAttr('disabled')
+                            .val(btnUploadLabel);
+        })
+        .on('filebatchuploaderror', function(e, data, msg){
+        });
 });
