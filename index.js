@@ -1,16 +1,20 @@
 "use strict";
 
 let fs = require('fs');
+let async = require('async');
+
 let express = require('express');
 let app = express();
 
-let addRequestId = require('./libs/express-request-id')();
+let addRequestId = require('./libs/expressRequestId')();
 let multer = require('multer');
 let bodyParser = require('body-parser');
+let morgan = require('morgan');
 
 let taskManager = new (require('./libs/taskManager'))();
 let Task = require('./libs/Task');
 
+app.use(morgan('tiny'));
 app.use(bodyParser.urlencoded({extended: true}));
 app.use(bodyParser.json());
 app.use(express.static('public'));
@@ -34,34 +38,54 @@ let upload = multer({
 	  }
 	})
 });
-
+ 
 app.post('/newTask', addRequestId, upload.array('images'), (req, res) => {
 	if (req.files.length === 0) res.json({error: "Need at least 1 file."});
 	else{
-		console.log(`Received ${req.files.length} files`);
-
 		// Move to data
-		fs.rename(`tmp/${req.id}`, `data/${req.id}`, err => {
-			if (!err){
-				new Task(req.id, req.body.name, (err, task) => {
-					if (err) res.json({error: err.message});
-					else{
-						taskManager.addNew(task);
-						res.json({uuid: req.id, success: true});
+		async.series([
+			cb => { 
+				fs.stat(`data/${req.id}`, (err, stat) => {
+					if (err && err.code === 'ENOENT') cb();
+					else cb(new Error(`Directory exists (should not have happened: ${err.code})`));
+				});
+			},
+			cb => { fs.mkdir(`data/${req.id}`, undefined, cb); },
+			cb => {
+				fs.rename(`tmp/${req.id}`, `data/${req.id}/images`, err => {
+					if (!err){
+						new Task(req.id, req.body.name, (err, task) => {
+							if (err) cb(err);
+							else{
+								taskManager.addNew(task);
+								res.json({uuid: req.id, success: true});
+								cb();
+							}
+						});
+					}else{
+						cb(new Error("Could not move images folder."))
 					}
 				});
-			}else{
-				res.json({error: "Could not move images folder."});
 			}
+		], err => {
+			if (err) res.json({error: err.message})
 		});
 	}
 });
 
-app.get('/taskInfo/:uuid', (req, res) => {
+let getTaskFromUuid = (req, res, next) => {
 	let task = taskManager.find(req.params.uuid);
 	if (task){
-		res.json(task.getInfo());
+		req.task = task;
+		next();
 	}else res.json({error: `${req.params.uuid} not found`});
+}
+
+app.get('/taskInfo/:uuid', getTaskFromUuid, (req, res) => {
+	res.json(req.task.getInfo());
+});
+app.get('/taskOutput/:uuid', getTaskFromUuid, (req, res) => {
+	res.json(req.task.getOutput());
 });
 
 let uuidCheck = (req, res, next) => {
@@ -89,5 +113,5 @@ app.post('/restartTask', uuidCheck, (req, res) => {
 });
 
 app.listen(3000, () => {
-  console.log('Example app listening on port 3000!');
+  console.log('Server has started on port 3000');
 });

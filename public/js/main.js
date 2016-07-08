@@ -25,6 +25,8 @@ $(function(){
     };
 
     function Task(uuid){
+        var self = this;
+
         this.uuid = uuid;
         this.loading = ko.observable(true);
         this.info = ko.observable({});
@@ -72,6 +74,9 @@ $(function(){
         }, this);
 
         this.refreshInfo();
+        this.refreshInterval = setInterval(function(){
+            self.refreshInfo();
+        }, 2000);
     }
     Task.prototype.refreshInfo = function(){
         var self = this;
@@ -96,6 +101,11 @@ $(function(){
             }else{
                 self.info({error: json.error});
             }
+
+            if (self.refreshInterval){
+                clearInterval(self.refreshInterval);
+                self.refreshInterval = null;
+            }
         })
         .fail(function(){
             self.info({error: url + " is unreachable."});
@@ -106,6 +116,10 @@ $(function(){
         return function(){
             var self = this;
 
+
+            // TODO: maybe there's a better way
+            // to handle refreshInfo here...
+            
             $.post(url, {
                 uuid: this.uuid
             })

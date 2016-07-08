@@ -16,22 +16,34 @@
 }
 
 .spinning{
-	-webkit-animation: spin 3s infinite linear;
-	-moz-animation: spin 3s infinite linear;
 	animation: spin 3s infinite linear;
 }
 
-@-moz-keyframes spin {
-    from { -moz-transform: rotate(0deg); }
-    to { -moz-transform: rotate(360deg); }
-}
-@-webkit-keyframes spin {
-    from { -webkit-transform: rotate(0deg); }
-    to { -webkit-transform: rotate(360deg); }
-}
 @keyframes spin {
     from {transform:rotate(0deg);}
     to {transform:rotate(360deg);}
+}
+
+.pulsePositive {
+    animation: pulsatePositive 2s ease-out;
+    animation-iteration-count: 1; 
+    background-color: #fff;
+}
+@keyframes pulsatePositive {
+    0% {background-color: #fff;}
+    50% {background-color: lightgreen;}
+    100% {background-color: #fff;}
+}
+
+.pulseNegative {
+    animation: pulsateNegative 2s ease-out;
+    animation-iteration-count: 1; 
+    background-color: #fff;
+}
+@keyframes pulsateNegative {
+    0% {background-color: #fff;}
+    50% {background-color: lightred;}
+    100% {background-color: #fff;}
 }
 
 .task .actionButtons{
