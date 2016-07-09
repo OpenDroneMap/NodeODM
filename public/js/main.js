@@ -7,7 +7,7 @@ $(function(){
             return new Task(uuid);
         }));
     }
-    TaskList.prototype.addNew = function(task) {
+    TaskList.prototype.add = function(task) {
         this.tasks.push(task);
         this.saveTaskListToLocalStorage();
     };
@@ -30,6 +30,8 @@ $(function(){
         this.uuid = uuid;
         this.loading = ko.observable(true);
         this.info = ko.observable({});
+        this.viewingOutput = ko.observable(false);
+        this.resetOutput();
 
         var statusCodes = {
             10: {
@@ -64,7 +66,6 @@ $(function(){
         this.icon = ko.pureComputed(function(){
             if (this.info().status && this.info().status.code){
                 if(statusCodes[this.info().status.code]){
-                    console.log(statusCodes[this.info().status.code].icon);
                     return statusCodes[this.info().status.code].icon;
                 }else return "glyphicon-question-sign";
             }else return "";
@@ -73,14 +74,11 @@ $(function(){
             return this.info().status && this.info().status.code === 50;
         }, this);
 
-        this.refreshInfo();
-        this.refreshInterval = setInterval(function(){
-            self.refreshInfo();
-        }, 2000);
+        this.startRefreshingInfo();
     }
     Task.prototype.refreshInfo = function(){
         var self = this;
-        var url = "/taskInfo/" + this.uuid;
+        var url = "/task/" + this.uuid + "/info";
         $.get(url)
          .done(self.info)
          .fail(function(){
@@ -88,9 +86,61 @@ $(function(){
          })
          .always(function(){ self.loading(false); });
     };
+    Task.prototype.consoleMouseOver = function(){ this.autoScrollOutput = false; }
+    Task.prototype.consoleMouseOut = function(){ this.autoScrollOutput = true; } 
+    Task.prototype.resetOutput = function(){
+        this.viewOutputLine = 0;
+        this.autoScrollOutput = true;
+        this.output = ko.observableArray();
+    };
+    Task.prototype.viewOutput = function(){
+        var self = this;
+
+        function fetchOutput(){
+            var url = "/task/" + self.uuid + "/output";
+            $.get(url, {line: self.viewOutputLine})
+             .done(function(output){
+                for (var i in output){
+                    self.output.push(output[i]);
+                }
+                if (output.length){
+                    self.viewOutputLine += output.length;
+                    if (self.autoScrollOutput){
+                        var $console = $("#console_" + self.uuid);
+                        $console.scrollTop($console[0].scrollHeight - $console.height())
+                    }
+                }
+             })
+             .fail(function(){
+                self.info({error: url + " is unreachable."});
+             });
+        }
+        this.fetchOutputInterval = setInterval(fetchOutput, 2000);
+        fetchOutput();
+
+        this.viewingOutput(true);
+    };
+    Task.prototype.hideOutput = function(){
+        if (this.fetchOutputInterval) clearInterval(this.fetchOutputInterval);
+        this.viewingOutput(false);
+    };
+    Task.prototype.startRefreshingInfo = function() {
+        var self = this;
+        this.stopRefreshingInfo();
+        this.refreshInfo();
+        this.refreshInterval = setInterval(function(){
+            self.refreshInfo();
+        }, 2000);
+    };
+    Task.prototype.stopRefreshingInfo = function() {
+        if (this.refreshInterval){
+            clearInterval(this.refreshInterval);
+            this.refreshInterval = null;
+        }
+    };
     Task.prototype.remove = function() {
         var self = this;
-        var url = "/removeTask";
+        var url = "/task/remove";
 
         $.post(url, {
             uuid: this.uuid
@@ -102,13 +152,11 @@ $(function(){
                 self.info({error: json.error});
             }
 
-            if (self.refreshInterval){
-                clearInterval(self.refreshInterval);
-                self.refreshInterval = null;
-            }
+            self.stopRefreshingInfo();
         })
         .fail(function(){
             self.info({error: url + " is unreachable."});
+            self.stopRefreshingInfo();
         });
     };
 
@@ -116,34 +164,32 @@ $(function(){
         return function(){
             var self = this;
 
-
-            // TODO: maybe there's a better way
-            // to handle refreshInfo here...
-            
             $.post(url, {
                 uuid: this.uuid
             })
             .done(function(json){
                 if (json.success){
-                    self.refreshInfo();
+                    self.startRefreshingInfo();
                 }else{
+                    self.stopRefreshingInfo();
                     self.info({error: json.error});
                 }
             })
             .fail(function(){
                 self.info({error: url + " is unreachable."});
+                self.stopRefreshingInfo();
             });
         }
     };
-    Task.prototype.cancel = genApiCall("/cancelTask");
-    Task.prototype.restart = genApiCall("/restartTask");
+    Task.prototype.cancel = genApiCall("/task/cancel");
+    Task.prototype.restart = genApiCall("/task/restart");
 
     var taskList = new TaskList();
     ko.applyBindings(taskList);
 
     // Handle uploads
     $("#images").fileinput({
-        uploadUrl: '/newTask',
+        uploadUrl: '/task/new',
         showPreview: false,
         allowedFileExtensions: ['jpg', 'jpeg'],
         elErrorContainer: '#errorBlock',
@@ -170,7 +216,7 @@ $(function(){
             $("#images").fileinput('reset');
 
             if (params.response.success && params.response.uuid){
-                taskList.addNew(new Task(params.response.uuid));
+                taskList.add(new Task(params.response.uuid));
             }
         })
         .on('filebatchuploadcomplete', function(){

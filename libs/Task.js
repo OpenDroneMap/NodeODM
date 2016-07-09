@@ -33,7 +33,13 @@ module.exports = class Task{
 	// Get path where images are stored for this task
 	// (relative to nodejs process CWD)
 	getImagesFolderPath(){
-		return `data/${this.uuid}/images`;
+		return `${this.getProjectFolderPath()}/images`;
+	}
+
+	// Get path of project (where all images and assets folder are contained)
+	// (relative to nodejs process CWD)
+	getProjectFolderPath(){
+		return `data/${this.uuid}`;
 	}
 
 	setStatus(code, extra){
@@ -68,7 +74,7 @@ module.exports = class Task{
 		if (this.status.code === statusCodes.QUEUED){
 			this.setStatus(statusCodes.RUNNING);
 			this.runnerProcess = odmRunner.run({
-					projectPath: `${__dirname}/../${this.getImagesFolderPath()}`
+					projectPath: `${__dirname}/../${this.getProjectFolderPath()}`
 				}, (err, code, signal) => {
 					if (err){
 						this.setStatus(statusCodes.FAILED, {errorMessage: `Could not start process (${err.message})`});
@@ -81,6 +87,8 @@ module.exports = class Task{
 					}
 					done();
 				}, output => {
+					// Replace console colors
+					output = output.replace(/\x1b\[[0-9;]*m/g, "");
 					this.output.push(output);
 				});
 
@@ -120,7 +128,6 @@ module.exports = class Task{
 	// Returns the output of the OpenDroneMap process
 	// Optionally starting from a certain line number
 	getOutput(startFromLine = 0){
-		let lineNum = Math.min(this.output.length, startFromLine);
-		return this.output.slice(lineNum, this.output.length);
+		return this.output.slice(startFromLine, this.output.length);
 	}
 };

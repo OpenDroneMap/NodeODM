@@ -3,7 +3,7 @@ let assert = require('assert');
 let Task = require('./Task');
 let statusCodes = require('./statusCodes');
 
-let PARALLEL_QUEUE_PROCESS_LIMIT = 1;
+let PARALLEL_QUEUE_PROCESS_LIMIT = 2;
 
 module.exports = class TaskManager{
 	constructor(){
@@ -50,8 +50,6 @@ module.exports = class TaskManager{
 		this.runningQueue = this.runningQueue.filter(t => {
 			return t !== task;
 		});
-
-		console.log("New queue length: " + this.runningQueue.length);
 	}
 
 	addNew(task){
@@ -90,7 +88,10 @@ module.exports = class TaskManager{
 	restart(uuid, cb){
 		let task;
 		if (task = this.find(uuid, cb)){
-			task.restart(cb);
+			task.restart(err => {
+				this.processNextTask();
+				cb(err);
+			});
 		}
 	}
 

@@ -39,7 +39,7 @@ let upload = multer({
 	})
 });
  
-app.post('/newTask', addRequestId, upload.array('images'), (req, res) => {
+app.post('/task/new', addRequestId, upload.array('images'), (req, res) => {
 	if (req.files.length === 0) res.json({error: "Need at least 1 file."});
 	else{
 		// Move to data
@@ -81,11 +81,11 @@ let getTaskFromUuid = (req, res, next) => {
 	}else res.json({error: `${req.params.uuid} not found`});
 }
 
-app.get('/taskInfo/:uuid', getTaskFromUuid, (req, res) => {
+app.get('/task/:uuid/info', getTaskFromUuid, (req, res) => {
 	res.json(req.task.getInfo());
 });
-app.get('/taskOutput/:uuid', getTaskFromUuid, (req, res) => {
-	res.json(req.task.getOutput());
+app.get('/task/:uuid/output', getTaskFromUuid, (req, res) => {
+	res.json(req.task.getOutput(req.query.line));
 });
 
 let uuidCheck = (req, res, next) => {
@@ -100,15 +100,15 @@ let successHandler = res => {
 	};
 };
 
-app.post('/cancelTask', uuidCheck, (req, res) => {
+app.post('/task/cancel', uuidCheck, (req, res) => {
 	taskManager.cancel(req.body.uuid, successHandler(res));
 });
 
-app.post('/removeTask', uuidCheck, (req, res) => {
+app.post('/task/remove', uuidCheck, (req, res) => {
 	taskManager.remove(req.body.uuid, successHandler(res));
 });
 
-app.post('/restartTask', uuidCheck, (req, res) => {
+app.post('/task/restart', uuidCheck, (req, res) => {
 	taskManager.restart(req.body.uuid, successHandler(res));
 });
 
