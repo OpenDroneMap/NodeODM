@@ -25,7 +25,8 @@
     "express": "^4.14.0",
     "morgan": "^1.7.0",
     "multer": "^1.1.0",
-    "node-uuid": "^1.4.7"
+    "node-uuid": "^1.4.7",
+    "rimraf": "^2.5.3"
   },
   "devDependencies": {
     "nodemon": "^1.9.2"

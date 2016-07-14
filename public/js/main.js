@@ -1,4 +1,22 @@
 $(function(){
+    function hoursMinutesSecs(t){
+        var ch = 60 * 60 * 1000,
+            cm = 60 * 1000,
+            h = Math.floor(t / ch),
+            m = Math.floor( (t - h * ch) / cm),
+            s = Math.round( (t - h * ch - m * cm) / 1000),
+            pad = function(n){ return n < 10 ? '0' + n : n; };
+      if( s === 60 ){
+        h++;
+        s = 0;
+      }
+      if( m === 60 ){
+        h++;
+        m = 0;
+      }
+      return [pad(h), pad(m), pad(s)].join(':');
+    }
+
     function TaskList(){
         var uuids = JSON.parse(localStorage.getItem("odmTaskList") || "[]");
         if (Object.prototype.toString.call(uuids) !== "[object Array]") uuids = [];
@@ -31,8 +49,17 @@ $(function(){
         this.loading = ko.observable(true);
         this.info = ko.observable({});
         this.viewingOutput = ko.observable(false);
+        this.output = ko.observableArray();
         this.resetOutput();
+        this.timeElapsed = ko.observable("00:00:00");
 
+        var codes = {
+            QUEUED: 10,
+            RUNNING: 20,
+            FAILED: 30,
+            COMPLETED: 40,
+            CANCELED: 50
+        };
         var statusCodes = {
             10: {
                 descr: "Queued",
@@ -40,7 +67,7 @@ $(function(){
             },
             20: {
                 descr: "Running",
-                icon: "glyphicon-refresh spinning"
+                icon: "glyphicon-cog spinning"
             },
             30: {
                 descr: "Failed",
@@ -70,8 +97,17 @@ $(function(){
                 }else return "glyphicon-question-sign";
             }else return "";
         }, this);
-        this.canceled = ko.pureComputed(function(){
-            return this.info().status && this.info().status.code === 50;
+        this.showCancel = ko.pureComputed(function(){
+            return this.info().status && 
+            (this.info().status.code === codes.QUEUED || this.info().status.code === codes.RUNNING);
+        }, this);
+        this.showRestart = ko.pureComputed(function(){
+            return this.info().status && 
+            (this.info().status.code === codes.CANCELED);
+        }, this);
+        this.showRemove = ko.pureComputed(function(){
+            return this.info().status && 
+            (this.info().status.code === codes.FAILED || this.info().status.code === codes.COMPLETED || this.info().status.code === codes.CANCELED);
         }, this);
 
         this.startRefreshingInfo();
@@ -80,7 +116,14 @@ $(function(){
         var self = this;
         var url = "/task/" + this.uuid + "/info";
         $.get(url)
-         .done(self.info)
+         .done(function(json){
+            // Track time
+
+            if (json.processingTime && json.processingTime !== -1){
+                self.timeElapsed(hoursMinutesSecs(json.processingTime));
+            }
+            self.info(json);
+         })
          .fail(function(){
             self.info({error: url + " is unreachable."});
          })
@@ -91,7 +134,7 @@ $(function(){
     Task.prototype.resetOutput = function(){
         this.viewOutputLine = 0;
         this.autoScrollOutput = true;
-        this.output = ko.observableArray();
+        this.output.removeAll();
     };
     Task.prototype.viewOutput = function(){
         var self = this;
@@ -130,7 +173,7 @@ $(function(){
         this.refreshInfo();
         this.refreshInterval = setInterval(function(){
             self.refreshInfo();
-        }, 2000);
+        }, 500); // TODO: change to larger value
     };
     Task.prototype.stopRefreshingInfo = function() {
         if (this.refreshInterval){
@@ -160,7 +203,7 @@ $(function(){
         });
     };
 
-    function genApiCall(url){
+    function genApiCall(url, onSuccess){
         return function(){
             var self = this;
 
@@ -169,6 +212,7 @@ $(function(){
             })
             .done(function(json){
                 if (json.success){
+                    if (onSuccess !== undefined) onSuccess(self, json);
                     self.startRefreshingInfo();
                 }else{
                     self.stopRefreshingInfo();
@@ -182,7 +226,9 @@ $(function(){
         }
     };
     Task.prototype.cancel = genApiCall("/task/cancel");
-    Task.prototype.restart = genApiCall("/task/restart");
+    Task.prototype.restart = genApiCall("/task/restart", function(task){
+        task.resetOutput();
+    });
 
     var taskList = new TaskList();
     ko.applyBindings(taskList);

@@ -64,18 +64,23 @@
                 <div class="taskItem"><strong>Name:</strong> <span data-bind="text: info().name"></span></div>
                 <div class="taskItem"><strong>Images:</strong> <span data-bind="text: info().imagesCount"></span></div>
                 <div class="taskItem"><strong>Status:</strong> <span data-bind="text: statusDescr()"></span></div>
+                <div class="taskItem"><strong>Time Elapsed:</strong> <span data-bind="text: timeElapsed()"></span></div>
               <div class="taskItem"><strong>Output:</strong> <a href="javascript:void(0);" data-bind="click: viewOutput, visible: !viewingOutput()">View</a><a href="javascript:void(0);" data-bind="click: hideOutput, visible: viewingOutput()">Hide</a></div>
                 <textarea class="consoleOutput" data-bind="value: output().join(''), visible: viewingOutput(), event: {mouseover: consoleMouseOver, mouseout: consoleMouseOut}, attr: {id: 'console_' + uuid}"></textarea>
 
                 <span data-bind="css: 'statusIcon glyphicon ' + icon()"></span>
       
                 <div class="actionButtons">
-                  <button data-bind="click: cancel, visible: !canceled()" type="button" class="btn btn-primary btn-sm" >
+                  <button data-bind="click: cancel, visible: showCancel()" type="button" class="btn btn-primary btn-sm" >
                     <span class="glyphicon glyphicon-remove-circle"></span> Cancel
                   </button>
 
-                   <button data-bind="click: restart, visible: canceled()" type="button" class="btn btn-primary btn-sm" >
+                   <button data-bind="click: restart, visible: showRestart()" type="button" class="btn btn-primary btn-sm" >
                     <span class="glyphicon glyphicon-play"></span> Restart
+                  </button>
+
+                  <button data-bind="click: remove, visible: showRemove()" type="button" class="btn btn-primary btn-sm">
+                    <span class="glyphicon glyphicon-remove-circle"></span> Remove
                   </button>
                 </div>
               </div>

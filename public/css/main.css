@@ -42,7 +42,7 @@
 }
 @keyframes pulsateNegative {
     0% {background-color: #fff;}
-    50% {background-color: lightred;}
+    50% {background-color: pink;}
     100% {background-color: #fff;}
 }
 

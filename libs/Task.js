@@ -1,6 +1,7 @@
 "use strict";
 let assert = require('assert');
 let fs = require('fs');
+let rmdir = require('rimraf');
 let odmRunner = require('./odmRunner');
 
 let statusCodes = require('./statusCodes');
@@ -13,9 +14,8 @@ module.exports = class Task{
 		this.uuid = uuid;
 		this.name = name != "" ? name : "Task of " + (new Date()).toISOString();
 		this.dateCreated = new Date().getTime();
-		this.status = {
-			code: statusCodes.QUEUED
-		};
+		this.processingTime = -1;
+		this.setStatus(statusCodes.QUEUED);
 		this.options = {};
 		this.output = [];
 		this.runnerProcess = null;
@@ -42,6 +42,11 @@ module.exports = class Task{
 		return `data/${this.uuid}`;
 	}
 
+	// Deletes files and folders related to this task
+	cleanup(cb){
+		rmdir(this.getProjectFolderPath(), cb);
+	}
+
 	setStatus(code, extra){
 		this.status = {
 			code: code
@@ -51,17 +56,53 @@ module.exports = class Task{
 		}
 	}
 
+	updateProcessingTime(resetTime){
+		this.processingTime = resetTime ? 
+								-1		:
+								new Date().getTime() - this.dateCreated;
+	}
+
+	startTrackingProcessingTime(){
+		this.updateProcessingTime();
+		if (!this._updateProcessingTimeInterval){
+			this._updateProcessingTimeInterval = setInterval(() => {
+				this.updateProcessingTime();
+			}, 1000);
+		}
+	}
+
+	stopTrackingProcessingTime(resetTime){
+		this.updateProcessingTime(resetTime);
+		if (this._updateProcessingTimeInterval){
+			clearInterval(this._updateProcessingTimeInterval);
+			this._updateProcessingTimeInterval = null;
+		}
+	}
+
 	getStatus(){
 		return this.status.code;
+	}
+
+	isCanceled(){
+		return this.status.code === statusCodes.CANCELED;
 	}
 
 	// Cancels the current task (unless it's already canceled)
 	cancel(cb){
 		if (this.status.code !== statusCodes.CANCELED){
+			let wasRunning = this.status.code === statusCodes.RUNNING;
 			this.setStatus(statusCodes.CANCELED);
+			
+			if (wasRunning && this.runnerProcess){
+				// TODO: this does guarantee that
+				// the process will immediately terminate.
+				// In fact, often times ODM will continue running for a while
+				// This might need to be fixed on ODM's end. 
+				this.runnerProcess.kill('SIGINT');
+				this.runnerProcess = null;
+			}
 
-			console.log("Requested to cancel " + this.name);
-			// TODO
+			this.stopTrackingProcessingTime(true);
 			cb(null);
 		}else{
 			cb(new Error("Task already cancelled"));
@@ -72,6 +113,7 @@ module.exports = class Task{
 	// This will spawn a new process.
 	start(done){
 		if (this.status.code === statusCodes.QUEUED){
+			this.startTrackingProcessingTime();
 			this.setStatus(statusCodes.RUNNING);
 			this.runnerProcess = odmRunner.run({
 					projectPath: `${__dirname}/../${this.getProjectFolderPath()}`
@@ -79,12 +121,16 @@ module.exports = class Task{
 					if (err){
 						this.setStatus(statusCodes.FAILED, {errorMessage: `Could not start process (${err.message})`});
 					}else{
-						if (code === 0){
-							this.setStatus(statusCodes.COMPLETED);
-						}else{
-							this.setStatus(statusCodes.FAILED, {errorMessage: `Process exited with code ${code}`});
+						// Don't evaluate if we caused the process to exit via SIGINT?
+						if (this.status.code !== statusCodes.CANCELED){
+							if (code === 0){
+								this.setStatus(statusCodes.COMPLETED);
+							}else{
+								this.setStatus(statusCodes.FAILED, {errorMessage: `Process exited with code ${code}`});
+							}
 						}
 					}
+					this.stopTrackingProcessingTime();
 					done();
 				}, output => {
 					// Replace console colors
@@ -103,10 +149,9 @@ module.exports = class Task{
 	restart(cb){
 		if (this.status.code === statusCodes.CANCELED || this.status.code === statusCodes.FAILED){
 			this.setStatus(statusCodes.QUEUED);
-
-			console.log("Requested to restart " + this.name);
-			// TODO
-
+			this.dateCreated = new Date().getTime();
+			this.output = [];
+			this.stopTrackingProcessingTime(true);
 			cb(null);
 		}else{
 			cb(new Error("Task cannot be restarted"));
@@ -119,6 +164,7 @@ module.exports = class Task{
 			uuid: this.uuid,
 			name: this.name,
 			dateCreated: this.dateCreated,
+			processingTime: this.processingTime,
 			status: this.status,
 			options: this.options,
 			imagesCount: this.images.length

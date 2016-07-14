@@ -64,10 +64,15 @@ module.exports = class TaskManager{
 	cancel(uuid, cb){
 		let task;
 		if (task = this.find(uuid, cb)){
-			task.cancel(err => {
-				this.removeFromRunningQueue(task);
-				cb(err);
-			});
+			if (!task.isCanceled()){
+				task.cancel(err => {
+					this.removeFromRunningQueue(task);
+					this.processNextTask();
+					cb(err);
+				});
+			}else{
+				cb(null); // Nothing to be done
+			}
 		}
 	}
 
@@ -76,9 +81,16 @@ module.exports = class TaskManager{
 	remove(uuid, cb){
 		this.cancel(uuid, err => {
 			if (!err){
-				delete(this.tasks[uuid]);
-				// TODO: other cleanup
-				cb(null);
+				let task;
+				if (task = this.find(uuid, cb)){
+					task.cleanup(err => {
+						if (!err){
+							delete(this.tasks[uuid]);
+							this.processNextTask();
+							cb(null);
+						}else cb(err);
+					});
+				}else; // cb is called by find on error
 			}else cb(err);
 		});
 	}
@@ -89,7 +101,7 @@ module.exports = class TaskManager{
 		let task;
 		if (task = this.find(uuid, cb)){
 			task.restart(err => {
-				this.processNextTask();
+				if (!err) this.processNextTask();
 				cb(err);
 			});
 		}
