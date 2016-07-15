@@ -1,14 +1,51 @@
 "use strict";
 let assert = require('assert');
+let fs = require('fs');
 let Task = require('./Task');
 let statusCodes = require('./statusCodes');
+let async = require('async');
 
-let PARALLEL_QUEUE_PROCESS_LIMIT = 2;
+const PARALLEL_QUEUE_PROCESS_LIMIT = 2;
+const TASKS_DUMP_FILE = "data/tasks.json";
 
 module.exports = class TaskManager{
-	constructor(){
+	constructor(done){
 		this.tasks = {};
 		this.runningQueue = [];
+
+		async.series([
+			cb => { this.restoreTaskListFromDump(cb); },
+			cb => {
+				this.processNextTask();
+				cb();
+			}
+		], done);
+		
+	}
+
+	// Load tasks that already exists (if any)
+	restoreTaskListFromDump(done){
+		fs.readFile(TASKS_DUMP_FILE, (err, data) => {
+			if (!err){
+				let tasks = JSON.parse(data.toString());
+
+				async.each(tasks, (taskJson, done) => {
+					Task.CreateFromSerialized(taskJson, (err, task) => {
+						if (err) done(err);
+						else{
+							this.tasks[task.uuid] = task;
+							done();
+						}
+					});
+				}, err => {
+					console.log(`Initialized ${tasks.length} tasks`);
+					if (done !== undefined) done();
+				});				
+			}else{
+				console.log("No tasks dump found");
+				if (done !== undefined) done();
+			}
+		});
 	}
 
 	// Finds the first QUEUED task.
@@ -112,5 +149,21 @@ module.exports = class TaskManager{
 		let task = this.tasks[uuid];
 		if (!task && cb) cb(new Error(`${uuid} not found`));
 		return task;
+	}
+
+	// Serializes the list of tasks and saves it
+	// to disk
+	dumpTaskList(done){
+		var output = [];
+
+		for (let uuid in this.tasks){
+			output.push(this.tasks[uuid].serialize());
+		}
+
+		fs.writeFile(TASKS_DUMP_FILE, JSON.stringify(output), err => {
+			if (err) console.log(`Could not dump tasks: ${err.message}`);
+			else console.log("Dumped tasks list.");
+			if (done !== undefined) done();
+		})
 	}
 };

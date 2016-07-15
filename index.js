@@ -10,8 +10,7 @@ let addRequestId = require('./libs/expressRequestId')();
 let multer = require('multer');
 let bodyParser = require('body-parser');
 let morgan = require('morgan');
-
-let taskManager = new (require('./libs/taskManager'))();
+let TaskManager = require('./libs/taskManager');
 let Task = require('./libs/Task');
 
 app.use(morgan('tiny'));
@@ -112,6 +111,35 @@ app.post('/task/restart', uuidCheck, (req, res) => {
 	taskManager.restart(req.body.uuid, successHandler(res));
 });
 
-app.listen(3000, () => {
-  console.log('Server has started on port 3000');
+let gracefulShutdown = done => {
+	async.series([
+		cb => { taskManager.dumpTaskList(cb) },
+		cb => { 
+			console.log("Closing server");
+			server.close();
+			console.log("Exiting...");
+			process.exit(0);
+		}
+	], done);
+};
+
+// listen for TERM signal .e.g. kill 
+process.on ('SIGTERM', gracefulShutdown);
+
+// listen for INT signal e.g. Ctrl-C
+process.on ('SIGINT', gracefulShutdown);
+
+// Startup
+let taskManager;
+let server;
+
+async.series([
+	cb => { taskManager = new TaskManager(cb); },
+	cb => { server = app.listen(3000, err => {
+			if (!err) console.log('Server has started on port 3000');
+			cb(err);
+		});
+	}
+], err => {
+	if (err) console.log("Error during startup: " + err.message);
 });

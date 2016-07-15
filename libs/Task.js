@@ -7,9 +7,9 @@ let odmRunner = require('./odmRunner');
 let statusCodes = require('./statusCodes');
 
 module.exports = class Task{
-	constructor(uuid, name, readyCb){
+	constructor(uuid, name, done){
 		assert(uuid !== undefined, "uuid must be set");
-		assert(readyCb !== undefined, "ready must be set");
+		assert(done !== undefined, "ready must be set");
 
 		this.uuid = uuid;
 		this.name = name != "" ? name : "Task of " + (new Date()).toISOString();
@@ -22,12 +22,31 @@ module.exports = class Task{
 
 		// Read images info
 		fs.readdir(this.getImagesFolderPath(), (err, files) => {
-			if (err) readyCb(err);
+			if (err) done(err);
 			else{
 				this.images = files;
-				readyCb(null, this);
+				done(null, this);
 			}
 		});
+	}
+
+	static CreateFromSerialized(taskJson, done){
+		new Task(taskJson.uuid, taskJson.name, (err, task) => {
+			if (err) done(err);
+			else{
+				// Override default values with those
+				// provided in the taskJson
+				for (let k in taskJson){
+					task[k] = taskJson[k];
+				}
+				
+				// Tasks that were running should be put back to QUEUED state
+				if (task.status.code === statusCodes.RUNNING){
+					task.status.code = statusCodes.QUEUED;
+				}
+				done(null, task);
+			}
+		})
 	}
 
 	// Get path where images are stored for this task
@@ -175,5 +194,17 @@ module.exports = class Task{
 	// Optionally starting from a certain line number
 	getOutput(startFromLine = 0){
 		return this.output.slice(startFromLine, this.output.length);
+	}
+
+	// Returns the data necessary to serialize this
+	// task to restore it later.
+	serialize(){
+		return {
+			uuid: this.uuid,
+			name: this.name,
+			dateCreated: this.dateCreated,
+			status: this.status,
+			options: this.options
+		}
 	}
 };
