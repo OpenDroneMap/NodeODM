@@ -3,6 +3,7 @@ let assert = require('assert');
 let fs = require('fs');
 let rmdir = require('rimraf');
 let odmRunner = require('./odmRunner');
+let AdmZip = require('adm-zip');
 
 let statusCodes = require('./statusCodes');
 
@@ -131,6 +132,25 @@ module.exports = class Task{
 	// Starts processing the task with OpenDroneMap
 	// This will spawn a new process.
 	start(done){
+		function postProcess(done){
+			let zip = new AdmZip();
+			zip.addLocalFolder(`${this.getProjectFolderPath()}/odm_orthophoto`);
+			zip.addLocalFolder(`${this.getProjectFolderPath()}/odm_georeferencing`);
+			zip.addLocalFolder(`${this.getProjectFolderPath()}/odm_texturing`);
+			zip.addLocalFolder(`${this.getProjectFolderPath()}/odm_meshing`);
+			zip.writeZip(`${this.getProjectFolderPath()/all.zip}`);
+			this.setStatus(statusCodes.COMPLETED);
+			finished();
+
+			// TODO: test, think about possibly doing this on the fly
+			// upon download request...
+		}
+
+		function finished(){
+			this.stopTrackingProcessingTime();
+			done();
+		}
+
 		if (this.status.code === statusCodes.QUEUED){
 			this.startTrackingProcessingTime();
 			this.setStatus(statusCodes.RUNNING);
@@ -139,18 +159,20 @@ module.exports = class Task{
 				}, (err, code, signal) => {
 					if (err){
 						this.setStatus(statusCodes.FAILED, {errorMessage: `Could not start process (${err.message})`});
+						finished();
 					}else{
 						// Don't evaluate if we caused the process to exit via SIGINT?
 						if (this.status.code !== statusCodes.CANCELED){
 							if (code === 0){
-								this.setStatus(statusCodes.COMPLETED);
+								postProcess(done);
 							}else{
 								this.setStatus(statusCodes.FAILED, {errorMessage: `Process exited with code ${code}`});
+								finished();
 							}
+						}else{
+							finished();
 						}
 					}
-					this.stopTrackingProcessingTime();
-					done();
 				}, output => {
 					// Replace console colors
 					output = output.replace(/\x1b\[[0-9;]*m/g, "");

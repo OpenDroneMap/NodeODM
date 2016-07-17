@@ -4,9 +4,11 @@ let fs = require('fs');
 let Task = require('./Task');
 let statusCodes = require('./statusCodes');
 let async = require('async');
+let schedule = require('node-schedule');
 
 const PARALLEL_QUEUE_PROCESS_LIMIT = 2;
 const TASKS_DUMP_FILE = "data/tasks.json";
+const CLEANUP_TASKS_IF_OLDER_THAN = 1000 * 60 * 60 * 24 * 3; // 3 days
 
 module.exports = class TaskManager{
 	constructor(done){
@@ -15,12 +17,45 @@ module.exports = class TaskManager{
 
 		async.series([
 			cb => { this.restoreTaskListFromDump(cb); },
+			cb => { this.removeOldTasks(cb); },
 			cb => {
 				this.processNextTask();
 				cb();
+			},
+			cb => {
+				// Every hour
+				schedule.scheduleJob('* 0 * * * *', () => {
+					this.removeOldTasks();
+					this.dumpTaskList();
+				});
+
+				cb();
 			}
-		], done);
-		
+		], done);		
+	}
+
+	// Removes old tasks that have either failed, are completed, or 
+	// have been canceled.
+	removeOldTasks(done){
+		let list = [];
+		let now = new Date().getTime();
+		console.log("Checking for old tasks to be removed...");
+
+		for (let uuid in this.tasks){
+			let task = this.tasks[uuid];
+
+			if ([statusCodes.FAILED, 
+				statusCodes.COMPLETED, 
+				statusCodes.CANCELED].indexOf(task.status.code) !== -1 && 
+				now - task.dateCreated > CLEANUP_TASKS_IF_OLDER_THAN){
+				list.push(task.uuid);
+			}
+		}
+
+		async.eachSeries(list, (uuid, cb) => { 
+			console.log(`Cleaning up old task ${uuid}`)
+			this.remove(uuid, cb); 
+		}, done);
 	}
 
 	// Load tasks that already exists (if any)
