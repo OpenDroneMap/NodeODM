@@ -71,6 +71,10 @@
                 <span data-bind="css: 'statusIcon glyphicon ' + icon()"></span>
       
                 <div class="actionButtons">
+                  <button data-bind="click: download, visible: showDownload()" type="button" class="btn btn-primary btn-sm" >
+                    <span class="glyphicon glyphicon-download-alt"></span> Download Results
+                  </button>
+
                   <button data-bind="click: cancel, visible: showCancel()" type="button" class="btn btn-primary btn-sm" >
                     <span class="glyphicon glyphicon-remove-circle"></span> Cancel
                   </button>

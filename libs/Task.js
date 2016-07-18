@@ -62,6 +62,12 @@ module.exports = class Task{
 		return `data/${this.uuid}`;
 	}
 
+	// Get the path of the archive where all assets
+	// outputted by this task are stored.
+	getAssetsArchivePath(){
+		return `${this.getProjectFolderPath()}/all.zip`;
+	}
+
 	// Deletes files and folders related to this task
 	cleanup(cb){
 		rmdir(this.getProjectFolderPath(), cb);
@@ -138,12 +144,10 @@ module.exports = class Task{
 			zip.addLocalFolder(`${this.getProjectFolderPath()}/odm_georeferencing`);
 			zip.addLocalFolder(`${this.getProjectFolderPath()}/odm_texturing`);
 			zip.addLocalFolder(`${this.getProjectFolderPath()}/odm_meshing`);
-			zip.writeZip(`${this.getProjectFolderPath()/all.zip}`);
+			zip.writeZip(this.getAssetsArchivePath());
+
 			this.setStatus(statusCodes.COMPLETED);
 			finished();
-
-			// TODO: test, think about possibly doing this on the fly
-			// upon download request...
 		}
 
 		function finished(){

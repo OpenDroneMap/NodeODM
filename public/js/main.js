@@ -109,7 +109,10 @@ $(function(){
             return this.info().status && 
             (this.info().status.code === codes.FAILED || this.info().status.code === codes.COMPLETED || this.info().status.code === codes.CANCELED);
         }, this);
-
+        this.showDownload = ko.pureComputed(function(){
+            return this.info().status && 
+            (this.info().status.code === codes.COMPLETED);
+        }, this);
         this.startRefreshingInfo();
     }
     Task.prototype.refreshInfo = function(){
@@ -229,6 +232,9 @@ $(function(){
     Task.prototype.restart = genApiCall("/task/restart", function(task){
         task.resetOutput();
     });
+    Task.prototype.download = function(){
+        location.href = "/task/" + this.uuid + "/download/all";
+    };
 
     var taskList = new TaskList();
     ko.applyBindings(taskList);

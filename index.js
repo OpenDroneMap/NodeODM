@@ -86,6 +86,15 @@ app.get('/task/:uuid/info', getTaskFromUuid, (req, res) => {
 app.get('/task/:uuid/output', getTaskFromUuid, (req, res) => {
 	res.json(req.task.getOutput(req.query.line));
 });
+app.get('/task/:uuid/download/:asset', getTaskFromUuid, (req, res) => {
+	if (!req.params.asset || req.params.asset === "all"){
+		res.download(req.task.getAssetsArchivePath(), "all.zip", err => {
+			if (err) res.json({error: "Asset not ready"});
+		});
+	}else{
+		res.json({error: "Invalid asset"});
+	}
+});
 
 let uuidCheck = (req, res, next) => {
 	if (!req.body.uuid) res.json({error: "uuid param missing."});
