@@ -1,5 +1,5 @@
-# node-OpenDroneMap - Open Source Drone Aerial Imagery Processing
-Node.js App and REST API to access [OpenDroneMap](https://github.com/OpenDroneMap/OpenDroneMap)
+# Open Source Drone Aerial Imagery Processing
+node-OpenDroneMap is a Node.js App and REST API to access [OpenDroneMap](https://github.com/OpenDroneMap/OpenDroneMap)
 
 ![Alt text](/screenshots/main.png?raw=true "Node-OpenDroneMap")
 
