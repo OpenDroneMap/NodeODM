@@ -36,6 +36,7 @@ sudo curl --silent --location https://deb.nodesource.com/setup_6.x | sudo bash -
 sudo apt-get install -y nodejs
 git clone https://github.com/pierotofy/node-OpenDroneMap
 cd node-OpenDroneMap
+npm install
 node index.js
 ```
 
