@@ -50,8 +50,8 @@ Make a pull request for small contributions. For big contributions, please open 
 ## Roadmap
 
 - [ ] Command line options for OpenDroneMap (in progress)
-- [ ] Cluster tasks distribution to multiple servers (planned)
-- [ ] Documentation (planned)
+- [ ] Cluster tasks distribution to multiple servers
+- [ ] Documentation
 - [ ] Unit Testing
 
 ## API Docs
