@@ -1,5 +1,5 @@
 # node-OpenDroneMap
-Node.js GUI and REST API to access [OpenDroneMap](https://github.com/OpenDroneMap/OpenDroneMap)
+Node.js App and REST API to access [OpenDroneMap](https://github.com/OpenDroneMap/OpenDroneMap)
 
 ![Alt text](/screenshots/main.png?raw=true "Node-OpenDroneMap")
 
