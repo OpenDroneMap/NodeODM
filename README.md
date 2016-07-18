@@ -39,6 +39,10 @@ cd node-OpenDroneMap
 node index.js
 ```
 
+### Test Images
+
+You can find some test drone images from [OpenDroneMap's Test Data Folder](https://github.com/OpenDroneMap/OpenDroneMap/tree/master/tests/test_data/images).
+
 ## Contributing
 
 Make a pull request for small contributions. For big contributions, please open a discussion first.
