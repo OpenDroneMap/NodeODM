@@ -1,9 +1,26 @@
+/* 
+Node-OpenDroneMap Node.js App and REST API to access OpenDroneMap. 
+Copyright (C) 2016 Node-OpenDroneMap Contributors
+
+This program is free software: you can redistribute it and/or modify
+it under the terms of the GNU General Public License as published by
+the Free Software Foundation, either version 3 of the License, or
+(at your option) any later version.
+
+This program is distributed in the hope that it will be useful,
+but WITHOUT ANY WARRANTY; without even the implied warranty of
+MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+GNU General Public License for more details.
+
+You should have received a copy of the GNU General Public License
+along with this program.  If not, see <http://www.gnu.org/licenses/>.
+*/
 "use strict";
 let assert = require('assert');
 let fs = require('fs');
 let rmdir = require('rimraf');
 let odmRunner = require('./odmRunner');
-let AdmZip = require('adm-zip');
+let archiver = require('archiver');
 
 let statusCodes = require('./statusCodes');
 
@@ -138,22 +155,34 @@ module.exports = class Task{
 	// Starts processing the task with OpenDroneMap
 	// This will spawn a new process.
 	start(done){
-		function postProcess(done){
-			let zip = new AdmZip();
-			zip.addLocalFolder(`${this.getProjectFolderPath()}/odm_orthophoto`);
-			zip.addLocalFolder(`${this.getProjectFolderPath()}/odm_georeferencing`);
-			zip.addLocalFolder(`${this.getProjectFolderPath()}/odm_texturing`);
-			zip.addLocalFolder(`${this.getProjectFolderPath()}/odm_meshing`);
-			zip.writeZip(this.getAssetsArchivePath());
+		const postProcess = () => {
+			let output = fs.createWriteStream(this.getAssetsArchivePath());
+			let archive = archiver.create('zip', {});
 
-			this.setStatus(statusCodes.COMPLETED);
-			finished();
-		}
+			archive.on('finish', () => {
+				// TODO: is this being fired twice?
+				this.setStatus(statusCodes.COMPLETED);
+				finished();
+			});
 
-		function finished(){
+			archive.on('error', err => {
+				this.setStatus(statusCodes.FAILED);
+				finished(err);
+			});
+
+			archive.pipe(output);
+			archive
+			  .directory(`${this.getProjectFolderPath()}/odm_orthophoto`, 'odm_orthophoto')
+			  .directory(`${this.getProjectFolderPath()}/odm_georeferencing`, 'odm_georeferencing')
+			  .directory(`${this.getProjectFolderPath()}/odm_texturing`, 'odm_texturing')
+			  .directory(`${this.getProjectFolderPath()}/odm_meshing`, 'odm_meshing')
+			  .finalize();
+		};
+
+		const finished = err => {
 			this.stopTrackingProcessingTime();
-			done();
-		}
+			done(err);
+		};
 
 		if (this.status.code === statusCodes.QUEUED){
 			this.startTrackingProcessingTime();
@@ -168,7 +197,7 @@ module.exports = class Task{
 						// Don't evaluate if we caused the process to exit via SIGINT?
 						if (this.status.code !== statusCodes.CANCELED){
 							if (code === 0){
-								postProcess(done);
+								postProcess();
 							}else{
 								this.setStatus(statusCodes.FAILED, {errorMessage: `Process exited with code ${code}`});
 								finished();

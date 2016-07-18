@@ -20,7 +20,7 @@
   },
   "homepage": "https://github.com/pierotofy/node-OpenDroneMap#readme",
   "dependencies": {
-    "adm-zip": "^0.4.7",
+    "archiver": "^1.0.0",
     "async": "^2.0.0-rc.6",
     "body-parser": "^1.15.2",
     "express": "^4.14.0",
