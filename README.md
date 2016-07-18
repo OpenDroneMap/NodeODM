@@ -52,6 +52,7 @@ Make a pull request for small contributions. For big contributions, please open 
 - [ ] Command line options for OpenDroneMap (in progress)
 - [ ] Cluster tasks distribution to multiple servers (planned)
 - [ ] Documentation (planned)
+- [ ] Unit Testing
 
 ## API Docs
 
