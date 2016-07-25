@@ -158,7 +158,7 @@ process.on ('SIGINT', gracefulShutdown);
 // Startup
 let taskManager;
 let server;
-
+/*
 async.series([
 	cb => { taskManager = new TaskManager(cb); },
 	cb => { server = app.listen(3000, err => {
@@ -168,4 +168,6 @@ async.series([
 	}
 ], err => {
 	if (err) console.log("Error during startup: " + err.message);
-});
+});*/
+let odmOptionsParser = require('./libs/odmOptionsParser');
+odmOptionsParser.getOptions(function(){});

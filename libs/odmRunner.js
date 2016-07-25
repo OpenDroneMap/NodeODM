@@ -44,5 +44,30 @@ module.exports = {
 		});
 
 		return childProcess;
+	},
+
+	getJsonOptions: function(done){
+		// Launch
+		let childProcess = spawn("python", [`${__dirname}/../helpers/odmOptionsToJson.py`, 
+				"--project-path", ODM_PATH]);
+		let output = [];
+
+		childProcess
+			.on('exit', (code, signal) => {
+				try{
+					let json = JSON.parse(output.join(""));
+					done(null, json);
+				}catch(err){
+					done(err);	
+				}
+			})
+			.on('error', done);
+
+		let processOutput = chunk => {
+			output.push(chunk.toString());
+		};
+
+		childProcess.stdout.on('data', processOutput);
+		childProcess.stderr.on('data', processOutput);
 	}
 };

@@ -137,7 +137,7 @@ module.exports = class Task{
 			this.setStatus(statusCodes.CANCELED);
 			
 			if (wasRunning && this.runnerProcess){
-				// TODO: this does guarantee that
+				// TODO: this does NOT guarantee that
 				// the process will immediately terminate.
 				// In fact, often times ODM will continue running for a while
 				// This might need to be fixed on ODM's end. 
