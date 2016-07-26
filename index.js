@@ -29,7 +29,7 @@ let bodyParser = require('body-parser');
 let morgan = require('morgan');
 let TaskManager = require('./libs/taskManager');
 let Task = require('./libs/Task');
-let odmOptionsParser = require('./libs/odmOptionsParser');
+let odmOptions = require('./libs/odmOptions');
 
 app.use(morgan('tiny'));
 app.use(bodyParser.urlencoded({extended: true}));
@@ -59,8 +59,18 @@ let upload = multer({
 app.post('/task/new', addRequestId, upload.array('images'), (req, res) => {
 	if (req.files.length === 0) res.json({error: "Need at least 1 file."});
 	else{
-		// Move to data
 		async.series([
+			cb => { 
+				odmOptions.filterOptions(req.body.options, (err, options) => {
+					if (err) cb(err);
+					else{
+						req.body.options = options;
+						cb(null);
+					}
+				}); 
+			},
+			
+			// Move uploads to data dir
 			cb => { 
 				fs.stat(`data/${req.id}`, (err, stat) => {
 					if (err && err.code === 'ENOENT') cb();
@@ -70,19 +80,21 @@ app.post('/task/new', addRequestId, upload.array('images'), (req, res) => {
 			cb => { fs.mkdir(`data/${req.id}`, undefined, cb); },
 			cb => {
 				fs.rename(`tmp/${req.id}`, `data/${req.id}/images`, err => {
-					if (!err){
-						new Task(req.id, req.body.name, (err, task) => {
-							if (err) cb(err);
-							else{
-								taskManager.addNew(task);
-								res.json({uuid: req.id, success: true});
-								cb();
-							}
-						});
-					}else{
-						cb(new Error("Could not move images folder."))
-					}
+					if (!err) cb();
+					else cb(new Error("Could not move images folder."))
 				});
+			},
+
+			// Create task
+			cb => {
+				new Task(req.id, req.body.name, (err, task) => {
+					if (err) cb(err);
+					else{
+						taskManager.addNew(task);
+						res.json({uuid: req.id, success: true});
+						cb();
+					}
+				}, req.body.options);
 			}
 		], err => {
 			if (err) res.json({error: err.message})
@@ -139,7 +151,7 @@ app.post('/task/restart', uuidCheck, (req, res) => {
 });
 
 app.get('/getOptions', (req, res) => {
-	odmOptionsParser.getOptions((err, options) => {
+	odmOptions.getOptions((err, options) => {
 		if (err) res.json({error: err.message});
 		else res.json(options);
 	});
@@ -147,7 +159,7 @@ app.get('/getOptions', (req, res) => {
 
 let gracefulShutdown = done => {
 	async.series([
-		cb => { taskManager.dumpTaskList(cb) },
+		cb => { taskManager.dumpTaskList(cb); },
 		cb => { 
 			console.log("Closing server");
 			server.close();

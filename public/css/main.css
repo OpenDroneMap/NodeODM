@@ -60,3 +60,7 @@
 .selectric-items li{
     background: #fff;
 }
+
+#options .checkbox{
+    margin-right: 143px;
+}

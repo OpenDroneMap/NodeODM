@@ -32,8 +32,12 @@ module.exports = {
 			else{
 				options = {};
 				for (let option in json){
-					if (["-h", "--project-path", "--zip-results"].indexOf(option) !== -1) continue;
-					
+					// Not all options are useful to the end user
+					// (num cores can be set programmatically, so can gcpFile, etc.)
+					if (["-h", "--project-path", 
+						"--zip-results", "--pmvs-num-cores", "--odm_georeferencing-useGcp",
+						"--start-with", "--odm_georeferencing-gcpFile", "--end-with"].indexOf(option) !== -1) continue;
+
 					let values = json[option];
 					option = option.replace(/^--/, "");
 
@@ -83,5 +87,21 @@ module.exports = {
 				done(null, options);
 			}
 		});
+	},
+
+	// Checks that the options (as received from the rest endpoint)
+	// Are valid and within proper ranges.
+	// The result of filtering is passed back via callback
+	// @param options[]
+	filterOptions: function(options, done){
+		try{
+			if (typeof options === "string") options = JSON.parse(options);
+
+			// TODO: range checks, filtering
+
+			done(null, options);
+		}catch(e){
+			done(e);
+		}
 	}
 };

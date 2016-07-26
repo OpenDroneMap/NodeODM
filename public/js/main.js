@@ -149,8 +149,8 @@ $(function(){
          })
          .always(function(){ self.loading(false); });
     };
-    Task.prototype.consoleMouseOver = function(){ this.autoScrollOutput = false; }
-    Task.prototype.consoleMouseOut = function(){ this.autoScrollOutput = true; } 
+    Task.prototype.consoleMouseOver = function(){ this.autoScrollOutput = false; };
+    Task.prototype.consoleMouseOut = function(){ this.autoScrollOutput = true; };
     Task.prototype.resetOutput = function(){
         this.viewOutputLine = 0;
         this.autoScrollOutput = true;
@@ -170,7 +170,7 @@ $(function(){
                     self.viewOutputLine += output.length;
                     if (self.autoScrollOutput){
                         var $console = $("#console_" + self.uuid);
-                        $console.scrollTop($console[0].scrollHeight - $console.height())
+                        $console.scrollTop($console[0].scrollHeight - $console.height());
                     }
                 }
              })
@@ -243,8 +243,8 @@ $(function(){
                 self.info({error: url + " is unreachable."});
                 self.stopRefreshingInfo();
             });
-        }
-    };
+        };
+    }
     Task.prototype.cancel = genApiCall("/task/cancel");
     Task.prototype.restart = genApiCall("/task/restart", function(task){
         task.resetOutput();
@@ -266,7 +266,8 @@ $(function(){
         uploadAsync: false,
         uploadExtraData: function(){
             return {
-                name: $("#taskName").val()
+                name: $("#taskName").val(),
+                options: JSON.stringify(optionsModel.getUserOptions())
             };
         }
     });
@@ -299,12 +300,22 @@ $(function(){
     function Option(name, params){
         this.name = name;
         this.params = params;
+        this.value = ko.observable();
     }
+    Option.prototype.resetToDefault = function(){
+        this.value(undefined);
+    };
 
     function OptionsModel(){
         var self = this;
 
         this.options = ko.observableArray();
+        this.options.subscribe(function(){
+            setTimeout(function(){
+                $('#options [data-toggle="tooltip"]').tooltip();
+            }, 100);
+        });
+        this.showOptions = ko.observable(false);
         this.error = ko.observable();
 
         $.get("/getOptions")
@@ -314,16 +325,25 @@ $(function(){
                 for (var optionName in json){
                     self.options.push(new Option(optionName, json[optionName]));
                 }
-
-                $('select').selectric({
-                  maxHeight: 500
-                });
             }
          })
          .fail(function(){
             self.error("options are not available.");
-         })
+         });
     }
+    OptionsModel.prototype.getUserOptions = function(){
+        var result = [];
+        for (var i = 0; i < this.options().length; i++){
+            var opt = this.options()[i];
+            if (opt.value() !== undefined){
+                result.push({
+                    name: opt.name,
+                    value: opt.value()
+                });
+            }
+        }
+        return result;
+    };
 
     var optionsModel = new OptionsModel();
     ko.applyBindings(optionsModel, document.getElementById("options"));
