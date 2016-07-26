@@ -254,7 +254,7 @@ $(function(){
     };
 
     var taskList = new TaskList();
-    ko.applyBindings(taskList);
+    ko.applyBindings(taskList, document.getElementById('taskList'));
 
     // Handle uploads
     $("#images").fileinput({
@@ -294,4 +294,37 @@ $(function(){
         })
         .on('filebatchuploaderror', function(e, data, msg){
         });
+
+    // Load options
+    function Option(name, params){
+        this.name = name;
+        this.params = params;
+    }
+
+    function OptionsModel(){
+        var self = this;
+
+        this.options = ko.observableArray();
+        this.error = ko.observable();
+
+        $.get("/getOptions")
+         .done(function(json){
+            if (json.error) self.error(json.error);
+            else{
+                for (var optionName in json){
+                    self.options.push(new Option(optionName, json[optionName]));
+                }
+
+                $('select').selectric({
+                  maxHeight: 500
+                });
+            }
+         })
+         .fail(function(){
+            self.error("options are not available.");
+         })
+    }
+
+    var optionsModel = new OptionsModel();
+    ko.applyBindings(optionsModel, document.getElementById("options"));
 });

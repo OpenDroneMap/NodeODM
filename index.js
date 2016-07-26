@@ -29,6 +29,7 @@ let bodyParser = require('body-parser');
 let morgan = require('morgan');
 let TaskManager = require('./libs/taskManager');
 let Task = require('./libs/Task');
+let odmOptionsParser = require('./libs/odmOptionsParser');
 
 app.use(morgan('tiny'));
 app.use(bodyParser.urlencoded({extended: true}));
@@ -137,6 +138,13 @@ app.post('/task/restart', uuidCheck, (req, res) => {
 	taskManager.restart(req.body.uuid, successHandler(res));
 });
 
+app.get('/getOptions', (req, res) => {
+	odmOptionsParser.getOptions((err, options) => {
+		if (err) res.json({error: err.message});
+		else res.json(options);
+	});
+});
+
 let gracefulShutdown = done => {
 	async.series([
 		cb => { taskManager.dumpTaskList(cb) },
@@ -158,7 +166,7 @@ process.on ('SIGINT', gracefulShutdown);
 // Startup
 let taskManager;
 let server;
-/*
+
 async.series([
 	cb => { taskManager = new TaskManager(cb); },
 	cb => { server = app.listen(3000, err => {
@@ -168,6 +176,4 @@ async.series([
 	}
 ], err => {
 	if (err) console.log("Error during startup: " + err.message);
-});*/
-let odmOptionsParser = require('./libs/odmOptionsParser');
-odmOptionsParser.getOptions(function(){});
+});

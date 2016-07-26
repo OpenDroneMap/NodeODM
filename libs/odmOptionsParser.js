@@ -18,57 +18,69 @@ along with this program.  If not, see <http://www.gnu.org/licenses/>.
 "use strict";
 let odmRunner = require('./odmRunner');
 
+let options = null;
+
 module.exports = {
 	getOptions: function(done){
+		if (options){
+			done(null, options);
+			return;
+		}
+
 		odmRunner.getJsonOptions((err, json) => {
 			if (err) done(err);
 			else{
+				options = {};
 				for (let option in json){
-					if (option === "-h") continue;
+					if (["-h", "--project-path", "--zip-results"].indexOf(option) !== -1) continue;
+					
 					let values = json[option];
+					option = option.replace(/^--/, "");
 
 					let type = "";
-					let defaultValue = "";
+					let value = "";
 					let help = values.help || "";
-					let range = values.metavar.replace(/[<>]/g, "").trim();
+					let domain = values.metavar !== undefined ? 
+								 values.metavar.replace(/^[<>]/g, "")
+								 				.replace(/[<>]$/g, "")
+							 					.trim() : 
+								 "";
 
-					switch(values.type.trim()){
+					switch((values.type || "").trim()){
 						case "<type 'int'>":
 							type = "int";
-							defaultValue = values['default'] !== undefined ? 
+							value = values['default'] !== undefined ? 
 											parseInt(values['default']) :
 											0;
 							break;
 						case "<type 'float'>":
 							type = "float";
-							defaultValue = values['default'] !== undefined ? 
+							value = values['default'] !== undefined ? 
 											parseFloat(values['default']) :
 											0.0;
 							break;
 						default:
 							type = "string";
-							defaultValue = values['default'].trim();
+							value = values['default'] !== undefined ? 
+								    values['default'].trim() :
+								    "";
 					}
 
 					if (values['default'] === "True"){
 						type = "bool";
-						defaultValue = true;
+						value = true;
 					}else if (values['default'] === "False"){
 						type = "bool";
-						defaultValue = false;
+						value = false;
 					}
 
+					help = help.replace(/\%\(default\)s/g, value);
 
-
-					let result = {
-						type, defaultValue, range, help
+					options[option] = {
+						type, value, domain, help
 					};
-
-					console.log(values);
-					console.log(result);
-					console.log('-----');
 				}
-				done();
+				done(null, options);
 			}
 		});
 	}
