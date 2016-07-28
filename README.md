@@ -47,7 +47,7 @@ You can find some test drone images from [OpenDroneMap's Test Data Folder](https
 
 ## Contributing
 
-Make a pull request for small contributions. For big contributions, please open a discussion first.
+Make a pull request to the dev branch for small contributions. For big contributions, please open a discussion first. Please use ES6 syntax while writing new Javascript code so that we can keep the code base uniform.
 
 ## Roadmap
 
