@@ -1,0 +1,1 @@
+{"info":{"title":"Node-OpenDroneMap","version":"0.1.0"},"swagger":"2.0","paths":{"/task/cancel/{uuidCheck}":{"get":{"description":"Cancels a task","parameters":[{"uuidCheck":"uuid of the task to cancel"}],"responses":{"200":{"description":"Task cancelled"}}}}},"definitions":{},"responses":{},"parameters":{},"securityDefinitions":{},"tags":[]}
