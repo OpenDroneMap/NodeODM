@@ -207,7 +207,7 @@ module.exports = class TaskManager{
 	// Serializes the list of tasks and saves it
 	// to disk
 	dumpTaskList(done){
-		var output = [];
+		let output = [];
 
 		for (let uuid in this.tasks){
 			output.push(this.tasks[uuid].serialize());

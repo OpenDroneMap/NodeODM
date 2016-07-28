@@ -1,5 +1,5 @@
-/* 
-Node-OpenDroneMap Node.js App and REST API to access OpenDroneMap. 
+/*
+Node-OpenDroneMap Node.js App and REST API to access OpenDroneMap.
 Copyright (C) 2016 Node-OpenDroneMap Contributors
 
 This program is free software: you can redistribute it and/or modify
@@ -57,7 +57,7 @@ module.exports = class Task{
 				for (let k in taskJson){
 					task[k] = taskJson[k];
 				}
-				
+
 				// Tasks that were running should be put back to QUEUED state
 				if (task.status.code === statusCodes.RUNNING){
 					task.status.code = statusCodes.QUEUED;
@@ -94,13 +94,13 @@ module.exports = class Task{
 		this.status = {
 			code: code
 		};
-		for (var k in extra){
+		for (let k in extra){
 			this.status[k] = extra[k];
 		}
 	}
 
 	updateProcessingTime(resetTime){
-		this.processingTime = resetTime ? 
+		this.processingTime = resetTime ?
 								-1		:
 								new Date().getTime() - this.dateCreated;
 	}
@@ -135,12 +135,12 @@ module.exports = class Task{
 		if (this.status.code !== statusCodes.CANCELED){
 			let wasRunning = this.status.code === statusCodes.RUNNING;
 			this.setStatus(statusCodes.CANCELED);
-			
+
 			if (wasRunning && this.runnerProcess){
 				// TODO: this does guarantee that
 				// the process will immediately terminate.
 				// In fact, often times ODM will continue running for a while
-				// This might need to be fixed on ODM's end. 
+				// This might need to be fixed on ODM's end.
 				this.runnerProcess.kill('SIGINT');
 				this.runnerProcess = null;
 			}

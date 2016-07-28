@@ -17,7 +17,7 @@ along with this program.  If not, see <http://www.gnu.org/licenses/>.
 */
 "use strict";
 
-var config = require('./config.js')
+let config = require('./config.js')
 
 let logger = require('winston');
 let fs = require('fs');
@@ -34,7 +34,7 @@ let morgan = require('morgan');
 
 // Set up logging
 // Configure custom File transport to write plain text messages
-var logPath = ( config.logger.logDirectory ? config.logger.logDirectory : __dirname );
+let logPath = ( config.logger.logDirectory ? config.logger.logDirectory : __dirname );
 // Check that log file directory can be written to
 try {
 	fs.accessSync(logPath, fs.W_OK);
@@ -56,7 +56,7 @@ logger
 	// Console transport is no use to us when running as a daemon
 	.remove(logger.transports.Console);
 
-var winstonStream = {
+let winstonStream = {
     write: function(message, encoding){
     	logger.info(message.slice(0, -1));
     }

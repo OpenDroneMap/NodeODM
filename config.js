@@ -14,7 +14,7 @@
  * @property {number} port Port to launch server on
  */
 
-var config = {};
+let config = {};
 
 // Instance name - default name for this configuration (will be server process name)
 config.instance = 'node-OpenDroneMap';
@@ -28,7 +28,7 @@ config.logger.maxFiles = 10; // Max number of log files kept
 config.logger.logDirectory = ''; // Set this to a full path to a directory - if not set logs will be written to the application directory.
 
 // Server port
-config.port = process.env.PORT || 8081;
+config.port = process.env.PORT || 3000;
 // process.env.PORT is what AWS Elastic Beanstalk defines
 // on IBM bluemix use config.port = process.env.VCAP_APP_PORT || 8081;
 
