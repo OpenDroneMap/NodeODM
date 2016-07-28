@@ -19,6 +19,8 @@ let config = {};
 // Instance name - default name for this configuration (will be server process name)
 config.instance = 'node-OpenDroneMap';
 
+config.odm_path = '/code';
+
 
 // Logging configuration
 config.logger = {};

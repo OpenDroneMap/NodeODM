@@ -1,5 +1,5 @@
-/* 
-Node-OpenDroneMap Node.js App and REST API to access OpenDroneMap. 
+/*
+Node-OpenDroneMap Node.js App and REST API to access OpenDroneMap.
 Copyright (C) 2016 Node-OpenDroneMap Contributors
 
 This program is free software: you can redistribute it and/or modify
@@ -17,8 +17,7 @@ along with this program.  If not, see <http://www.gnu.org/licenses/>.
 */
 "use strict";
 let spawn = require('child_process').spawn;
-
-const ODM_PATH = "/code";
+let config = require('./config.js');
 
 module.exports = {
 	run: function(options = {
@@ -26,9 +25,9 @@ module.exports = {
 		}, done, outputReceived){
 
 		// Launch
-		let childProcess = spawn("python", [`${ODM_PATH}/run.py`, 
+		let childProcess = spawn("python", [`${config.odm_path}/run.py`,
 				"--project-path", options.projectPath
-			], {cwd: ODM_PATH});
+			], {cwd: config.odm_path});
 
 		childProcess
 			.on('exit', (code, signal) => done(null, code, signal))
@@ -42,8 +41,8 @@ module.exports = {
 
 	getJsonOptions: function(done){
 		// Launch
-		let childProcess = spawn("python", [`${__dirname}/../helpers/odmOptionsToJson.py`, 
-				"--project-path", ODM_PATH]);
+		let childProcess = spawn("python", [`${__dirname}/../helpers/odmOptionsToJson.py`,
+				"--project-path", config.odm_path]);
 		let output = [];
 
 		childProcess
@@ -52,7 +51,7 @@ module.exports = {
 					let json = JSON.parse(output.join(""));
 					done(null, json);
 				}catch(err){
-					done(err);	
+					done(err);
 				}
 			})
 			.on('error', done);
