@@ -25,7 +25,7 @@ let archiver = require('archiver');
 let statusCodes = require('./statusCodes');
 
 module.exports = class Task{
-	constructor(uuid, name, done){
+	constructor(uuid, name, done, options = []){
 		assert(uuid !== undefined, "uuid must be set");
 		assert(done !== undefined, "ready must be set");
 
@@ -34,9 +34,11 @@ module.exports = class Task{
 		this.dateCreated = new Date().getTime();
 		this.processingTime = -1;
 		this.setStatus(statusCodes.QUEUED);
-		this.options = {};
+		this.options = options;
 		this.output = [];
 		this.runnerProcess = null;
+
+		this.options.forEach(option => { console.log(option); });
 
 		// Read images info
 		fs.readdir(this.getImagesFolderPath(), (err, files) => {
@@ -64,7 +66,7 @@ module.exports = class Task{
 				}
 				done(null, task);
 			}
-		})
+		}, taskJson.options);
 	}
 
 	// Get path where images are stored for this task
@@ -137,7 +139,7 @@ module.exports = class Task{
 			this.setStatus(statusCodes.CANCELED);
 
 			if (wasRunning && this.runnerProcess){
-				// TODO: this does guarantee that
+				// TODO: this does NOT guarantee that
 				// the process will immediately terminate.
 				// In fact, often times ODM will continue running for a while
 				// This might need to be fixed on ODM's end.

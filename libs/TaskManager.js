@@ -34,8 +34,8 @@ module.exports = class TaskManager{
 		this.runningQueue = [];
 
 		async.series([
-			cb => { this.restoreTaskListFromDump(cb); },
-			cb => { this.removeOldTasks(cb); },
+			cb => this.restoreTaskListFromDump(cb),
+			cb => this.removeOldTasks(cb),
 			cb => {
 				this.processNextTask();
 				cb();
@@ -136,10 +136,7 @@ module.exports = class TaskManager{
 
 	removeFromRunningQueue(task){
 		assert(task.constructor.name === "Task", "Must be a Task object");
-
-		this.runningQueue = this.runningQueue.filter(t => {
-			return t !== task;
-		});
+		this.runningQueue = this.runningQueue.filter(t => t !== task);
 	}
 
 	addNew(task){

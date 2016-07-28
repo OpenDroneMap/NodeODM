@@ -31,18 +31,35 @@ module.exports = {
 			], {cwd: ODM_PATH});
 
 		childProcess
+			.on('exit', (code, signal) => done(null, code, signal))
+			.on('error', done);
+
+		childProcess.stdout.on('data', chunk => outputReceived(chunk.toString()));
+		childProcess.stderr.on('data', chunk => outputReceived(chunk.toString()));
+
+		return childProcess;
+	},
+
+	getJsonOptions: function(done){
+		// Launch
+		let childProcess = spawn("python", [`${__dirname}/../helpers/odmOptionsToJson.py`, 
+				"--project-path", ODM_PATH]);
+		let output = [];
+
+		childProcess
 			.on('exit', (code, signal) => {
-				done(null, code, signal);
+				try{
+					let json = JSON.parse(output.join(""));
+					done(null, json);
+				}catch(err){
+					done(err);	
+				}
 			})
 			.on('error', done);
 
-		childProcess.stdout.on('data', chunk => {
-		  outputReceived(chunk.toString());
-		});
-		childProcess.stderr.on('data', chunk => {
-		  outputReceived(chunk.toString());
-		});
+		let processOutput = chunk => output.push(chunk.toString());
 
-		return childProcess;
+		childProcess.stdout.on('data', processOutput);
+		childProcess.stderr.on('data', processOutput);
 	}
 };
