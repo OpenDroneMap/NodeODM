@@ -170,7 +170,7 @@ module.exports = {
 			function checkDomain(domain, value){
 				let dc, matches;
 
-				if (dc = domainChecks.find(dc => { return matches = domain.match(dc.regex); })){
+				if (dc = domainChecks.find(dc => matches = domain.match(dc.regex))){
 					if (!dc.validate(matches, value)) throw new Error(`Invalid value ${value} (out of range)`);
 				}else{
 					throw new Error(`Domain value cannot be handled: '${domain}' : '${value}'`);
@@ -181,7 +181,7 @@ module.exports = {
 			for (let odmOption of odmOptions){
 				// Was this option selected by the user?
 				let opt;
-				if (opt = options.find(o => { return o.name === odmOption.name; })){
+				if (opt = options.find(o => o.name === odmOption.name)){
 					try{
 						// Convert to proper data type
 						let value = typeConversion[odmOption.type](opt.value);

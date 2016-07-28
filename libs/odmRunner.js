@@ -31,17 +31,11 @@ module.exports = {
 			], {cwd: ODM_PATH});
 
 		childProcess
-			.on('exit', (code, signal) => {
-				done(null, code, signal);
-			})
+			.on('exit', (code, signal) => done(null, code, signal))
 			.on('error', done);
 
-		childProcess.stdout.on('data', chunk => {
-		  outputReceived(chunk.toString());
-		});
-		childProcess.stderr.on('data', chunk => {
-		  outputReceived(chunk.toString());
-		});
+		childProcess.stdout.on('data', chunk => outputReceived(chunk.toString()));
+		childProcess.stderr.on('data', chunk => outputReceived(chunk.toString()));
 
 		return childProcess;
 	},
@@ -63,9 +57,7 @@ module.exports = {
 			})
 			.on('error', done);
 
-		let processOutput = chunk => {
-			output.push(chunk.toString());
-		};
+		let processOutput = chunk => output.push(chunk.toString());
 
 		childProcess.stdout.on('data', processOutput);
 		childProcess.stderr.on('data', processOutput);

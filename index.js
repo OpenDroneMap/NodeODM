@@ -159,7 +159,7 @@ app.get('/getOptions', (req, res) => {
 
 let gracefulShutdown = done => {
 	async.series([
-		cb => { taskManager.dumpTaskList(cb); },
+		cb => taskManager.dumpTaskList(cb),
 		cb => { 
 			console.log("Closing server");
 			server.close();
@@ -180,7 +180,7 @@ let taskManager;
 let server;
 
 async.series([
-	cb => { taskManager = new TaskManager(cb); },
+	cb => taskManager = new TaskManager(cb),
 	cb => { server = app.listen(3000, err => {
 			if (!err) console.log('Server has started on port 3000');
 			cb(err);
