@@ -297,9 +297,8 @@ $(function(){
         });
 
     // Load options
-    function Option(name, params){
-        this.name = name;
-        this.params = params;
+    function Option(properties){
+        this.properties = properties;
         this.value = ko.observable();
     }
     Option.prototype.resetToDefault = function(){
@@ -322,8 +321,8 @@ $(function(){
          .done(function(json){
             if (json.error) self.error(json.error);
             else{
-                for (var optionName in json){
-                    self.options.push(new Option(optionName, json[optionName]));
+                for (var i in json){
+                    self.options.push(new Option(json[i]));
                 }
             }
          })
@@ -337,7 +336,7 @@ $(function(){
             var opt = this.options()[i];
             if (opt.value() !== undefined){
                 result.push({
-                    name: opt.name,
+                    name: opt.properties.name,
                     value: opt.value()
                 });
             }

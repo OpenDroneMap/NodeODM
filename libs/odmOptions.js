@@ -17,20 +17,21 @@ along with this program.  If not, see <http://www.gnu.org/licenses/>.
 */
 "use strict";
 let odmRunner = require('./odmRunner');
+let assert = require('assert');
 
-let options = null;
+let odmOptions = null;
 
 module.exports = {
 	getOptions: function(done){
-		if (options){
-			done(null, options);
+		if (odmOptions){
+			done(null, odmOptions);
 			return;
 		}
 
 		odmRunner.getJsonOptions((err, json) => {
 			if (err) done(err);
 			else{
-				options = {};
+				odmOptions = [];
 				for (let option in json){
 					// Not all options are useful to the end user
 					// (num cores can be set programmatically, so can gcpFile, etc.)
@@ -39,8 +40,8 @@ module.exports = {
 						"--start-with", "--odm_georeferencing-gcpFile", "--end-with"].indexOf(option) !== -1) continue;
 
 					let values = json[option];
-					option = option.replace(/^--/, "");
 
+					let name = option.replace(/^--/, "");
 					let type = "";
 					let value = "";
 					let help = values.help || "";
@@ -80,11 +81,11 @@ module.exports = {
 
 					help = help.replace(/\%\(default\)s/g, value);
 
-					options[option] = {
-						type, value, domain, help
-					};
+					odmOptions.push({
+						name, type, value, domain, help
+					});
 				}
-				done(null, options);
+				done(null, odmOptions);
 			}
 		});
 	},
@@ -94,12 +95,114 @@ module.exports = {
 	// The result of filtering is passed back via callback
 	// @param options[]
 	filterOptions: function(options, done){
+		assert(odmOptions !== null, "odmOptions is not set. Have you initialized odmOptions properly?");
+		
 		try{
 			if (typeof options === "string") options = JSON.parse(options);
+			
+			let result = [];
+			let errors = [];
+			function addError(opt, descr){
+				errors.push({
+					name: opt.name,
+					error: descr
+				});
+			}
 
-			// TODO: range checks, filtering
+			let typeConversion = {
+				'float': Number.parseFloat,
+				'int': Number.parseInt,
+				'bool': function(value){
+					if (value === 'true') return true;
+					else if (value === 'false') return false;
+					else if (typeof value === 'boolean') return value;
+					else throw new Error(`Cannot convert ${value} to boolean`);
+				}
+			};
+			
+			let domainChecks = [
+				{
+					regex: /^(positive |negative )?(integer|float)$/, 
+					validate: function(matches, value){
+						if (matches[1] === 'positive ') return value >= 0;
+						else if (matches[1] === 'negative ') return value <= 0;
+						
+						else if (matches[2] === 'integer') return Number.isInteger(value);
+						else if (matches[2] === 'float') return Number.isFinite(value);
+					}
+				},
+				{
+					regex: /^percent$/,
+					validate: function(matches, value){
+						return value >= 0 && value <= 100;
+					}
+				},
+				{
+					regex: /^(float): ([\-\+\.\d]+) <= x <= ([\-\+\.\d]+)$/,
+					validate: function(matches, value){
+						let [str, type, lower, upper] = matches;
+						lower = parseFloat(lower);
+						upper = parseFloat(upper);
+						return value >= lower && value <= upper;						
+					}
+				},
+				{
+					regex: /^(float) (>=|>|<|<=) ([\-\+\.\d]+)$/,
+					validate: function(matches, value){
+						let [str, type, oper, bound] = matches;
+						bound = parseFloat(bound);
+						switch(oper){
+							case '>=':
+								return value >= bound;
+							case '>':
+								return value > bound;
+							case '<=':
+								return value <= bound;
+							case '<':
+								return value < bound;
+							default:
+								return false;
+						}
+					}
+				}			
+			];
 
-			done(null, options);
+			function checkDomain(domain, value){
+				let dc, matches;
+
+				if (dc = domainChecks.find(dc => { return matches = domain.match(dc.regex); })){
+					if (!dc.validate(matches, value)) throw new Error(`Invalid value ${value} (out of range)`);
+				}else{
+					throw new Error(`Domain value cannot be handled: '${domain}' : '${value}'`);
+				}
+			}
+
+			// Scan through all possible options
+			for (let odmOption of odmOptions){
+				// Was this option selected by the user?
+				let opt;
+				if (opt = options.find(o => { return o.name === odmOption.name; })){
+					try{
+						// Convert to proper data type
+						let value = typeConversion[odmOption.type](opt.value);
+
+						// Domain check
+						if (odmOption.domain){
+							checkDomain(odmOption.domain, value);
+						}
+
+						result.push({
+							name: odmOption.name,
+							value: value
+						});
+					}catch(e){
+						addError(opt, e.message);						
+					}
+				}
+			}
+
+			if (errors.length > 0) done(new Error(JSON.stringify(errors)));
+			else done(null, result);
 		}catch(e){
 			done(e);
 		}

@@ -54,18 +54,18 @@
             
              <div data-bind="visible: showOptions()">
                 <div data-bind="foreach: options">
-                 <label data-bind="text: name + (params.domain ? ' (' + params.domain + ')' : '')"></label><br/>
-                 <!-- ko if: params.type !== 'bool' -->
-                 <input type="text" class="form-control" data-bind="attr: {placeholder: params.value}, value: value">
+                 <label data-bind="text: properties.name + (properties.domain ? ' (' + properties.domain + ')' : '')"></label><br/>
+                 <!-- ko if: properties.type !== 'bool' -->
+                 <input type="text" class="form-control" data-bind="attr: {placeholder: properties.value}, value: value">
                  <!-- /ko -->
-                 <!-- ko if: params.type === 'bool' -->
+                 <!-- ko if: properties.type === 'bool' -->
                  <div class="checkbox">
                   <label>
                     <input type="checkbox" data-bind="checked: value"> Enable
                   </label>
                 </div>
                  <!-- /ko -->
-                 <button type="submit" class="btn glyphicon glyphicon-info-sign btn-info" data-toggle="tooltip" data-placement="top" data-bind="attr: {title: params.help}"></button>
+                 <button type="submit" class="btn glyphicon glyphicon-info-sign btn-info" data-toggle="tooltip" data-placement="top" data-bind="attr: {title: properties.help}"></button>
                  <button type="submit" class="btn glyphicon glyphicon glyphicon-repeat btn-default" data-toggle="tooltip" data-placement="top" title="Reset to default" data-bind="click: resetToDefault"></button>
 
                  <br/><br/>
