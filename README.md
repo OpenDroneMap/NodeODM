@@ -1,5 +1,5 @@
-# node-OpenDroneMap
-Node.js App and REST API to access [OpenDroneMap](https://github.com/OpenDroneMap/OpenDroneMap)
+# Open Source Drone Aerial Imagery Processing
+node-OpenDroneMap is a Node.js App and REST API to access [OpenDroneMap](https://github.com/OpenDroneMap/OpenDroneMap)
 
 ![Alt text](/screenshots/main.png?raw=true "Node-OpenDroneMap")
 
@@ -24,8 +24,9 @@ docker-machine ip
 Linux users can connect to 127.0.0.1.
 
 * Open a Web Browser to `http://<yourDockerMachineIp>:3000`
-
-And you're done!
+* Load [some images](https://github.com/OpenDroneMap/OpenDroneMap/tree/master/tests/test_data/images)
+* Press "Start Task"
+* Go for a walk :)
 
 ### Run it Natively
 
@@ -36,6 +37,7 @@ sudo curl --silent --location https://deb.nodesource.com/setup_6.x | sudo bash -
 sudo apt-get install -y nodejs
 git clone https://github.com/pierotofy/node-OpenDroneMap
 cd node-OpenDroneMap
+npm install
 node index.js
 ```
 

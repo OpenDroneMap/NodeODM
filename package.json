@@ -28,7 +28,8 @@
     "multer": "^1.1.0",
     "node-schedule": "^1.1.1",
     "node-uuid": "^1.4.7",
-    "rimraf": "^2.5.3"
+    "rimraf": "^2.5.3",
+    "winston": "^2.2.0"
   },
   "devDependencies": {
     "nodemon": "^1.9.2"

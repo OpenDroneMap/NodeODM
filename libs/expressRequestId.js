@@ -1,6 +1,6 @@
 'use strict';
 
-var uuid = require('node-uuid');
+let uuid = require('node-uuid');
 
 module.exports = function (options) {
     options = options || {};

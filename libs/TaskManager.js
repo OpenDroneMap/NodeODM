@@ -1,5 +1,5 @@
-/* 
-Node-OpenDroneMap Node.js App and REST API to access OpenDroneMap. 
+/*
+Node-OpenDroneMap Node.js App and REST API to access OpenDroneMap.
 Copyright (C) 2016 Node-OpenDroneMap Contributors
 
 This program is free software: you can redistribute it and/or modify
@@ -28,7 +28,8 @@ const TASKS_DUMP_FILE = "data/tasks.json";
 const CLEANUP_TASKS_IF_OLDER_THAN = 1000 * 60 * 60 * 24 * 3; // 3 days
 
 module.exports = class TaskManager{
-	constructor(done){
+	constructor(done,logger){
+		this.logger = logger;
 		this.tasks = {};
 		this.runningQueue = [];
 
@@ -48,30 +49,30 @@ module.exports = class TaskManager{
 
 				cb();
 			}
-		], done);		
+		], done);
 	}
 
-	// Removes old tasks that have either failed, are completed, or 
+	// Removes old tasks that have either failed, are completed, or
 	// have been canceled.
 	removeOldTasks(done){
 		let list = [];
 		let now = new Date().getTime();
-		console.log("Checking for old tasks to be removed...");
+		this.logger.info("Checking for old tasks to be removed...");
 
 		for (let uuid in this.tasks){
 			let task = this.tasks[uuid];
 
-			if ([statusCodes.FAILED, 
-				statusCodes.COMPLETED, 
-				statusCodes.CANCELED].indexOf(task.status.code) !== -1 && 
+			if ([statusCodes.FAILED,
+				statusCodes.COMPLETED,
+				statusCodes.CANCELED].indexOf(task.status.code) !== -1 &&
 				now - task.dateCreated > CLEANUP_TASKS_IF_OLDER_THAN){
 				list.push(task.uuid);
 			}
 		}
 
-		async.eachSeries(list, (uuid, cb) => { 
-			console.log(`Cleaning up old task ${uuid}`)
-			this.remove(uuid, cb); 
+		async.eachSeries(list, (uuid, cb) => {
+			this.logger.info(`Cleaning up old task ${uuid}`)
+			this.remove(uuid, cb);
 		}, done);
 	}
 
@@ -90,11 +91,11 @@ module.exports = class TaskManager{
 						}
 					});
 				}, err => {
-					console.log(`Initialized ${tasks.length} tasks`);
+					this.logger.info(`Initialized ${tasks.length} tasks`);
 					if (done !== undefined) done();
-				});				
+				});
 			}else{
-				console.log("No tasks dump found");
+				this.logger.info("No tasks dump found");
 				if (done !== undefined) done();
 			}
 		});
@@ -135,7 +136,6 @@ module.exports = class TaskManager{
 
 	removeFromRunningQueue(task){
 		assert(task.constructor.name === "Task", "Must be a Task object");
-		
 		this.runningQueue = this.runningQueue.filter(t => t !== task);
 	}
 
@@ -204,15 +204,15 @@ module.exports = class TaskManager{
 	// Serializes the list of tasks and saves it
 	// to disk
 	dumpTaskList(done){
-		var output = [];
+		let output = [];
 
 		for (let uuid in this.tasks){
 			output.push(this.tasks[uuid].serialize());
 		}
 
 		fs.writeFile(TASKS_DUMP_FILE, JSON.stringify(output), err => {
-			if (err) console.log(`Could not dump tasks: ${err.message}`);
-			else console.log("Dumped tasks list.");
+			if (err) this.logger.error(`Could not dump tasks: ${err.message}`);
+			else this.logger.debug("Dumped tasks list.");
 			if (done !== undefined) done();
 		})
 	}
