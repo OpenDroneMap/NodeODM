@@ -17,7 +17,7 @@ along with this program.  If not, see <http://www.gnu.org/licenses/>.
 */
 "use strict";
 let spawn = require('child_process').spawn;
-let config = require('./config.js');
+let config = require('../config.js');
 
 module.exports = {
 	run: function(options = {
