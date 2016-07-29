@@ -18,6 +18,7 @@ along with this program.  If not, see <http://www.gnu.org/licenses/>.
 "use strict";
 let assert = require('assert');
 let fs = require('fs');
+let logger = require('./logger');
 let Task = require('./Task');
 let statusCodes = require('./statusCodes');
 let async = require('async');
@@ -28,8 +29,7 @@ const TASKS_DUMP_FILE = "data/tasks.json";
 const CLEANUP_TASKS_IF_OLDER_THAN = 1000 * 60 * 60 * 24 * 3; // 3 days
 
 module.exports = class TaskManager{
-	constructor(done,logger){
-		this.logger = logger;
+	constructor(done){
 		this.tasks = {};
 		this.runningQueue = [];
 
@@ -57,7 +57,7 @@ module.exports = class TaskManager{
 	removeOldTasks(done){
 		let list = [];
 		let now = new Date().getTime();
-		this.logger.info("Checking for old tasks to be removed...");
+		logger.info("Checking for old tasks to be removed...");
 
 		for (let uuid in this.tasks){
 			let task = this.tasks[uuid];
@@ -71,7 +71,7 @@ module.exports = class TaskManager{
 		}
 
 		async.eachSeries(list, (uuid, cb) => {
-			this.logger.info(`Cleaning up old task ${uuid}`)
+			logger.info(`Cleaning up old task ${uuid}`)
 			this.remove(uuid, cb);
 		}, done);
 	}
@@ -91,11 +91,11 @@ module.exports = class TaskManager{
 						}
 					});
 				}, err => {
-					this.logger.info(`Initialized ${tasks.length} tasks`);
+					logger.info(`Initialized ${tasks.length} tasks`);
 					if (done !== undefined) done();
 				});
 			}else{
-				this.logger.info("No tasks dump found");
+				logger.info("No tasks dump found");
 				if (done !== undefined) done();
 			}
 		});
@@ -211,8 +211,8 @@ module.exports = class TaskManager{
 		}
 
 		fs.writeFile(TASKS_DUMP_FILE, JSON.stringify(output), err => {
-			if (err) this.logger.error(`Could not dump tasks: ${err.message}`);
-			else this.logger.debug("Dumped tasks list.");
+			if (err) logger.error(`Could not dump tasks: ${err.message}`);
+			else logger.debug("Dumped tasks list.");
 			if (done !== undefined) done();
 		})
 	}

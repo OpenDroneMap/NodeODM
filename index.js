@@ -19,9 +19,8 @@ along with this program.  If not, see <http://www.gnu.org/licenses/>.
 
 let config = require('./config.js')
 
-let logger = require('winston');
+let logger = require('./libs/logger');
 let fs = require('fs');
-let path = require('path');
 let async = require('async');
 
 let express = require('express');
@@ -32,40 +31,15 @@ let multer = require('multer');
 let bodyParser = require('body-parser');
 let morgan = require('morgan');
 
-// Set up logging
-// Configure custom File transport to write plain text messages
-let logPath = ( config.logger.logDirectory ? config.logger.logDirectory : __dirname );
-// Check that log file directory can be written to
-try {
-	fs.accessSync(logPath, fs.W_OK);
-} catch (e) {
-	console.log( "Log directory '" + logPath + "' cannot be written to"  );
-	throw e;
-}
-logPath += path.sep;
-logPath += config.instance + ".log";
-
-logger
-	.add(logger.transports.File, {
-		filename: logPath, // Write to projectname.log
-		json: false, // Write in plain text, not JSON
-		maxsize: config.logger.maxFileSize, // Max size of each file
-		maxFiles: config.logger.maxFiles, // Max number of files
-		level: config.logger.level // Level of log messages
-	})
-	// Console transport is no use to us when running as a daemon
-	.remove(logger.transports.Console);
+let TaskManager = require('./libs/TaskManager');
+let Task = require('./libs/Task');
+let odmOptions = require('./libs/odmOptions');
 
 let winstonStream = {
     write: function(message, encoding){
     	logger.info(message.slice(0, -1));
     }
 };
-
-let TaskManager = require('./libs/TaskManager');
-let Task = require('./libs/Task');
-let odmOptions = require('./libs/odmOptions');
-
 app.use(morgan('combined', { stream : winstonStream }));
 app.use(bodyParser.urlencoded({extended: true}));
 app.use(bodyParser.json());
@@ -215,7 +189,7 @@ let taskManager;
 let server;
 
 async.series([
-	cb => { taskManager = new TaskManager(cb,logger); },
+	cb => { taskManager = new TaskManager(cb); },
 	cb => { server = app.listen(config.port, err => {
 			if (!err) logger.info('Server has started on port ' + String(config.port));
 			cb(err);
