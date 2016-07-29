@@ -25,8 +25,11 @@ Usage: node index.js [options]
 Options:
 	-p, --port <number> 	Port to bind the server to (default: 3000)
 	--odm_path <path>	Path to OpenDroneMap's code	(default: /code)
-	--log_level <logLevel>	Set log level verbosity (default: debug)
+	--log_level <logLevel>	Set log level verbosity (default: info)
 	-d, --deamonize 	Set process to run as a deamon
+	--parallel_queue_processing <number> Number of simultaneous processing tasks (default: 2)
+	--cleanup_tasks_after <number> Number of days that elapse before deleting finished and canceled tasks (default: 3) 
+
 Log Levels: 
 error | debug | info | verbose | debug | silly 
 `);
@@ -41,12 +44,14 @@ config.odm_path = argv.odm_path || '/code';
 
 // Logging configuration
 config.logger = {};
-config.logger.level = argv.log_level || 'debug'; // What level to log at; info, verbose or debug are most useful. Levels are (npm defaults): silly, debug, verbose, info, warn, error.
+config.logger.level = argv.log_level || 'info'; // What level to log at; info, verbose or debug are most useful. Levels are (npm defaults): silly, debug, verbose, info, warn, error.
 config.logger.maxFileSize = 1024 * 1024 * 100; // Max file size in bytes of each log file; default 100MB
 config.logger.maxFiles = 10; // Max number of log files kept
 config.logger.logDirectory = ''; // Set this to a full path to a directory - if not set logs will be written to the application directory.
 
 config.port = parseInt(argv.port || argv.p || process.env.PORT || 3000);
 config.deamon = argv.deamonize || argv.d;
+config.parallelQueueProcessing = argv.parallel_queue_processing || 2;
+config.cleanupTasksAfter = argv.cleanup_tasks_after || 3;
 
 module.exports = config;

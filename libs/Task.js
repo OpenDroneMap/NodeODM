@@ -21,6 +21,7 @@ let fs = require('fs');
 let rmdir = require('rimraf');
 let odmRunner = require('./odmRunner');
 let archiver = require('archiver');
+let os = require('os');
 
 let statusCodes = require('./statusCodes');
 
@@ -37,8 +38,6 @@ module.exports = class Task{
 		this.options = options;
 		this.output = [];
 		this.runnerProcess = null;
-
-		this.options.forEach(option => { console.log(option); });
 
 		// Read images info
 		fs.readdir(this.getImagesFolderPath(), (err, files) => {
@@ -189,9 +188,16 @@ module.exports = class Task{
 		if (this.status.code === statusCodes.QUEUED){
 			this.startTrackingProcessingTime();
 			this.setStatus(statusCodes.RUNNING);
-			this.runnerProcess = odmRunner.run({
-					projectPath: `${__dirname}/../${this.getProjectFolderPath()}`
-				}, (err, code, signal) => {
+
+			let runnerOptions = this.options.reduce((result, opt) => {
+				result[opt.name] = opt.value;
+				return result;
+			}, {});
+
+			runnerOptions["project-path"] = `${__dirname}/../${this.getProjectFolderPath()}`;
+			runnerOptions["pmvs-num-cores"] = os.cpus().length;
+
+			this.runnerProcess = odmRunner.run(runnerOptions, (err, code, signal) => {
 					if (err){
 						this.setStatus(statusCodes.FAILED, {errorMessage: `Could not start process (${err.message})`});
 						finished();

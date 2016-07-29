@@ -21,13 +21,26 @@ let config = require('../config.js');
 
 module.exports = {
 	run: function(options = {
-			projectPath: "/images"
+			"project-path": "/images"
 		}, done, outputReceived){
 
+		let command = [`${config.odm_path}/run.py`];
+		for (var name in options){
+			let value = options[name];
+
+			// Skip false booleans
+			if (value === false) continue;
+
+			command.push("--" + name);
+
+			// We don't specify "--time true" (just "--time")
+			if (typeof value !== 'boolean'){
+				command.push(value);
+			}
+		}
+		
 		// Launch
-		let childProcess = spawn("python", [`${config.odm_path}/run.py`,
-				"--project-path", options.projectPath
-			], {cwd: config.odm_path});
+		let childProcess = spawn("python", command, {cwd: config.odm_path});
 
 		childProcess
 			.on('exit', (code, signal) => done(null, code, signal))

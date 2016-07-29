@@ -17,7 +17,7 @@ along with this program.  If not, see <http://www.gnu.org/licenses/>.
 */
 "use strict";
 
-let config = require('./config.js')
+let config = require('./config.js');
 
 let logger = require('./libs/logger');
 let fs = require('fs');
@@ -37,7 +37,7 @@ let odmOptions = require('./libs/odmOptions');
 
 let winstonStream = {
     write: function(message, encoding){
-    	logger.info(message.slice(0, -1));
+    	logger.debug(message.slice(0, -1));
     }
 };
 app.use(morgan('combined', { stream : winstonStream }));
@@ -189,6 +189,7 @@ let taskManager;
 let server;
 
 async.series([
+	cb => odmOptions.initialize(cb),
 	cb => { taskManager = new TaskManager(cb); },
 	cb => { server = app.listen(config.port, err => {
 			if (!err) logger.info('Server has started on port ' + String(config.port));

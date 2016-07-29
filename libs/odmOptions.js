@@ -22,6 +22,10 @@ let assert = require('assert');
 let odmOptions = null;
 
 module.exports = {
+	initialize: function(done){
+		this.getOptions(done);
+	},
+
 	getOptions: function(done){
 		if (odmOptions){
 			done(null, odmOptions);

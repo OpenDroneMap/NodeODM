@@ -24,7 +24,9 @@ let path = require('path');
 
 // Set up logging
 // Configure custom File transport to write plain text messages
-let logPath = ( config.logger.logDirectory ? config.logger.logDirectory : __dirname );
+let logPath = ( config.logger.logDirectory ? 
+				config.logger.logDirectory : 
+				`${__dirname}/../` );
 
 // Check that log file directory can be written to
 try {
@@ -36,7 +38,12 @@ try {
 logPath += path.sep;
 logPath += config.instance + ".log";
 
-winston.add(winston.transports.File, {
+let logger = new (winston.Logger)({
+  transports: [
+    new (winston.transports.Console)({ level: config.logger.level }),
+  ]
+});
+logger.add(winston.transports.File, {
 		filename: logPath, // Write to projectname.log
 		json: false, // Write in plain text, not JSON
 		maxsize: config.logger.maxFileSize, // Max size of each file
@@ -46,7 +53,7 @@ winston.add(winston.transports.File, {
 
 if (config.deamon){
 	// Console transport is no use to us when running as a daemon
-	winston.remove(winston.transports.Console);
+	logger.remove(winston.transports.Console);
 }
 
-module.exports = winston;
+module.exports = logger;
