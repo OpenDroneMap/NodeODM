@@ -62,7 +62,7 @@ let winstonStream = {
     }
 };
 
-let TaskManager = require('./libs/taskManager');
+let TaskManager = require('./libs/TaskManager');
 let Task = require('./libs/Task');
 let odmOptions = require('./libs/odmOptions');
 
