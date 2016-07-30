@@ -1,11 +1,13 @@
 # Open Source Drone Aerial Imagery Processing
 node-OpenDroneMap is a Node.js App and REST API to access [OpenDroneMap](https://github.com/OpenDroneMap/OpenDroneMap)
 
+[http://nodeodm.masseranolabs.com](http://nodeodm.masseranolabs.com)
+
 ![Alt text](/screenshots/main.png?raw=true "Node-OpenDroneMap")
 
 ## Getting Started
 
-For a quick taste of the application, simply visit: [http://nodeodm.masseranolabs.com](http://nodeodm.masseranolabs.com). Please note that this is not a production environment, and that processing on this server will be slow (you are sharing the server's resources with everyone else in the world).
+For a quick taste of the application, we have setup a test environment at [http://nodeodm.masseranolabs.com](http://nodeodm.masseranolabs.com). Please note that **this is not a production environment**, and that processing on this server will be slow (you are sharing the server's resources with everyone else in the world).
 
 If you want to do your own imaging processing, we recommend that you setup your own instance via [Docker](https://www.docker.com/).
 
