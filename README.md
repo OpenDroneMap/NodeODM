@@ -51,8 +51,9 @@ Make a pull request to the dev branch for small contributions. For big contribut
 
 ## Roadmap
 
-- [ ] Command line options for OpenDroneMap (in progress)
-- [ ] Cluster tasks distribution to multiple servers
+- [X] Command line options for OpenDroneMap
+- [X] GPC List support
+- [ ] Continuous Integration Setup
 - [ ] Documentation
 - [ ] Unit Testing
 
