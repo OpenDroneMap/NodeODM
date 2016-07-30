@@ -5,7 +5,9 @@ node-OpenDroneMap is a Node.js App and REST API to access [OpenDroneMap](https:/
 
 ## Getting Started
 
-The quickest way is to use [Docker](https://www.docker.com/).
+For a quick taste of the application, simply visit: [http://nodeodm.masseranolabs.com](http://nodeodm.masseranolabs.com). Please note that this is not a production environment, and that processing on this server will be slow (you are sharing the server's resources with everyone else in the world).
+
+If you want to do your own imaging processing, we recommend that you setup your own instance via [Docker](https://www.docker.com/).
 
 * From the Docker Quickstart Terminal (Windows / OSX) or from the command line (Linux) type:
 ```
