@@ -14,8 +14,8 @@
     $.fn.fileinputLocales['_LANG_'] = {
         fileSingle: 'file',
         filePlural: 'files',
-        browseLabel: 'Browse &hellip;',
-        removeLabel: 'Remove',
+        browseLabel: 'Add &hellip;',
+        removeLabel: 'Clear All',
         removeTitle: 'Clear selected files',
         cancelLabel: 'Cancel',
         cancelTitle: 'Abort ongoing upload',

@@ -1,5 +1,5 @@
-/* 
-Node-OpenDroneMap Node.js App and REST API to access OpenDroneMap. 
+/*
+Node-OpenDroneMap Node.js App and REST API to access OpenDroneMap.
 Copyright (C) 2016 Node-OpenDroneMap Contributors
 
 This program is free software: you can redistribute it and/or modify
@@ -16,16 +16,21 @@ You should have received a copy of the GNU General Public License
 along with this program.  If not, see <http://www.gnu.org/licenses/>.
 */
 "use strict";
+
+let async = require('async');
 let assert = require('assert');
+let logger = require('./logger');
 let fs = require('fs');
+let path = require('path');
 let rmdir = require('rimraf');
 let odmRunner = require('./odmRunner');
 let archiver = require('archiver');
+let os = require('os');
 
 let statusCodes = require('./statusCodes');
 
 module.exports = class Task{
-	constructor(uuid, name, done){
+	constructor(uuid, name, done, options = []){
 		assert(uuid !== undefined, "uuid must be set");
 		assert(done !== undefined, "ready must be set");
 
@@ -34,17 +39,41 @@ module.exports = class Task{
 		this.dateCreated = new Date().getTime();
 		this.processingTime = -1;
 		this.setStatus(statusCodes.QUEUED);
-		this.options = {};
+		this.options = options;
+		this.gpcFiles = [];
 		this.output = [];
 		this.runnerProcess = null;
 
-		// Read images info
-		fs.readdir(this.getImagesFolderPath(), (err, files) => {
-			if (err) done(err);
-			else{
-				this.images = files;
-				done(null, this);
+		async.series([
+			// Read images info
+			cb => {
+				fs.readdir(this.getImagesFolderPath(), (err, files) => {
+					if (err) cb(err);
+					else{
+						this.images = files;
+						logger.debug(`Found ${this.images.length} images for ${this.uuid}`)
+						cb(null);
+					}
+				});
+			},
+
+			// Find GCP (if any)
+			cb => {
+				fs.readdir(this.getGpcFolderPath(), (err, files) => {
+					if (err) cb(err);
+					else{
+						files.forEach(file => {
+							if (/\.txt$/gi.test(file)){
+								this.gpcFiles.push(file);
+							}
+						});
+						logger.debug(`Found ${this.gpcFiles.length} GPC files (${this.gpcFiles.join(" ")}) for ${this.uuid}`);
+						cb(null);
+					}
+				});
 			}
+		], err => {
+			done(err, this);
 		});
 	}
 
@@ -57,20 +86,26 @@ module.exports = class Task{
 				for (let k in taskJson){
 					task[k] = taskJson[k];
 				}
-				
+
 				// Tasks that were running should be put back to QUEUED state
 				if (task.status.code === statusCodes.RUNNING){
 					task.status.code = statusCodes.QUEUED;
 				}
 				done(null, task);
 			}
-		})
+		}, taskJson.options);
 	}
 
 	// Get path where images are stored for this task
 	// (relative to nodejs process CWD)
 	getImagesFolderPath(){
 		return `${this.getProjectFolderPath()}/images`;
+	}
+
+	// Get path where GPC file(s) are stored
+	// (relative to nodejs process CWD)
+	getGpcFolderPath(){
+		return `${this.getProjectFolderPath()}/gpc`;
 	}
 
 	// Get path of project (where all images and assets folder are contained)
@@ -94,13 +129,13 @@ module.exports = class Task{
 		this.status = {
 			code: code
 		};
-		for (var k in extra){
+		for (let k in extra){
 			this.status[k] = extra[k];
 		}
 	}
 
 	updateProcessingTime(resetTime){
-		this.processingTime = resetTime ? 
+		this.processingTime = resetTime ?
 								-1		:
 								new Date().getTime() - this.dateCreated;
 	}
@@ -135,12 +170,12 @@ module.exports = class Task{
 		if (this.status.code !== statusCodes.CANCELED){
 			let wasRunning = this.status.code === statusCodes.RUNNING;
 			this.setStatus(statusCodes.CANCELED);
-			
+
 			if (wasRunning && this.runnerProcess){
-				// TODO: this does guarantee that
+				// TODO: this does NOT guarantee that
 				// the process will immediately terminate.
 				// In fact, often times ODM will continue running for a while
-				// This might need to be fixed on ODM's end. 
+				// This might need to be fixed on ODM's end.
 				this.runnerProcess.kill('SIGINT');
 				this.runnerProcess = null;
 			}
@@ -187,9 +222,21 @@ module.exports = class Task{
 		if (this.status.code === statusCodes.QUEUED){
 			this.startTrackingProcessingTime();
 			this.setStatus(statusCodes.RUNNING);
-			this.runnerProcess = odmRunner.run({
-					projectPath: `${__dirname}/../${this.getProjectFolderPath()}`
-				}, (err, code, signal) => {
+
+			let runnerOptions = this.options.reduce((result, opt) => {
+				result[opt.name] = opt.value;
+				return result;
+			}, {});
+
+			runnerOptions["project-path"] = fs.realpathSync(this.getProjectFolderPath());
+			runnerOptions["pmvs-num-cores"] = os.cpus().length;
+
+			if (this.gpcFiles.length > 0){
+				runnerOptions["odm_georeferencing-useGcp"] = true;
+				runnerOptions["odm_georeferencing-gcpFile"] = fs.realpathSync(path.join(this.getGpcFolderPath(), this.gpcFiles[0]));
+			}
+
+			this.runnerProcess = odmRunner.run(runnerOptions, (err, code, signal) => {
 					if (err){
 						this.setStatus(statusCodes.FAILED, {errorMessage: `Could not start process (${err.message})`});
 						finished();

@@ -56,3 +56,11 @@
     font-family: monospace;
     font-size: 90%;
 }
+
+.selectric-items li{
+    background: #fff;
+}
+
+#options .checkbox{
+    margin-right: 143px;
+}

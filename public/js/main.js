@@ -59,6 +59,14 @@ $(function(){
         this.saveTaskListToLocalStorage();
     };
 
+    var codes = {
+        QUEUED: 10,
+        RUNNING: 20,
+        FAILED: 30,
+        COMPLETED: 40,
+        CANCELED: 50
+    };
+
     function Task(uuid){
         var self = this;
 
@@ -70,13 +78,6 @@ $(function(){
         this.resetOutput();
         this.timeElapsed = ko.observable("00:00:00");
 
-        var codes = {
-            QUEUED: 10,
-            RUNNING: 20,
-            FAILED: 30,
-            COMPLETED: 40,
-            CANCELED: 50
-        };
         var statusCodes = {
             10: {
                 descr: "Queued",
@@ -149,8 +150,8 @@ $(function(){
          })
          .always(function(){ self.loading(false); });
     };
-    Task.prototype.consoleMouseOver = function(){ this.autoScrollOutput = false; }
-    Task.prototype.consoleMouseOut = function(){ this.autoScrollOutput = true; } 
+    Task.prototype.consoleMouseOver = function(){ this.autoScrollOutput = false; };
+    Task.prototype.consoleMouseOut = function(){ this.autoScrollOutput = true; };
     Task.prototype.resetOutput = function(){
         this.viewOutputLine = 0;
         this.autoScrollOutput = true;
@@ -170,7 +171,7 @@ $(function(){
                     self.viewOutputLine += output.length;
                     if (self.autoScrollOutput){
                         var $console = $("#console_" + self.uuid);
-                        $console.scrollTop($console[0].scrollHeight - $console.height())
+                        $console.scrollTop($console[0].scrollHeight - $console.height());
                     }
                 }
              })
@@ -205,22 +206,30 @@ $(function(){
         var self = this;
         var url = "/task/remove";
 
-        $.post(url, {
-            uuid: this.uuid
-        })
-        .done(function(json){
-            if (json.success || self.info().error){
-                taskList.remove(self);
-            }else{
-                self.info({error: json.error});
-            }
+        function doRemove(){
+            $.post(url, {
+                uuid: self.uuid
+            })
+            .done(function(json){
+                if (json.success || self.info().error){
+                    taskList.remove(self);
+                }else{
+                    self.info({error: json.error});
+                }
 
-            self.stopRefreshingInfo();
-        })
-        .fail(function(){
-            self.info({error: url + " is unreachable."});
-            self.stopRefreshingInfo();
-        });
+                self.stopRefreshingInfo();
+            })
+            .fail(function(){
+                self.info({error: url + " is unreachable."});
+                self.stopRefreshingInfo();
+            });
+        }
+
+        if (this.info().status && this.info().status.code === codes.COMPLETED){
+            if (confirm("Are you sure?")) doRemove();
+        }else{
+            doRemove();
+        }
     };
 
     function genApiCall(url, onSuccess){
@@ -243,8 +252,8 @@ $(function(){
                 self.info({error: url + " is unreachable."});
                 self.stopRefreshingInfo();
             });
-        }
-    };
+        };
+    }
     Task.prototype.cancel = genApiCall("/task/cancel");
     Task.prototype.restart = genApiCall("/task/restart", function(task){
         task.resetOutput();
@@ -254,19 +263,20 @@ $(function(){
     };
 
     var taskList = new TaskList();
-    ko.applyBindings(taskList);
+    ko.applyBindings(taskList, document.getElementById('taskList'));
 
     // Handle uploads
     $("#images").fileinput({
         uploadUrl: '/task/new',
         showPreview: false,
-        allowedFileExtensions: ['jpg', 'jpeg'],
+        allowedFileExtensions: ['jpg', 'jpeg', 'txt'],
         elErrorContainer: '#errorBlock',
         showUpload: false,
         uploadAsync: false,
         uploadExtraData: function(){
             return {
-                name: $("#taskName").val()
+                name: $("#taskName").val(),
+                options: JSON.stringify(optionsModel.getUserOptions())
             };
         }
     });
@@ -294,4 +304,55 @@ $(function(){
         })
         .on('filebatchuploaderror', function(e, data, msg){
         });
+
+    // Load options
+    function Option(properties){
+        this.properties = properties;
+        this.value = ko.observable();
+    }
+    Option.prototype.resetToDefault = function(){
+        this.value(undefined);
+    };
+
+    function OptionsModel(){
+        var self = this;
+
+        this.options = ko.observableArray();
+        this.options.subscribe(function(){
+            setTimeout(function(){
+                $('#options [data-toggle="tooltip"]').tooltip();
+            }, 100);
+        });
+        this.showOptions = ko.observable(false);
+        this.error = ko.observable();
+
+        $.get("/getOptions")
+         .done(function(json){
+            if (json.error) self.error(json.error);
+            else{
+                for (var i in json){
+                    self.options.push(new Option(json[i]));
+                }
+            }
+         })
+         .fail(function(){
+            self.error("options are not available.");
+         });
+    }
+    OptionsModel.prototype.getUserOptions = function(){
+        var result = [];
+        for (var i = 0; i < this.options().length; i++){
+            var opt = this.options()[i];
+            if (opt.value() !== undefined){
+                result.push({
+                    name: opt.properties.name,
+                    value: opt.value()
+                });
+            }
+        }
+        return result;
+    };
+
+    var optionsModel = new OptionsModel();
+    ko.applyBindings(optionsModel, document.getElementById("options"));
 });

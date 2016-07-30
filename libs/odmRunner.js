@@ -1,5 +1,5 @@
-/* 
-Node-OpenDroneMap Node.js App and REST API to access OpenDroneMap. 
+/*
+Node-OpenDroneMap Node.js App and REST API to access OpenDroneMap.
 Copyright (C) 2016 Node-OpenDroneMap Contributors
 
 This program is free software: you can redistribute it and/or modify
@@ -17,32 +17,64 @@ along with this program.  If not, see <http://www.gnu.org/licenses/>.
 */
 "use strict";
 let spawn = require('child_process').spawn;
-
-const ODM_PATH = "/code";
+let config = require('../config.js');
+let logger = require('./logger');
 
 module.exports = {
 	run: function(options = {
-			projectPath: "/images"
+			"project-path": "/images"
 		}, done, outputReceived){
 
+		let command = [`${config.odm_path}/run.py`];
+		for (var name in options){
+			let value = options[name];
+
+			// Skip false booleans
+			if (value === false) continue;
+
+			command.push("--" + name);
+
+			// We don't specify "--time true" (just "--time")
+			if (typeof value !== 'boolean'){
+				command.push(value);
+			}
+		}
+
+		logger.info(`About to run: python ${command.join(" ")}`);
+
 		// Launch
-		let childProcess = spawn("python", [`${ODM_PATH}/run.py`, 
-				"--project-path", options.projectPath
-			], {cwd: ODM_PATH});
+		let childProcess = spawn("python", command, {cwd: config.odm_path});
+
+		childProcess
+			.on('exit', (code, signal) => done(null, code, signal))
+			.on('error', done);
+
+		childProcess.stdout.on('data', chunk => outputReceived(chunk.toString()));
+		childProcess.stderr.on('data', chunk => outputReceived(chunk.toString()));
+
+		return childProcess;
+	},
+
+	getJsonOptions: function(done){
+		// Launch
+		let childProcess = spawn("python", [`${__dirname}/../helpers/odmOptionsToJson.py`,
+				"--project-path", config.odm_path]);
+		let output = [];
 
 		childProcess
 			.on('exit', (code, signal) => {
-				done(null, code, signal);
+				try{
+					let json = JSON.parse(output.join(""));
+					done(null, json);
+				}catch(err){
+					done(err);
+				}
 			})
 			.on('error', done);
 
-		childProcess.stdout.on('data', chunk => {
-		  outputReceived(chunk.toString());
-		});
-		childProcess.stderr.on('data', chunk => {
-		  outputReceived(chunk.toString());
-		});
+		let processOutput = chunk => output.push(chunk.toString());
 
-		return childProcess;
+		childProcess.stdout.on('data', processOutput);
+		childProcess.stderr.on('data', processOutput);
 	}
 };

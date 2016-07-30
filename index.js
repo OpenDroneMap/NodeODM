@@ -1,5 +1,5 @@
-/* 
-Node-OpenDroneMap Node.js App and REST API to access OpenDroneMap. 
+/*
+Node-OpenDroneMap Node.js App and REST API to access OpenDroneMap.
 Copyright (C) 2016 Node-OpenDroneMap Contributors
 
 This program is free software: you can redistribute it and/or modify
@@ -17,7 +17,11 @@ along with this program.  If not, see <http://www.gnu.org/licenses/>.
 */
 "use strict";
 
+let config = require('./config.js');
+
+let logger = require('./libs/logger');
 let fs = require('fs');
+let path = require('path');
 let async = require('async');
 
 let express = require('express');
@@ -27,10 +31,17 @@ let addRequestId = require('./libs/expressRequestId')();
 let multer = require('multer');
 let bodyParser = require('body-parser');
 let morgan = require('morgan');
-let TaskManager = require('./libs/taskManager');
-let Task = require('./libs/Task');
 
-app.use(morgan('tiny'));
+let TaskManager = require('./libs/TaskManager');
+let Task = require('./libs/Task');
+let odmOptions = require('./libs/odmOptions');
+
+let winstonStream = {
+    write: function(message, encoding){
+    	logger.debug(message.slice(0, -1));
+    }
+};
+app.use(morgan('combined', { stream : winstonStream }));
 app.use(bodyParser.urlencoded({extended: true}));
 app.use(bodyParser.json());
 app.use(express.static('public'));
@@ -54,34 +65,60 @@ let upload = multer({
 	  }
 	})
 });
- 
+
 app.post('/task/new', addRequestId, upload.array('images'), (req, res) => {
 	if (req.files.length === 0) res.json({error: "Need at least 1 file."});
 	else{
-		// Move to data
+		let srcPath = `tmp/${req.id}`;
+		let destPath = `data/${req.id}`;
+		let destImagesPath = `${destPath}/images`;
+		let destGpcPath = `${destPath}/gpc`;
+
 		async.series([
-			cb => { 
-				fs.stat(`data/${req.id}`, (err, stat) => {
+			cb => {
+				odmOptions.filterOptions(req.body.options, (err, options) => {
+					if (err) cb(err);
+					else{
+						req.body.options = options;
+						cb(null);
+					}
+				});
+			},
+
+			// Move all uploads to data/<uuid>/images dir
+			cb => {
+				fs.stat(destPath, (err, stat) => {
 					if (err && err.code === 'ENOENT') cb();
 					else cb(new Error(`Directory exists (should not have happened: ${err.code})`));
 				});
 			},
-			cb => { fs.mkdir(`data/${req.id}`, undefined, cb); },
+			cb => fs.mkdir(destPath, undefined, cb),
+			cb => fs.mkdir(destGpcPath, undefined, cb),
+			cb => fs.rename(srcPath, destImagesPath, cb),
 			cb => {
-				fs.rename(`tmp/${req.id}`, `data/${req.id}/images`, err => {
-					if (!err){
-						new Task(req.id, req.body.name, (err, task) => {
-							if (err) cb(err);
-							else{
-								taskManager.addNew(task);
-								res.json({uuid: req.id, success: true});
-								cb();
-							}
-						});
-					}else{
-						cb(new Error("Could not move images folder."))
+				// Find any *.txt (GPC) file and move it to the data/<uuid>/gpc directory
+				fs.readdir(destImagesPath, (err, entries) => {
+					if (err) cb(err);
+					else{
+						async.eachSeries(entries, (entry, cb) => {
+							if (/\.txt$/gi.test(entry)){
+								fs.rename(path.join(destImagesPath, entry), path.join(destGpcPath, entry), cb);		
+							}else cb();
+						}, cb);
 					}
 				});
+			},
+
+			// Create task
+			cb => {
+				new Task(req.id, req.body.name, (err, task) => {
+					if (err) cb(err);
+					else{
+						taskManager.addNew(task);
+						res.json({uuid: req.id, success: true});
+						cb();
+					}
+				}, req.body.options);
 			}
 		], err => {
 			if (err) res.json({error: err.message})
@@ -137,19 +174,26 @@ app.post('/task/restart', uuidCheck, (req, res) => {
 	taskManager.restart(req.body.uuid, successHandler(res));
 });
 
+app.get('/getOptions', (req, res) => {
+	odmOptions.getOptions((err, options) => {
+		if (err) res.json({error: err.message});
+		else res.json(options);
+	});
+});
+
 let gracefulShutdown = done => {
 	async.series([
-		cb => { taskManager.dumpTaskList(cb) },
-		cb => { 
-			console.log("Closing server");
+		cb => taskManager.dumpTaskList(cb),
+		cb => {
+			logger.info("Closing server");
 			server.close();
-			console.log("Exiting...");
+			logger.info("Exiting...");
 			process.exit(0);
 		}
 	], done);
 };
 
-// listen for TERM signal .e.g. kill 
+// listen for TERM signal .e.g. kill
 process.on ('SIGTERM', gracefulShutdown);
 
 // listen for INT signal e.g. Ctrl-C
@@ -160,12 +204,13 @@ let taskManager;
 let server;
 
 async.series([
+	cb => odmOptions.initialize(cb),
 	cb => { taskManager = new TaskManager(cb); },
-	cb => { server = app.listen(3000, err => {
-			if (!err) console.log('Server has started on port 3000');
+	cb => { server = app.listen(config.port, err => {
+			if (!err) logger.info('Server has started on port ' + String(config.port));
 			cb(err);
 		});
 	}
 ], err => {
-	if (err) console.log("Error during startup: " + err.message);
+	if (err) logger.error("Error during startup: " + err.message);
 });
