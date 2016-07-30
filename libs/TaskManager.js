@@ -91,7 +91,7 @@ module.exports = class TaskManager{
 				async.eachSeries(entries, (entry, cb) => {
 					let dirPath = path.join(DATA_DIR, entry);
 					if (fs.statSync(dirPath).isDirectory() &&
-						entry.match(/[\w\d]+\-[\w\d]+\-[\w\d]+\-[\w\d]+\-[\w\d]+/) &&
+						entry.match(/^[\w\d]+\-[\w\d]+\-[\w\d]+\-[\w\d]+\-[\w\d]+$/) &&
 						!this.tasks[entry]){
 						logger.info(`Found orphaned directory: ${entry}, removing...`);
 						rmdir(dirPath, cb);
@@ -100,7 +100,6 @@ module.exports = class TaskManager{
 			}
 		});
 	}
-
 
 	// Load tasks that already exists (if any)
 	restoreTaskListFromDump(done){
@@ -238,7 +237,7 @@ module.exports = class TaskManager{
 
 		fs.writeFile(TASKS_DUMP_FILE, JSON.stringify(output), err => {
 			if (err) logger.error(`Could not dump tasks: ${err.message}`);
-			else logger.debug("Dumped tasks list.");
+			else logger.info("Dumped tasks list.");
 			if (done !== undefined) done();
 		})
 	}

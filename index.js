@@ -21,6 +21,7 @@ let config = require('./config.js');
 
 let logger = require('./libs/logger');
 let fs = require('fs');
+let path = require('path');
 let async = require('async');
 
 let express = require('express');
@@ -68,6 +69,11 @@ let upload = multer({
 app.post('/task/new', addRequestId, upload.array('images'), (req, res) => {
 	if (req.files.length === 0) res.json({error: "Need at least 1 file."});
 	else{
+		let srcPath = `tmp/${req.id}`;
+		let destPath = `data/${req.id}`;
+		let destImagesPath = `${destPath}/images`;
+		let destGpcPath = `${destPath}/gpc`;
+
 		async.series([
 			cb => {
 				odmOptions.filterOptions(req.body.options, (err, options) => {
@@ -79,18 +85,27 @@ app.post('/task/new', addRequestId, upload.array('images'), (req, res) => {
 				});
 			},
 
-			// Move uploads to data dir
+			// Move all uploads to data/<uuid>/images dir
 			cb => {
-				fs.stat(`data/${req.id}`, (err, stat) => {
+				fs.stat(destPath, (err, stat) => {
 					if (err && err.code === 'ENOENT') cb();
 					else cb(new Error(`Directory exists (should not have happened: ${err.code})`));
 				});
 			},
-			cb => { fs.mkdir(`data/${req.id}`, undefined, cb); },
+			cb => fs.mkdir(destPath, undefined, cb),
+			cb => fs.mkdir(destGpcPath, undefined, cb),
+			cb => fs.rename(srcPath, destImagesPath, cb),
 			cb => {
-				fs.rename(`tmp/${req.id}`, `data/${req.id}/images`, err => {
-					if (!err) cb();
-					else cb(new Error("Could not move images folder."))
+				// Find any *.txt (GPC) file and move it to the data/<uuid>/gpc directory
+				fs.readdir(destImagesPath, (err, entries) => {
+					if (err) cb(err);
+					else{
+						async.eachSeries(entries, (entry, cb) => {
+							if (/\.txt$/gi.test(entry)){
+								fs.rename(path.join(destImagesPath, entry), path.join(destGpcPath, entry), cb);		
+							}else cb();
+						}, cb);
+					}
 				});
 			},
 

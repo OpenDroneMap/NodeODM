@@ -18,6 +18,7 @@ along with this program.  If not, see <http://www.gnu.org/licenses/>.
 "use strict";
 let spawn = require('child_process').spawn;
 let config = require('../config.js');
+let logger = require('./logger');
 
 module.exports = {
 	run: function(options = {
@@ -38,7 +39,9 @@ module.exports = {
 				command.push(value);
 			}
 		}
-		
+
+		logger.info(`About to run: python ${command.join(" ")}`);
+
 		// Launch
 		let childProcess = spawn("python", command, {cwd: config.odm_path});
 

@@ -59,6 +59,14 @@ $(function(){
         this.saveTaskListToLocalStorage();
     };
 
+    var codes = {
+        QUEUED: 10,
+        RUNNING: 20,
+        FAILED: 30,
+        COMPLETED: 40,
+        CANCELED: 50
+    };
+
     function Task(uuid){
         var self = this;
 
@@ -70,13 +78,6 @@ $(function(){
         this.resetOutput();
         this.timeElapsed = ko.observable("00:00:00");
 
-        var codes = {
-            QUEUED: 10,
-            RUNNING: 20,
-            FAILED: 30,
-            COMPLETED: 40,
-            CANCELED: 50
-        };
         var statusCodes = {
             10: {
                 descr: "Queued",
@@ -205,22 +206,30 @@ $(function(){
         var self = this;
         var url = "/task/remove";
 
-        $.post(url, {
-            uuid: this.uuid
-        })
-        .done(function(json){
-            if (json.success || self.info().error){
-                taskList.remove(self);
-            }else{
-                self.info({error: json.error});
-            }
+        function doRemove(){
+            $.post(url, {
+                uuid: self.uuid
+            })
+            .done(function(json){
+                if (json.success || self.info().error){
+                    taskList.remove(self);
+                }else{
+                    self.info({error: json.error});
+                }
 
-            self.stopRefreshingInfo();
-        })
-        .fail(function(){
-            self.info({error: url + " is unreachable."});
-            self.stopRefreshingInfo();
-        });
+                self.stopRefreshingInfo();
+            })
+            .fail(function(){
+                self.info({error: url + " is unreachable."});
+                self.stopRefreshingInfo();
+            });
+        }
+
+        if (this.info().status && this.info().status.code === codes.COMPLETED){
+            if (confirm("Are you sure?")) doRemove();
+        }else{
+            doRemove();
+        }
     };
 
     function genApiCall(url, onSuccess){
@@ -260,7 +269,7 @@ $(function(){
     $("#images").fileinput({
         uploadUrl: '/task/new',
         showPreview: false,
-        allowedFileExtensions: ['jpg', 'jpeg'],
+        allowedFileExtensions: ['jpg', 'jpeg', 'txt'],
         elErrorContainer: '#errorBlock',
         showUpload: false,
         uploadAsync: false,

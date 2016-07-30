@@ -16,8 +16,12 @@ You should have received a copy of the GNU General Public License
 along with this program.  If not, see <http://www.gnu.org/licenses/>.
 */
 "use strict";
+
+let async = require('async');
 let assert = require('assert');
+let logger = require('./logger');
 let fs = require('fs');
+let path = require('path');
 let rmdir = require('rimraf');
 let odmRunner = require('./odmRunner');
 let archiver = require('archiver');
@@ -36,16 +40,40 @@ module.exports = class Task{
 		this.processingTime = -1;
 		this.setStatus(statusCodes.QUEUED);
 		this.options = options;
+		this.gpcFiles = [];
 		this.output = [];
 		this.runnerProcess = null;
 
-		// Read images info
-		fs.readdir(this.getImagesFolderPath(), (err, files) => {
-			if (err) done(err);
-			else{
-				this.images = files;
-				done(null, this);
+		async.series([
+			// Read images info
+			cb => {
+				fs.readdir(this.getImagesFolderPath(), (err, files) => {
+					if (err) cb(err);
+					else{
+						this.images = files;
+						logger.debug(`Found ${this.images.length} images for ${this.uuid}`)
+						cb(null);
+					}
+				});
+			},
+
+			// Find GCP (if any)
+			cb => {
+				fs.readdir(this.getGpcFolderPath(), (err, files) => {
+					if (err) cb(err);
+					else{
+						files.forEach(file => {
+							if (/\.txt$/gi.test(file)){
+								this.gpcFiles.push(file);
+							}
+						});
+						logger.debug(`Found ${this.gpcFiles.length} GPC files (${this.gpcFiles.join(" ")}) for ${this.uuid}`);
+						cb(null);
+					}
+				});
 			}
+		], err => {
+			done(err, this);
 		});
 	}
 
@@ -72,6 +100,12 @@ module.exports = class Task{
 	// (relative to nodejs process CWD)
 	getImagesFolderPath(){
 		return `${this.getProjectFolderPath()}/images`;
+	}
+
+	// Get path where GPC file(s) are stored
+	// (relative to nodejs process CWD)
+	getGpcFolderPath(){
+		return `${this.getProjectFolderPath()}/gpc`;
 	}
 
 	// Get path of project (where all images and assets folder are contained)
@@ -194,8 +228,13 @@ module.exports = class Task{
 				return result;
 			}, {});
 
-			runnerOptions["project-path"] = `${__dirname}/../${this.getProjectFolderPath()}`;
+			runnerOptions["project-path"] = fs.realpathSync(this.getProjectFolderPath());
 			runnerOptions["pmvs-num-cores"] = os.cpus().length;
+
+			if (this.gpcFiles.length > 0){
+				runnerOptions["odm_georeferencing-useGcp"] = true;
+				runnerOptions["odm_georeferencing-gcpFile"] = fs.realpathSync(path.join(this.getGpcFolderPath(), this.gpcFiles[0]));
+			}
 
 			this.runnerProcess = odmRunner.run(runnerOptions, (err, code, signal) => {
 					if (err){
