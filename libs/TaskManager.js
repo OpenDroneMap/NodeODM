@@ -61,7 +61,7 @@ module.exports = class TaskManager{
 	removeOldTasks(done){
 		let list = [];
 		let now = new Date().getTime();
-		logger.info("Checking for old tasks to be removed...");
+		logger.debug("Checking for old tasks to be removed...");
 
 		for (let uuid in this.tasks){
 			let task = this.tasks[uuid];
@@ -237,7 +237,7 @@ module.exports = class TaskManager{
 
 		fs.writeFile(TASKS_DUMP_FILE, JSON.stringify(output), err => {
 			if (err) logger.error(`Could not dump tasks: ${err.message}`);
-			else logger.info("Dumped tasks list.");
+			else logger.debug("Dumped tasks list.");
 			if (done !== undefined) done();
 		})
 	}
