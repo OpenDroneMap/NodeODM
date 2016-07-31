@@ -15,7 +15,6 @@
             }
         </style>
         <link href="css/fileinput.css" media="all" rel="stylesheet" type="text/css" />
-
         <link rel="stylesheet" href="css/main.css">
 
         <script src="js/vendor/modernizr-2.8.3.min.js"></script>
@@ -41,20 +40,42 @@
 			<br/>
 			<form enctype="multipart/form-data" onsubmit="return false;">
 				<div class="form-group form-inline">
-					<label for="taskName">Project Name:</lable> <input type="text" class="form-control" value="" id="taskName"/>
+					<label for="taskName">Project Name:</lable> <input type="text" class="form-control" value="" id="taskName" />
 				</div>
 				<div class="form-group">
-                    <label for="images">Aerial Imageries:</label> <input id="images" name="images" multiple type="file">
-                    <div id="errorBlock" class="help-block"></div>
+            <label for="images">Aerial Imageries and GCP List (optional):</label> <input id="images" name="images" multiple type="file">
+            <div id="errorBlock" class="help-block"></div>
+        </div>
+        <div class="text-right"><input type="submit" class="btn btn-success" value="Start Task" id="btnUpload" /></div>
+        <div id="options">
+          <div class="form-inline form-group form-horizontal">
+             <div data-bind="visible: error(), text: error()" class="alert alert-warning" role="alert"></div>
+             <button style="position: relative; top: -45px;" type="submit" class="btn btn-default" data-bind="visible: !error(), click: function(){ showOptions(!showOptions()); }, text: (showOptions() ? 'Hide' : 'Show') + ' Options'"></button>
+            
+             <div data-bind="visible: showOptions()">
+                <div data-bind="foreach: options">
+                 <label data-bind="text: properties.name + (properties.domain ? ' (' + properties.domain + ')' : '')"></label><br/>
+                 <!-- ko if: properties.type !== 'bool' -->
+                 <input type="text" class="form-control" data-bind="attr: {placeholder: properties.value}, value: value">
+                 <!-- /ko -->
+                 <!-- ko if: properties.type === 'bool' -->
+                 <div class="checkbox">
+                  <label>
+                    <input type="checkbox" data-bind="checked: value"> Enable
+                  </label>
                 </div>
-                <div class="form-group">
-					<!-- <label>Options:</label> -->
-                </div>
+                 <!-- /ko -->
+                 <button type="submit" class="btn glyphicon glyphicon-info-sign btn-info" data-toggle="tooltip" data-placement="top" data-bind="attr: {title: properties.help}"></button>
+                 <button type="submit" class="btn glyphicon glyphicon glyphicon-repeat btn-default" data-toggle="tooltip" data-placement="top" title="Reset to default" data-bind="click: resetToDefault"></button>
 
-                <div class="text-right"><input type="submit" class="btn btn-success" value="Start Task" id="btnUpload" /></div>
-            </form>
+                 <br/><br/>
+              </div>
+            </div>
+          </div>
+        </div>
+      </form>
 		</div>
-        <div class="col-md-7">
+        <div class="col-md-7" id="taskList">
           <h2>Current Tasks (<span data-bind="text: tasks().length"></span>)</h2>
           <p data-bind="visible: tasks().length === 0">No running tasks.</p>
           <div data-bind="foreach: tasks">
@@ -113,6 +134,7 @@
         <script src="js/vendor/bootstrap.min.js"></script>
         <script src="js/vendor/knockout-3.4.0.js"></script>
         <script src="js/fileinput.js" type="text/javascript"></script>
+
         <script src="js/main.js"></script>
     </body>
 </html>

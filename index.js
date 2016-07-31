@@ -17,9 +17,9 @@ along with this program.  If not, see <http://www.gnu.org/licenses/>.
 */
 "use strict";
 
-var config = require('./config.js')
+let config = require('./config.js');
 
-let logger = require('winston');
+let logger = require('./libs/logger');
 let fs = require('fs');
 let path = require('path');
 let async = require('async');
@@ -32,39 +32,15 @@ let multer = require('multer');
 let bodyParser = require('body-parser');
 let morgan = require('morgan');
 
-// Set up logging
-// Configure custom File transport to write plain text messages
-var logPath = ( config.logger.logDirectory ? config.logger.logDirectory : __dirname );
-// Check that log file directory can be written to
-try {
-	fs.accessSync(logPath, fs.W_OK);
-} catch (e) {
-	console.log( "Log directory '" + logPath + "' cannot be written to"  );
-	throw e;
-}
-logPath += path.sep;
-logPath += config.instance + ".log";
+let TaskManager = require('./libs/TaskManager');
+let Task = require('./libs/Task');
+let odmOptions = require('./libs/odmOptions');
 
-logger
-	.add(logger.transports.File, {
-		filename: logPath, // Write to projectname.log
-		json: false, // Write in plain text, not JSON
-		maxsize: config.logger.maxFileSize, // Max size of each file
-		maxFiles: config.logger.maxFiles, // Max number of files
-		level: config.logger.level // Level of log messages
-	})
-	// Console transport is no use to us when running as a daemon
-	.remove(logger.transports.Console);
-
-var winstonStream = {
+let winstonStream = {
     write: function(message, encoding){
-    	logger.info(message.slice(0, -1));
+    	logger.debug(message.slice(0, -1));
     }
 };
-
-let TaskManager = require('./libs/taskManager');
-let Task = require('./libs/Task');
-
 app.use(morgan('combined', { stream : winstonStream }));
 app.use(bodyParser.urlencoded({extended: true}));
 app.use(bodyParser.json());
@@ -93,30 +69,56 @@ let upload = multer({
 app.post('/task/new', addRequestId, upload.array('images'), (req, res) => {
 	if (req.files.length === 0) res.json({error: "Need at least 1 file."});
 	else{
-		// Move to data
+		let srcPath = `tmp/${req.id}`;
+		let destPath = `data/${req.id}`;
+		let destImagesPath = `${destPath}/images`;
+		let destGpcPath = `${destPath}/gpc`;
+
 		async.series([
 			cb => {
-				fs.stat(`data/${req.id}`, (err, stat) => {
+				odmOptions.filterOptions(req.body.options, (err, options) => {
+					if (err) cb(err);
+					else{
+						req.body.options = options;
+						cb(null);
+					}
+				});
+			},
+
+			// Move all uploads to data/<uuid>/images dir
+			cb => {
+				fs.stat(destPath, (err, stat) => {
 					if (err && err.code === 'ENOENT') cb();
 					else cb(new Error(`Directory exists (should not have happened: ${err.code})`));
 				});
 			},
-			cb => { fs.mkdir(`data/${req.id}`, undefined, cb); },
+			cb => fs.mkdir(destPath, undefined, cb),
+			cb => fs.mkdir(destGpcPath, undefined, cb),
+			cb => fs.rename(srcPath, destImagesPath, cb),
 			cb => {
-				fs.rename(`tmp/${req.id}`, `data/${req.id}/images`, err => {
-					if (!err){
-						new Task(req.id, req.body.name, (err, task) => {
-							if (err) cb(err);
-							else{
-								taskManager.addNew(task);
-								res.json({uuid: req.id, success: true});
-								cb();
-							}
-						});
-					}else{
-						cb(new Error("Could not move images folder."))
+				// Find any *.txt (GPC) file and move it to the data/<uuid>/gpc directory
+				fs.readdir(destImagesPath, (err, entries) => {
+					if (err) cb(err);
+					else{
+						async.eachSeries(entries, (entry, cb) => {
+							if (/\.txt$/gi.test(entry)){
+								fs.rename(path.join(destImagesPath, entry), path.join(destGpcPath, entry), cb);		
+							}else cb();
+						}, cb);
 					}
 				});
+			},
+
+			// Create task
+			cb => {
+				new Task(req.id, req.body.name, (err, task) => {
+					if (err) cb(err);
+					else{
+						taskManager.addNew(task);
+						res.json({uuid: req.id, success: true});
+						cb();
+					}
+				}, req.body.options);
 			}
 		], err => {
 			if (err) res.json({error: err.message})
@@ -184,9 +186,16 @@ app.post('/task/restart', uuidCheck, (req, res) => {
 	taskManager.restart(req.body.uuid, successHandler(res));
 });
 
+app.get('/getOptions', (req, res) => {
+	odmOptions.getOptions((err, options) => {
+		if (err) res.json({error: err.message});
+		else res.json(options);
+	});
+});
+
 let gracefulShutdown = done => {
 	async.series([
-		cb => { taskManager.dumpTaskList(cb) },
+		cb => taskManager.dumpTaskList(cb),
 		cb => {
 			logger.info("Closing server");
 			server.close();
@@ -207,7 +216,8 @@ let taskManager;
 let server;
 
 async.series([
-	cb => { taskManager = new TaskManager(cb,logger); },
+	cb => odmOptions.initialize(cb),
+	cb => { taskManager = new TaskManager(cb); },
 	cb => { server = app.listen(config.port, err => {
 			if (!err) logger.info('Server has started on port ' + String(config.port));
 			cb(err);

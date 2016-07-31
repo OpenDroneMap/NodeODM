@@ -17,32 +17,36 @@ along with this program.  If not, see <http://www.gnu.org/licenses/>.
 */
 "use strict";
 let assert = require('assert');
+let config = require('../config');
+let rmdir = require('rimraf');
 let fs = require('fs');
+let path = require('path');
+let logger = require('./logger');
 let Task = require('./Task');
 let statusCodes = require('./statusCodes');
 let async = require('async');
 let schedule = require('node-schedule');
 
-const PARALLEL_QUEUE_PROCESS_LIMIT = 2;
-const TASKS_DUMP_FILE = "data/tasks.json";
-const CLEANUP_TASKS_IF_OLDER_THAN = 1000 * 60 * 60 * 24 * 3; // 3 days
+const DATA_DIR = "data";
+const TASKS_DUMP_FILE = `${DATA_DIR}/tasks.json`;
+const CLEANUP_TASKS_IF_OLDER_THAN = 1000 * 60 * 60 * 24 * config.cleanupTasksAfter; // days
 
 module.exports = class TaskManager{
-	constructor(done,logger){
-		this.logger = logger;
+	constructor(done){
 		this.tasks = {};
 		this.runningQueue = [];
 
 		async.series([
-			cb => { this.restoreTaskListFromDump(cb); },
-			cb => { this.removeOldTasks(cb); },
+			cb => this.restoreTaskListFromDump(cb),
+			cb => this.removeOldTasks(cb),
+			cb => this.removeOrphanedDirectories(cb),
 			cb => {
 				this.processNextTask();
 				cb();
 			},
 			cb => {
 				// Every hour
-				schedule.scheduleJob('* 0 * * * *', () => {
+				schedule.scheduleJob('0 * * * *', () => {
 					this.removeOldTasks();
 					this.dumpTaskList();
 				});
@@ -57,7 +61,7 @@ module.exports = class TaskManager{
 	removeOldTasks(done){
 		let list = [];
 		let now = new Date().getTime();
-		this.logger.info("Checking for old tasks to be removed...");
+		logger.info("Checking for old tasks to be removed...");
 
 		for (let uuid in this.tasks){
 			let task = this.tasks[uuid];
@@ -71,9 +75,30 @@ module.exports = class TaskManager{
 		}
 
 		async.eachSeries(list, (uuid, cb) => {
-			this.logger.info(`Cleaning up old task ${uuid}`)
+			logger.info(`Cleaning up old task ${uuid}`)
 			this.remove(uuid, cb);
 		}, done);
+	}
+
+	// Removes directories that don't have a corresponding
+	// task associated with it (maybe as a cause of an abrupt exit)
+	removeOrphanedDirectories(done){
+		logger.info("Checking for orphaned directories to be removed...");
+
+		fs.readdir(DATA_DIR, (err, entries) => {
+			if (err) done(err);
+			else{
+				async.eachSeries(entries, (entry, cb) => {
+					let dirPath = path.join(DATA_DIR, entry);
+					if (fs.statSync(dirPath).isDirectory() &&
+						entry.match(/^[\w\d]+\-[\w\d]+\-[\w\d]+\-[\w\d]+\-[\w\d]+$/) &&
+						!this.tasks[entry]){
+						logger.info(`Found orphaned directory: ${entry}, removing...`);
+						rmdir(dirPath, cb);
+					}else cb();
+				}, done);
+			}
+		});
 	}
 
 	// Load tasks that already exists (if any)
@@ -91,11 +116,11 @@ module.exports = class TaskManager{
 						}
 					});
 				}, err => {
-					this.logger.info(`Initialized ${tasks.length} tasks`);
+					logger.info(`Initialized ${tasks.length} tasks`);
 					if (done !== undefined) done();
 				});
 			}else{
-				this.logger.info("No tasks dump found");
+				logger.info("No tasks dump found");
 				if (done !== undefined) done();
 			}
 		});
@@ -113,7 +138,7 @@ module.exports = class TaskManager{
 	// Finds the next tasks, adds them to the running queue,
 	// and starts the tasks (up to the limit).
 	processNextTask(){
-		if (this.runningQueue.length < PARALLEL_QUEUE_PROCESS_LIMIT){
+		if (this.runningQueue.length < config.parallelQueueProcessing){
 			let task = this.findNextTaskToProcess();
 			if (task){
 				this.addToRunningQueue(task);
@@ -122,7 +147,7 @@ module.exports = class TaskManager{
 					this.processNextTask();
 				});
 
-				if (this.runningQueue.length < PARALLEL_QUEUE_PROCESS_LIMIT) this.processNextTask();
+				if (this.runningQueue.length < config.parallelQueueProcessing) this.processNextTask();
 			}
 		}else{
 			// Do nothing
@@ -136,10 +161,7 @@ module.exports = class TaskManager{
 
 	removeFromRunningQueue(task){
 		assert(task.constructor.name === "Task", "Must be a Task object");
-
-		this.runningQueue = this.runningQueue.filter(t => {
-			return t !== task;
-		});
+		this.runningQueue = this.runningQueue.filter(t => t !== task);
 	}
 
 	addNew(task){
@@ -207,15 +229,15 @@ module.exports = class TaskManager{
 	// Serializes the list of tasks and saves it
 	// to disk
 	dumpTaskList(done){
-		var output = [];
+		let output = [];
 
 		for (let uuid in this.tasks){
 			output.push(this.tasks[uuid].serialize());
 		}
 
 		fs.writeFile(TASKS_DUMP_FILE, JSON.stringify(output), err => {
-			if (err) this.logger.error(`Could not dump tasks: ${err.message}`);
-			else this.logger.debug("Dumped tasks list.");
+			if (err) logger.error(`Could not dump tasks: ${err.message}`);
+			else logger.info("Dumped tasks list.");
 			if (done !== undefined) done();
 		})
 	}

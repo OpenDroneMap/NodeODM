@@ -1,0 +1,214 @@
+/* 
+Node-OpenDroneMap Node.js App and REST API to access OpenDroneMap. 
+Copyright (C) 2016 Node-OpenDroneMap Contributors
+
+This program is free software: you can redistribute it and/or modify
+it under the terms of the GNU General Public License as published by
+the Free Software Foundation, either version 3 of the License, or
+(at your option) any later version.
+
+This program is distributed in the hope that it will be useful,
+but WITHOUT ANY WARRANTY; without even the implied warranty of
+MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+GNU General Public License for more details.
+
+You should have received a copy of the GNU General Public License
+along with this program.  If not, see <http://www.gnu.org/licenses/>.
+*/
+"use strict";
+let odmRunner = require('./odmRunner');
+let assert = require('assert');
+
+let odmOptions = null;
+
+module.exports = {
+	initialize: function(done){
+		this.getOptions(done);
+	},
+
+	getOptions: function(done){
+		if (odmOptions){
+			done(null, odmOptions);
+			return;
+		}
+
+		odmRunner.getJsonOptions((err, json) => {
+			if (err) done(err);
+			else{
+				odmOptions = [];
+				for (let option in json){
+					// Not all options are useful to the end user
+					// (num cores can be set programmatically, so can gcpFile, etc.)
+					if (["-h", "--project-path", 
+						"--zip-results", "--pmvs-num-cores", "--odm_georeferencing-useGcp",
+						"--start-with", "--odm_georeferencing-gcpFile", "--end-with"].indexOf(option) !== -1) continue;
+
+					let values = json[option];
+
+					let name = option.replace(/^--/, "");
+					let type = "";
+					let value = "";
+					let help = values.help || "";
+					let domain = values.metavar !== undefined ? 
+								 values.metavar.replace(/^[<>]/g, "")
+								 				.replace(/[<>]$/g, "")
+							 					.trim() : 
+								 "";
+
+					switch((values.type || "").trim()){
+						case "<type 'int'>":
+							type = "int";
+							value = values['default'] !== undefined ? 
+											parseInt(values['default']) :
+											0;
+							break;
+						case "<type 'float'>":
+							type = "float";
+							value = values['default'] !== undefined ? 
+											parseFloat(values['default']) :
+											0.0;
+							break;
+						default:
+							type = "string";
+							value = values['default'] !== undefined ? 
+								    values['default'].trim() :
+								    "";
+					}
+
+					if (values['default'] === "True"){
+						type = "bool";
+						value = true;
+					}else if (values['default'] === "False"){
+						type = "bool";
+						value = false;
+					}
+
+					help = help.replace(/\%\(default\)s/g, value);
+
+					odmOptions.push({
+						name, type, value, domain, help
+					});
+				}
+				done(null, odmOptions);
+			}
+		});
+	},
+
+	// Checks that the options (as received from the rest endpoint)
+	// Are valid and within proper ranges.
+	// The result of filtering is passed back via callback
+	// @param options[]
+	filterOptions: function(options, done){
+		assert(odmOptions !== null, "odmOptions is not set. Have you initialized odmOptions properly?");
+		
+		try{
+			if (typeof options === "string") options = JSON.parse(options);
+			
+			let result = [];
+			let errors = [];
+			function addError(opt, descr){
+				errors.push({
+					name: opt.name,
+					error: descr
+				});
+			}
+
+			let typeConversion = {
+				'float': Number.parseFloat,
+				'int': Number.parseInt,
+				'bool': function(value){
+					if (value === 'true') return true;
+					else if (value === 'false') return false;
+					else if (typeof value === 'boolean') return value;
+					else throw new Error(`Cannot convert ${value} to boolean`);
+				}
+			};
+			
+			let domainChecks = [
+				{
+					regex: /^(positive |negative )?(integer|float)$/, 
+					validate: function(matches, value){
+						if (matches[1] === 'positive ') return value >= 0;
+						else if (matches[1] === 'negative ') return value <= 0;
+						
+						else if (matches[2] === 'integer') return Number.isInteger(value);
+						else if (matches[2] === 'float') return Number.isFinite(value);
+					}
+				},
+				{
+					regex: /^percent$/,
+					validate: function(matches, value){
+						return value >= 0 && value <= 100;
+					}
+				},
+				{
+					regex: /^(float): ([\-\+\.\d]+) <= x <= ([\-\+\.\d]+)$/,
+					validate: function(matches, value){
+						let [str, type, lower, upper] = matches;
+						lower = parseFloat(lower);
+						upper = parseFloat(upper);
+						return value >= lower && value <= upper;						
+					}
+				},
+				{
+					regex: /^(float) (>=|>|<|<=) ([\-\+\.\d]+)$/,
+					validate: function(matches, value){
+						let [str, type, oper, bound] = matches;
+						bound = parseFloat(bound);
+						switch(oper){
+							case '>=':
+								return value >= bound;
+							case '>':
+								return value > bound;
+							case '<=':
+								return value <= bound;
+							case '<':
+								return value < bound;
+							default:
+								return false;
+						}
+					}
+				}			
+			];
+
+			function checkDomain(domain, value){
+				let dc, matches;
+
+				if (dc = domainChecks.find(dc => matches = domain.match(dc.regex))){
+					if (!dc.validate(matches, value)) throw new Error(`Invalid value ${value} (out of range)`);
+				}else{
+					throw new Error(`Domain value cannot be handled: '${domain}' : '${value}'`);
+				}
+			}
+
+			// Scan through all possible options
+			for (let odmOption of odmOptions){
+				// Was this option selected by the user?
+				let opt;
+				if (opt = options.find(o => o.name === odmOption.name)){
+					try{
+						// Convert to proper data type
+						let value = typeConversion[odmOption.type](opt.value);
+
+						// Domain check
+						if (odmOption.domain){
+							checkDomain(odmOption.domain, value);
+						}
+
+						result.push({
+							name: odmOption.name,
+							value: value
+						});
+					}catch(e){
+						addError(opt, e.message);						
+					}
+				}
+			}
+
+			if (errors.length > 0) done(new Error(JSON.stringify(errors)));
+			else done(null, result);
+		}catch(e){
+			done(e);
+		}
+	}
+};
