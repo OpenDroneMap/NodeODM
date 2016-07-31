@@ -58,7 +58,6 @@ Make a pull request to the dev branch for small contributions. For big contribut
 - [X] Command line options for OpenDroneMap
 - [X] GPC List support
 - [ ] Autoremove Abandoned Tasks
-- [ ] Queue Position Tracking
 - [ ] Continuous Integration Setup
 - [ ] Documentation
 - [ ] Unit Testing
