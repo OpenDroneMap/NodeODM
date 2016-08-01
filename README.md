@@ -63,6 +63,8 @@ For other command line options you can run:
 node index.js --help
 ```
 
+These and other options (including logging options) can also be set in [config.js](config.js).
+
 ### Test Images
 
 You can find some test drone images from [OpenDroneMap's Test Data Folder](https://github.com/OpenDroneMap/OpenDroneMap/tree/master/tests/test_data/images).
