@@ -45,6 +45,24 @@ npm install
 node index.js
 ```
 
+You may need to specify your ODM project path to start the server:
+
+```
+node index.js --odm_path /home/username/OpenDroneMap
+```
+
+If you want to start node ODM on a different port you can do the following:
+
+```
+node index.js --port 8000 --odm_path /home/username/OpenDroneMap
+```
+
+For other command line options you can run:
+
+```
+node index.js --help
+```
+
 ### Test Images
 
 You can find some test drone images from [OpenDroneMap's Test Data Folder](https://github.com/OpenDroneMap/OpenDroneMap/tree/master/tests/test_data/images).
