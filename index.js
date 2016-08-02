@@ -61,10 +61,13 @@ let upload = multer({
 	  	});
 	  },
 	  filename: (req, file, cb) => {
-	    cb(null, file.originalname)
+	    cb(null, file.originalname);
 	  }
 	})
 });
+
+let taskManager;
+let server;
 
 app.post('/task/new', addRequestId, upload.array('images'), (req, res) => {
 	if (req.files.length === 0) res.json({error: "Need at least 1 file."});
@@ -121,7 +124,7 @@ app.post('/task/new', addRequestId, upload.array('images'), (req, res) => {
 				}, req.body.options);
 			}
 		], err => {
-			if (err) res.json({error: err.message})
+			if (err) res.json({error: err.message});
 		});
 	}
 });
@@ -132,7 +135,7 @@ let getTaskFromUuid = (req, res, next) => {
 		req.task = task;
 		next();
 	}else res.json({error: `${req.params.uuid} not found`});
-}
+};
 
 app.get('/task/:uuid/info', getTaskFromUuid, (req, res) => {
 	res.json(req.task.getInfo());
@@ -200,9 +203,6 @@ process.on ('SIGTERM', gracefulShutdown);
 process.on ('SIGINT', gracefulShutdown);
 
 // Startup
-let taskManager;
-let server;
-
 async.series([
 	cb => odmOptions.initialize(cb),
 	cb => { taskManager = new TaskManager(cb); },

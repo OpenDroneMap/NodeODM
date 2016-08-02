@@ -1,0 +1,16 @@
+{
+	"instance": "node-OpenDroneMap",
+	"odm_path": "/code",
+
+	"logger": {
+		"level": "info",
+		"maxFileSize": 104857600,
+		"maxFiles": 10,
+		"logDirectory": ""
+	},
+
+	"port": 3000,
+	"deamon": false,
+	"parallelQueueProcessing": 2,
+	"cleanupTasksAfter": 3
+}

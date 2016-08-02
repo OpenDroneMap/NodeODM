@@ -2,5 +2,5 @@
   "script"  : "index.js",
   "name"    : "node-OpenDroneMap",
   "watch"   : false,
-  "ignore_watch" : ["[\\/\\\\]\\./", "node_modules", "git-hooks", "test", "tmp", "data", "twitter-reply-test", "twitter-send-test", "^.*\.log$"]
+  "ignore_watch" : ["[\\/\\\\]\\./", "node_modules", "git-hooks", "test", "tmp", "data", "^.*\.log$"]
 }]
