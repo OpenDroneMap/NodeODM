@@ -106,12 +106,12 @@ module.exports = {
 			
 			let result = [];
 			let errors = [];
-			function addError(opt, descr){
+			let addError = function(opt, descr){
 				errors.push({
 					name: opt.name,
 					error: descr
 				});
-			}
+			};
 
 			let typeConversion = {
 				'float': Number.parseFloat,
@@ -171,21 +171,22 @@ module.exports = {
 				}			
 			];
 
-			function checkDomain(domain, value){
-				let dc, matches;
+			let checkDomain = function(domain, value){
+				let matches,
+					dc = domainChecks.find(dc => matches = domain.match(dc.regex));
 
-				if (dc = domainChecks.find(dc => matches = domain.match(dc.regex))){
+				if (dc){
 					if (!dc.validate(matches, value)) throw new Error(`Invalid value ${value} (out of range)`);
 				}else{
 					throw new Error(`Domain value cannot be handled: '${domain}' : '${value}'`);
 				}
-			}
+			};
 
 			// Scan through all possible options
 			for (let odmOption of odmOptions){
 				// Was this option selected by the user?
-				let opt;
-				if (opt = options.find(o => o.name === odmOption.name)){
+				let opt = options.find(o => o.name === odmOption.name);
+				if (opt){
 					try{
 						// Convert to proper data type
 						let value = typeConversion[odmOption.type](opt.value);

@@ -1,0 +1,6 @@
+[{
+  "script"  : "index.js",
+  "name"    : "node-OpenDroneMap",
+  "watch"   : false,
+  "ignore_watch" : ["[\\/\\\\]\\./", "node_modules", "git-hooks", "test", "tmp", "data", "^.*\.log$"]
+}]

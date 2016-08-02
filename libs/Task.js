@@ -35,7 +35,7 @@ module.exports = class Task{
 		assert(done !== undefined, "ready must be set");
 
 		this.uuid = uuid;
-		this.name = name != "" ? name : "Task of " + (new Date()).toISOString();
+		this.name = name !== "" ? name : "Task of " + (new Date()).toISOString();
 		this.dateCreated = new Date().getTime();
 		this.processingTime = -1;
 		this.setStatus(statusCodes.QUEUED);
@@ -51,7 +51,7 @@ module.exports = class Task{
 					if (err) cb(err);
 					else{
 						this.images = files;
-						logger.debug(`Found ${this.images.length} images for ${this.uuid}`)
+						logger.debug(`Found ${this.images.length} images for ${this.uuid}`);
 						cb(null);
 					}
 				});
@@ -190,6 +190,11 @@ module.exports = class Task{
 	// Starts processing the task with OpenDroneMap
 	// This will spawn a new process.
 	start(done){
+		const finished = err => {
+			this.stopTrackingProcessingTime();
+			done(err);
+		};
+		
 		const postProcess = () => {
 			let output = fs.createWriteStream(this.getAssetsArchivePath());
 			let archive = archiver.create('zip', {});
@@ -212,11 +217,6 @@ module.exports = class Task{
 			  .directory(`${this.getProjectFolderPath()}/odm_texturing`, 'odm_texturing')
 			  .directory(`${this.getProjectFolderPath()}/odm_meshing`, 'odm_meshing')
 			  .finalize();
-		};
-
-		const finished = err => {
-			this.stopTrackingProcessingTime();
-			done(err);
 		};
 
 		if (this.status.code === statusCodes.QUEUED){
@@ -289,7 +289,7 @@ module.exports = class Task{
 			status: this.status,
 			options: this.options,
 			imagesCount: this.images.length
-		}
+		};
 	}
 
 	// Returns the output of the OpenDroneMap process
@@ -307,6 +307,6 @@ module.exports = class Task{
 			dateCreated: this.dateCreated,
 			status: this.status,
 			options: this.options
-		}
+		};
 	}
 };

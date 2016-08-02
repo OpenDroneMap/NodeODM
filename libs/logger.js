@@ -49,7 +49,7 @@ logger.add(winston.transports.File, {
 		maxsize: config.logger.maxFileSize, // Max size of each file
 		maxFiles: config.logger.maxFiles, // Max number of files
 		level: config.logger.level // Level of log messages
-	})
+	});
 
 if (config.deamon){
 	// Console transport is no use to us when running as a daemon
