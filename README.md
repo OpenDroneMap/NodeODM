@@ -95,7 +95,7 @@ You can monitor the process using `pm2 status`.
 
 ### Test Images
 
-You can find some test drone images from [OpenDroneMap's Test Data Folder](https://github.com/OpenDroneMap/OpenDroneMap/tree/master/tests/test_data/images).
+You can find some test drone images [here](https://github.com/dakotabenjamin/odm_data).
 
 ## Contributing
 
