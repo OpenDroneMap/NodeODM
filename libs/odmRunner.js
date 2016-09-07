@@ -16,14 +16,14 @@ You should have received a copy of the GNU General Public License
 along with this program.  If not, see <http://www.gnu.org/licenses/>.
 */
 "use strict";
+let assert = require('assert');
 let spawn = require('child_process').spawn;
 let config = require('../config.js');
 let logger = require('./logger');
 
 module.exports = {
-	run: function(options = {
-			"project-path": "/images"
-		}, done, outputReceived){
+	run: function(options, done, outputReceived){
+		assert(options["project-path"] !== undefined, "project-path must be defined");
 
 		let command = [`${config.odm_path}/run.py`];
 		for (var name in options){

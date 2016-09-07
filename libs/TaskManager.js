@@ -61,7 +61,7 @@ module.exports = class TaskManager{
 	removeOldTasks(done){
 		let list = [];
 		let now = new Date().getTime();
-		logger.info("Checking for old tasks to be removed...");
+		logger.debug("Checking for old tasks to be removed...");
 
 		for (let uuid in this.tasks){
 			let task = this.tasks[uuid];
@@ -75,7 +75,7 @@ module.exports = class TaskManager{
 		}
 
 		async.eachSeries(list, (uuid, cb) => {
-			logger.info(`Cleaning up old task ${uuid}`)
+			logger.info(`Cleaning up old task ${uuid}`);
 			this.remove(uuid, cb);
 		}, done);
 	}
@@ -174,8 +174,8 @@ module.exports = class TaskManager{
 	// Stops the execution of a task
 	// (without removing it from the system).
 	cancel(uuid, cb){
-		let task;
-		if (task = this.find(uuid, cb)){
+		let task = this.find(uuid, cb);
+		if (task){
 			if (!task.isCanceled()){
 				task.cancel(err => {
 					this.removeFromRunningQueue(task);
@@ -193,8 +193,8 @@ module.exports = class TaskManager{
 	remove(uuid, cb){
 		this.cancel(uuid, err => {
 			if (!err){
-				let task;
-				if (task = this.find(uuid, cb)){
+				let task = this.find(uuid, cb);
+				if (task){
 					task.cleanup(err => {
 						if (!err){
 							delete(this.tasks[uuid]);
@@ -210,8 +210,8 @@ module.exports = class TaskManager{
 	// Restarts (puts back into QUEUED state)
 	// a task that is either in CANCELED or FAILED state.
 	restart(uuid, cb){
-		let task;
-		if (task = this.find(uuid, cb)){
+		let task = this.find(uuid, cb);
+		if (task){
 			task.restart(err => {
 				if (!err) this.processNextTask();
 				cb(err);
@@ -237,8 +237,8 @@ module.exports = class TaskManager{
 
 		fs.writeFile(TASKS_DUMP_FILE, JSON.stringify(output), err => {
 			if (err) logger.error(`Could not dump tasks: ${err.message}`);
-			else logger.info("Dumped tasks list.");
+			else logger.debug("Dumped tasks list.");
 			if (done !== undefined) done();
-		})
+		});
 	}
 };
