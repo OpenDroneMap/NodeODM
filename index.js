@@ -158,33 +158,89 @@ let uuidCheck = (req, res, next) => {
 	else next();
 };
 
+/** @swagger
+* definition:
+*   Response:
+*     type: object
+*     required:
+*       - success
+*     properties:
+*       success:
+*         type: boolean
+*       error:
+*         type: string
+*         description: Error message if an error occured
+*/
+
 let successHandler = res => {
 	return err => {
 		if (!err) res.json({success: true});
-		else res.json({error: err.message});
+		else res.json({success: false, error: err.message});
 	};
 };
 
-/**
- * @swagger
- * /task/cancel/{uuidCheck}:
- *   get:
- *     description: Cancels a task
- *     parameters:
- *      - uuidCheck: uuid of the task to cancel
- *     responses:
- *       200:
- *         description: Task cancelled
- */
-
+/** @swagger
+* /task/cancel:
+*    post:
+*      description: Cancels a task (stops its execution, or prevents it from being executed)
+*      parameters:
+*        -
+*          name: uuid
+*          in: body
+*          description: UUID of the task to cancel
+*          required: true
+*          schema:
+*            type: string
+*      responses:
+*        200:
+*          description: Command Received
+*          schema:
+*            $ref: "#/definitions/Response"
+*/
 app.post('/task/cancel', uuidCheck, (req, res) => {
-	taskManager.cancel(req.body.uuid, successHandler(res));
+	taskManager.cancel(req.body.uuid, e(res));
 });
 
+/** @swagger
+* /task/remove:
+*    post:
+*      description: Removes a task and deletes all of its assets
+*      parameters:
+*        -
+*          name: uuid
+*          in: body
+*          description: UUID of the task to cancel
+*          required: true
+*          schema:
+*            type: string
+*      responses:
+*        200:
+*          description: Command Received
+*          schema:
+*            $ref: "#/definitions/Response"
+*/
 app.post('/task/remove', uuidCheck, (req, res) => {
 	taskManager.remove(req.body.uuid, successHandler(res));
 });
 
+/** @swagger
+* /task/restart:
+*    post:
+*      description: Restarts a task that was previously canceled or that had failed to process
+*      parameters:
+*        -
+*          name: uuid
+*          in: body
+*          description: UUID of the task to cancel
+*          required: true
+*          schema:
+*            type: string
+*      responses:
+*        200:
+*          description: Command Received
+*          schema:
+*            $ref: "#/definitions/Response"
+*/
 app.post('/task/restart', uuidCheck, (req, res) => {
 	taskManager.restart(req.body.uuid, successHandler(res));
 });
