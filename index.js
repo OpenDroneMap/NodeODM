@@ -165,6 +165,18 @@ let successHandler = res => {
 	};
 };
 
+/**
+ * @swagger
+ * /task/cancel/{uuidCheck}:
+ *   get:
+ *     description: Cancels a task
+ *     parameters:
+ *      - uuidCheck: uuid of the task to cancel
+ *     responses:
+ *       200:
+ *         description: Task cancelled
+ */
+
 app.post('/task/cancel', uuidCheck, (req, res) => {
 	taskManager.cancel(req.body.uuid, successHandler(res));
 });
