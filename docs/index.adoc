@@ -8,7 +8,7 @@ REST API to access OpenDroneMap
 
 === Version information
 [%hardbreaks]
-_Version_ : 1.0
+_Version_ : 1.0.0
 
 
 === Contact information
