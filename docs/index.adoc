@@ -307,7 +307,7 @@ Retrieves the console output of the OpenDroneMap's process. Useful for monitorin
 |*Path*|*uuid* +
 _required_|UUID of the task|string|
 |*Query*|*line* +
-_optional_|Optional line number that the console output should be truncated from. For example, passing a value of 100 will retrieve the console output starting from line 100. Defaults to 0 (retrieve all console output).|integer|
+_optional_|Optional line number that the console output should be truncated from. For example, passing a value of 100 will retrieve the console output starting from line 100. Defaults to 0 (retrieve all console output).|integer|`"0"`
 |===
 
 

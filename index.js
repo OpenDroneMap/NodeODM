@@ -252,6 +252,7 @@ app.get('/task/:uuid/info', getTaskFromUuid, (req, res) => {
 *         name: line
 *         in: query
 *         description: Optional line number that the console output should be truncated from. For example, passing a value of 100 will retrieve the console output starting from line 100. Defaults to 0 (retrieve all console output).
+*         default: 0
 *         required: false
 *         type: integer
 *       responses:
