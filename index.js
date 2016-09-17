@@ -192,7 +192,9 @@ let getTaskFromUuid = (req, res, next) => {
 *        200:
 *         description: Task Information
 *         schema:
+*           title: TaskInfo
 *           type: object
+*           required: [uuid, name, dateCreated, processingTime, status, options, imagesCount]
 *           properties:
 *            uuid:
 *              type: string
@@ -215,6 +217,7 @@ let getTaskFromUuid = (req, res, next) => {
 *              description: List of options used to process this task
 *              items:
 *                type: object
+*                required: [name, value]
 *                properties:
 *                  name:
 *                    type: string
@@ -412,6 +415,7 @@ app.post('/task/restart', uuidCheck, (req, res) => {
 *         schema:
 *           type: array
 *           items:
+*             title: Option
 *             type: object
 *             properties:
 *               name:

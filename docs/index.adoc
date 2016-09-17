@@ -56,11 +56,11 @@ Retrieves the command line options that can be passed to process a task
 [options="header", cols=".^2,.^14,.^4"]
 |===
 |HTTP Code|Description|Schema
-|*200*|Options|< <<_getoptions_get_response_200,Response 200>> > array
+|*200*|Options|< <<_option,Option>> > array
 |===
 
-[[_getoptions_get_response_200]]
-*Response 200*
+[[_option]]
+*Option*
 
 [options="header", cols=".^3,.^11,.^4"]
 |===
@@ -253,30 +253,30 @@ _required_|UUID of the task|string|
 [options="header", cols=".^2,.^14,.^4"]
 |===
 |HTTP Code|Description|Schema
-|*200*|Task Information|<<_task_uuid_info_get_response_200,Response 200>>
+|*200*|Task Information|<<_taskinfo,TaskInfo>>
 |*default*|Error|<<_error,Error>>
 |===
 
-[[_task_uuid_info_get_response_200]]
-*Response 200*
+[[_taskinfo]]
+*TaskInfo*
 
 [options="header", cols=".^3,.^11,.^4"]
 |===
 |Name|Description|Schema
 |*dateCreated* +
-_optional_|Timestamp|integer
+_required_|Timestamp|integer
 |*imagesCount* +
-_optional_|Number of images|integer
+_required_|Number of images|integer
 |*name* +
-_optional_|Name|string
+_required_|Name|string
 |*options* +
-_optional_|List of options used to process this task|< <<_task_uuid_info_get_options,options>> > array
+_required_|List of options used to process this task|< <<_task_uuid_info_get_options,options>> > array
 |*processingTime* +
-_optional_|Milliseconds that have elapsed since the task started being processed.|integer
+_required_|Milliseconds that have elapsed since the task started being processed.|integer
 |*status* +
-_optional_|Status code (10 = QUEUED, 20 = RUNNING, 30 = FAILED, 40 = COMPLETED, 50 = CANCELED)|integer
+_required_|Status code (10 = QUEUED, 20 = RUNNING, 30 = FAILED, 40 = COMPLETED, 50 = CANCELED)|integer
 |*uuid* +
-_optional_|UUID|string
+_required_|UUID|string
 |===
 
 [[_task_uuid_info_get_options]]
@@ -286,9 +286,9 @@ _optional_|UUID|string
 |===
 |Name|Description|Schema
 |*name* +
-_optional_|Option name (example: "odm_meshing-octreeDepth")|string
+_required_|Option name (example: "odm_meshing-octreeDepth")|string
 |*value* +
-_optional_|Value (example: 9)|string
+_required_|Value (example: 9)|string
 |===
 
 
