@@ -66,15 +66,15 @@ Retrieves the command line options that can be passed to process a task
 |===
 |Name|Description|Schema
 |*domain* +
-_optional_|Valid range of values (for example, "positive integer" or "float &gt; 0.0")|string
+_required_|Valid range of values (for example, "positive integer" or "float &gt; 0.0")|string
 |*help* +
-_optional_|Description of what this option does|string
+_required_|Description of what this option does|string
 |*name* +
-_optional_|Command line option (exactly as it is passed to the OpenDroneMap process, minus the leading '–')|string
+_required_|Command line option (exactly as it is passed to the OpenDroneMap process, minus the leading '–')|string
 |*type* +
-_optional_|Datatype of the value of this option|enum (int, float, string, bool)
+_required_|Datatype of the value of this option|enum (int, float, string, bool)
 |*value* +
-_optional_|Default value of this option|string
+_required_|Default value of this option|string
 |===
 
 

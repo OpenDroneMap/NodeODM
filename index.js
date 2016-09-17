@@ -417,6 +417,7 @@ app.post('/task/restart', uuidCheck, (req, res) => {
 *           items:
 *             title: Option
 *             type: object
+*             required: [name, type, value, domain, help]
 *             properties:
 *               name:
 *                 type: string
