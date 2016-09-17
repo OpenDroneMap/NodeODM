@@ -1,7 +1,7 @@
 {
   "name": "node-opendronemap",
-  "version": "0.1.0",
-  "description": "Node.js API to access OpenDroneMap",
+  "version": "1.0",
+  "description": "REST API to access OpenDroneMap",
   "main": "index.js",
   "scripts": {
     "test": "echo \"Error: no test specified\" && exit 1"
@@ -14,6 +14,7 @@
     "opendronemap"
   ],
   "author": "Piero Toffanin",
+  "authorEmail": "pt@masseranolabs.com",
   "license": "GPL-3.0",
   "bugs": {
     "url": "https://github.com/pierotofy/node-OpenDroneMap/issues"

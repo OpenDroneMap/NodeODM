@@ -19,19 +19,20 @@ along with this program.  If not, see <http://www.gnu.org/licenses/>.
 let swaggerJSDoc = require('swagger-jsdoc');
 let fs = require('fs');
 
+let packageJson = JSON.parse(fs.readFileSync('../package.json'));
+
 let options = {
   swaggerDefinition: {
     info: {
-      title: 'Node-OpenDroneMap',
-      version: '0.1.0',
+      title: packageJson.name,
+      version: packageJson.version,
+      description: packageJson.description,
       license: {
-        name: 'GPLv3',
-        url: 'http://www.gnu.org/licenses/'
+        name: packageJson.license
       }, 
       contact: {
-        name: 'Piero Toffanin',
-        url: 'https://www.masseranolabs.com',
-        email: 'pt@masseranolabs.com'
+        name: packageJson.author,
+        email: packageJson.authorEmail
       }
     },
     consumes: ["application/json"],

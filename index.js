@@ -69,6 +69,46 @@ let upload = multer({
 let taskManager;
 let server;
 
+/** @swagger
+*  /task/new:
+*    post:
+*      description: Creates a new task and places it at the end of the processing queue
+*      consumes:
+*        - multipart/form-data
+*      parameters:
+*        -
+*          name: images
+*          in: formData
+*          description: Images to process, plus an optional GPC file. If included, the GPC file should have .txt extension
+*          required: true
+*          type: file
+*        - 
+*          name: name
+*          in: formData
+*          description: An optional name to be associated with the task
+*          required: false
+*          type: string
+*        - 
+*          name: options
+*          in: formData
+*          description: 'Serialized JSON string of the options to use for processing, as an array of the format: [{name: option1, value: value1}, {name: option2, value: value2}, ...]. For example, [{"name":"cmvs-maxImages","value":"500"},{"name":"time","value":true}]. For a list of all options, call /getOptions'
+*          required: false
+*          type: string
+*      responses:
+*        200:
+*          description: Success
+*          schema:
+*            type: object
+*            required: [uuid]
+*            properties:
+*              uuid:
+*                type: string
+*                description: UUID of the newly created task
+*        default:
+*          description: Error
+*          schema:
+*            $ref: '#/definitions/Error'
+*/
 app.post('/task/new', addRequestId, upload.array('images'), (req, res) => {
 	if (req.files.length === 0) res.json({error: "Need at least 1 file."});
 	else{
@@ -118,7 +158,7 @@ app.post('/task/new', addRequestId, upload.array('images'), (req, res) => {
 					if (err) cb(err);
 					else{
 						taskManager.addNew(task);
-						res.json({uuid: req.id, success: true});
+						res.json({uuid: req.id});
 						cb();
 					}
 				}, req.body.options);
@@ -137,12 +177,121 @@ let getTaskFromUuid = (req, res, next) => {
 	}else res.json({error: `${req.params.uuid} not found`});
 };
 
+/** @swagger
+*  /task/{uuid}/info:
+*     get:
+*       description: Gets information about this task, such as name, creation date, processing time, status, command line options and number of images being processed. See schema definition for a full list.
+*       parameters:
+*        -
+*           name: uuid
+*           in: path
+*           description: UUID of the task
+*           required: true
+*           type: string
+*       responses:
+*        200:
+*         description: Task Information
+*         schema:
+*           type: object
+*           properties:
+*            uuid:
+*              type: string
+*              description: UUID
+*            name:
+*              type: string
+*              description: Name
+*            dateCreated:
+*              type: integer
+*              description: Timestamp
+*            processingTime:
+*              type: integer
+*              description: Milliseconds that have elapsed since the task started being processed.
+*            status:
+*              type: integer
+*              description: Status code (10 = QUEUED, 20 = RUNNING, 30 = FAILED, 40 = COMPLETED, 50 = CANCELED)
+*              enum: [10, 20, 30, 40, 50]
+*            options:
+*              type: array
+*              description: List of options used to process this task
+*              items:
+*                type: object
+*                properties:
+*                  name:
+*                    type: string
+*                    description: 'Option name (example: "odm_meshing-octreeDepth")'
+*                  value:
+*                    type: string
+*                    description: 'Value (example: 9)'
+*            imagesCount:
+*              type: integer
+*              description: Number of images
+*        default:
+*          description: Error
+*          schema:
+*            $ref: '#/definitions/Error'
+*/
 app.get('/task/:uuid/info', getTaskFromUuid, (req, res) => {
 	res.json(req.task.getInfo());
 });
+
+/** @swagger
+*  /task/{uuid}/output:
+*     get:
+*       description: Retrieves the console output of the OpenDroneMap's process. Useful for monitoring execution and to provide updates to the user.
+*       parameters:
+*        -
+*           name: uuid
+*           in: path
+*           description: UUID of the task
+*           required: true
+*           type: string
+*        -
+*         name: line
+*         in: query
+*         description: Optional line number that the console output should be truncated from. For example, passing a value of 100 will retrieve the console output starting from line 100. Defaults to 0 (retrieve all console output).
+*         required: false
+*         type: integer
+*       responses:
+*        200:
+*         description: Console Output
+*         schema:
+*           type: string
+*        default:
+*          description: Error
+*          schema:
+*            $ref: '#/definitions/Error'
+*/
 app.get('/task/:uuid/output', getTaskFromUuid, (req, res) => {
 	res.json(req.task.getOutput(req.query.line));
 });
+
+/** @swagger
+*  /task/{uuid}/download/{asset}:
+*    get:
+*      description: Retrieves an asset (the output of OpenDroneMap's processing) associated with a task
+*      parameters:
+*        - name: uuid
+*          in: path
+*          type: string
+*          description: UUID of the task
+*          required: true
+*        - name: asset
+*          in: path
+*          type: string
+*          description: Type of asset to download. Use "all" for zip file containing all assets. Other options are not yet available
+*          required: true
+*          enum:
+*            - all
+*      responses:
+*        200:
+*          description: Asset File
+*          schema:
+*            type: file
+*        default:
+*          description: Error message
+*          schema:
+*            $ref: '#/definitions/Error'
+*/
 app.get('/task/:uuid/download/:asset', getTaskFromUuid, (req, res) => {
 	if (!req.params.asset || req.params.asset === "all"){
 		res.download(req.task.getAssetsArchivePath(), "all.zip", err => {
@@ -153,13 +302,16 @@ app.get('/task/:uuid/download/:asset', getTaskFromUuid, (req, res) => {
 	}
 });
 
-let uuidCheck = (req, res, next) => {
-	if (!req.body.uuid) res.json({error: "uuid param missing."});
-	else next();
-};
-
 /** @swagger
 * definition:
+*   Error:
+*     type: object
+*     required:
+*       - error
+*     properties:
+*       error:
+*         type: string
+*         description: Description of the error
 *   Response:
 *     type: object
 *     required:
@@ -167,10 +319,15 @@ let uuidCheck = (req, res, next) => {
 *     properties:
 *       success:
 *         type: boolean
+*         description: true if the command succeeded, false otherwise.
 *       error:
 *         type: string
 *         description: Error message if an error occured
 */
+let uuidCheck = (req, res, next) => {
+    if (!req.body.uuid) res.json({error: "uuid param missing."});
+    else next();
+};
 
 let successHandler = res => {
 	return err => {
@@ -187,7 +344,7 @@ let successHandler = res => {
 *        -
 *          name: uuid
 *          in: body
-*          description: UUID of the task to cancel
+*          description: UUID of the task
 *          required: true
 *          schema:
 *            type: string
@@ -209,7 +366,7 @@ app.post('/task/cancel', uuidCheck, (req, res) => {
 *        -
 *          name: uuid
 *          in: body
-*          description: UUID of the task to cancel
+*          description: UUID of the task
 *          required: true
 *          schema:
 *            type: string
@@ -231,7 +388,7 @@ app.post('/task/remove', uuidCheck, (req, res) => {
 *        -
 *          name: uuid
 *          in: body
-*          description: UUID of the task to cancel
+*          description: UUID of the task
 *          required: true
 *          schema:
 *            type: string
@@ -245,6 +402,39 @@ app.post('/task/restart', uuidCheck, (req, res) => {
 	taskManager.restart(req.body.uuid, successHandler(res));
 });
 
+/** @swagger
+* /getOptions:
+*   get:
+*     description: Retrieves the command line options that can be passed to process a task
+*     responses:
+*       200:
+*         description: Options
+*         schema:
+*           type: array
+*           items:
+*             type: object
+*             properties:
+*               name:
+*                 type: string
+*                 description: Command line option (exactly as it is passed to the OpenDroneMap process, minus the leading '--')
+*               type:
+*                 type: string
+*                 description: Datatype of the value of this option
+*                 enum:
+*                   - int
+*                   - float
+*                   - string
+*                   - bool
+*               value:
+*                 type: string
+*                 description: Default value of this option
+*               domain:
+*                 type: string
+*                 description: Valid range of values (for example, "positive integer" or "float > 0.0")
+*               help:
+*                 type: string
+*                 description: Description of what this option does
+*/
 app.get('/getOptions', (req, res) => {
 	odmOptions.getOptions((err, options) => {
 		if (err) res.json({error: err.message});

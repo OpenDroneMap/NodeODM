@@ -1,0 +1,355 @@
+= node-opendronemap
+
+
+[[_overview]]
+== Overview
+REST API to access OpenDroneMap
+
+
+=== Version information
+[%hardbreaks]
+_Version_ : 1.0
+
+
+=== Contact information
+[%hardbreaks]
+_Contact_ : Piero Toffanin
+_Contact Email_ : pt@masseranolabs.com
+
+
+=== License information
+[%hardbreaks]
+_License_ : GPL-3.0
+
+
+=== URI scheme
+[%hardbreaks]
+_BasePath_ : /
+_Schemes_ : HTTP
+
+
+=== Consumes
+
+* `application/json`
+
+
+=== Produces
+
+* `application/json`
+* `application/zip`
+
+
+
+
+[[_paths]]
+== Paths
+
+[[_getoptions_get]]
+=== GET /getOptions
+
+==== Description
+Retrieves the command line options that can be passed to process a task
+
+
+==== Responses
+
+[options="header", cols=".^2,.^14,.^4"]
+|===
+|HTTP Code|Description|Schema
+|*200*|Options|< <<_getoptions_get_response_200,Response 200>> > array
+|===
+
+[[_getoptions_get_response_200]]
+*Response 200*
+
+[options="header", cols=".^3,.^11,.^4"]
+|===
+|Name|Description|Schema
+|*domain* +
+_optional_|Valid range of values (for example, "positive integer" or "float &gt; 0.0")|string
+|*help* +
+_optional_|Description of what this option does|string
+|*name* +
+_optional_|Command line option (exactly as it is passed to the OpenDroneMap process, minus the leading '–')|string
+|*type* +
+_optional_|Datatype of the value of this option|enum (int, float, string, bool)
+|*value* +
+_optional_|Default value of this option|string
+|===
+
+
+[[_task_cancel_post]]
+=== POST /task/cancel
+
+==== Description
+Cancels a task (stops its execution, or prevents it from being executed)
+
+
+==== Parameters
+
+[options="header", cols=".^2,.^3,.^9,.^4,.^2"]
+|===
+|Type|Name|Description|Schema|Default
+|*Body*|*uuid* +
+_required_|UUID of the task|string|
+|===
+
+
+==== Responses
+
+[options="header", cols=".^2,.^14,.^4"]
+|===
+|HTTP Code|Description|Schema
+|*200*|Command Received|<<_response,Response>>
+|===
+
+
+[[_task_new_post]]
+=== POST /task/new
+
+==== Description
+Creates a new task and places it at the end of the processing queue
+
+
+==== Parameters
+
+[options="header", cols=".^2,.^3,.^9,.^4,.^2"]
+|===
+|Type|Name|Description|Schema|Default
+|*FormData*|*images* +
+_required_|Images to process, plus an optional GPC file. If included, the GPC file should have .txt extension|file|
+|*FormData*|*name* +
+_optional_|An optional name to be associated with the task|string|
+|*FormData*|*options* +
+_optional_|Serialized JSON string of the options to use for processing, as an array of the format: [{name: option1, value: value1}, {name: option2, value: value2}, …]. For example, [{"name":"cmvs-maxImages","value":"500"},{"name":"time","value":true}]. For a list of all options, call /getOptions|string|
+|===
+
+
+==== Responses
+
+[options="header", cols=".^2,.^14,.^4"]
+|===
+|HTTP Code|Description|Schema
+|*200*|Success|<<_task_new_post_response_200,Response 200>>
+|*default*|Error|<<_error,Error>>
+|===
+
+[[_task_new_post_response_200]]
+*Response 200*
+
+[options="header", cols=".^3,.^11,.^4"]
+|===
+|Name|Description|Schema
+|*uuid* +
+_required_|UUID of the newly created task|string
+|===
+
+
+==== Consumes
+
+* `multipart/form-data`
+
+
+[[_task_remove_post]]
+=== POST /task/remove
+
+==== Description
+Removes a task and deletes all of its assets
+
+
+==== Parameters
+
+[options="header", cols=".^2,.^3,.^9,.^4,.^2"]
+|===
+|Type|Name|Description|Schema|Default
+|*Body*|*uuid* +
+_required_|UUID of the task|string|
+|===
+
+
+==== Responses
+
+[options="header", cols=".^2,.^14,.^4"]
+|===
+|HTTP Code|Description|Schema
+|*200*|Command Received|<<_response,Response>>
+|===
+
+
+[[_task_restart_post]]
+=== POST /task/restart
+
+==== Description
+Restarts a task that was previously canceled or that had failed to process
+
+
+==== Parameters
+
+[options="header", cols=".^2,.^3,.^9,.^4,.^2"]
+|===
+|Type|Name|Description|Schema|Default
+|*Body*|*uuid* +
+_required_|UUID of the task|string|
+|===
+
+
+==== Responses
+
+[options="header", cols=".^2,.^14,.^4"]
+|===
+|HTTP Code|Description|Schema
+|*200*|Command Received|<<_response,Response>>
+|===
+
+
+[[_task_uuid_download_asset_get]]
+=== GET /task/{uuid}/download/{asset}
+
+==== Description
+Retrieves an asset (the output of OpenDroneMap's processing) associated with a task
+
+
+==== Parameters
+
+[options="header", cols=".^2,.^3,.^9,.^4,.^2"]
+|===
+|Type|Name|Description|Schema|Default
+|*Path*|*asset* +
+_required_|Type of asset to download. Use "all" for zip file containing all assets. Other options are not yet available|enum (all)|
+|*Path*|*uuid* +
+_required_|UUID of the task|string|
+|===
+
+
+==== Responses
+
+[options="header", cols=".^2,.^14,.^4"]
+|===
+|HTTP Code|Description|Schema
+|*200*|Asset File|file
+|*default*|Error message|<<_error,Error>>
+|===
+
+
+[[_task_uuid_info_get]]
+=== GET /task/{uuid}/info
+
+==== Description
+Gets information about this task, such as name, creation date, processing time, status, command line options and number of images being processed. See schema definition for a full list.
+
+
+==== Parameters
+
+[options="header", cols=".^2,.^3,.^9,.^4,.^2"]
+|===
+|Type|Name|Description|Schema|Default
+|*Path*|*uuid* +
+_required_|UUID of the task|string|
+|===
+
+
+==== Responses
+
+[options="header", cols=".^2,.^14,.^4"]
+|===
+|HTTP Code|Description|Schema
+|*200*|Task Information|<<_task_uuid_info_get_response_200,Response 200>>
+|*default*|Error|<<_error,Error>>
+|===
+
+[[_task_uuid_info_get_response_200]]
+*Response 200*
+
+[options="header", cols=".^3,.^11,.^4"]
+|===
+|Name|Description|Schema
+|*dateCreated* +
+_optional_|Timestamp|integer
+|*imagesCount* +
+_optional_|Number of images|integer
+|*name* +
+_optional_|Name|string
+|*options* +
+_optional_|List of options used to process this task|< <<_task_uuid_info_get_options,options>> > array
+|*processingTime* +
+_optional_|Milliseconds that have elapsed since the task started being processed.|integer
+|*status* +
+_optional_|Status code (10 = QUEUED, 20 = RUNNING, 30 = FAILED, 40 = COMPLETED, 50 = CANCELED)|integer
+|*uuid* +
+_optional_|UUID|string
+|===
+
+[[_task_uuid_info_get_options]]
+*options*
+
+[options="header", cols=".^3,.^11,.^4"]
+|===
+|Name|Description|Schema
+|*name* +
+_optional_|Option name (example: "odm_meshing-octreeDepth")|string
+|*value* +
+_optional_|Value (example: 9)|string
+|===
+
+
+[[_task_uuid_output_get]]
+=== GET /task/{uuid}/output
+
+==== Description
+Retrieves the console output of the OpenDroneMap's process. Useful for monitoring execution and to provide updates to the user.
+
+
+==== Parameters
+
+[options="header", cols=".^2,.^3,.^9,.^4,.^2"]
+|===
+|Type|Name|Description|Schema|Default
+|*Path*|*uuid* +
+_required_|UUID of the task|string|
+|*Query*|*line* +
+_optional_|Optional line number that the console output should be truncated from. For example, passing a value of 100 will retrieve the console output starting from line 100. Defaults to 0 (retrieve all console output).|integer|
+|===
+
+
+==== Responses
+
+[options="header", cols=".^2,.^14,.^4"]
+|===
+|HTTP Code|Description|Schema
+|*200*|Console Output|string
+|*default*|Error|<<_error,Error>>
+|===
+
+
+
+
+[[_definitions]]
+== Definitions
+
+[[_error]]
+=== Error
+
+[options="header", cols=".^3,.^11,.^4"]
+|===
+|Name|Description|Schema
+|*error* +
+_required_|Description of the error|string
+|===
+
+
+[[_response]]
+=== Response
+
+[options="header", cols=".^3,.^11,.^4"]
+|===
+|Name|Description|Schema
+|*error* +
+_optional_|Error message if an error occured|string
+|*success* +
+_required_|true if the command succeeded, false otherwise.|boolean
+|===
+
+
+
+
+

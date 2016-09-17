@@ -107,7 +107,7 @@ Make a pull request to the dev branch for small contributions. For big contribut
 - [X] GPC List support
 - [ ] Autoremove Abandoned Tasks
 - [ ] Continuous Integration Setup
-- [ ] Documentation
+- [X] Documentation
 - [ ] Unit Testing
 
 ## API Docs

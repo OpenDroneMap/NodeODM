@@ -294,7 +294,7 @@ $(function(){
         .on('filebatchuploadsuccess', function(e, params){
             $("#images").fileinput('reset');
 
-            if (params.response.success && params.response.uuid){
+            if (params.response && params.response.uuid){
                 taskList.add(new Task(params.response.uuid));
             }
         })
