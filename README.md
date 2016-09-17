@@ -32,6 +32,10 @@ Linux users can connect to 127.0.0.1.
 * Press "Start Task"
 * Go for a walk :)
 
+## API Docs
+
+See the [API documentation page](/docs/index.adoc).
+
 ### Run it Natively
 
 If you are already running [OpenDroneMap](https://github.com/OpenDroneMap/OpenDroneMap) on Ubuntu natively, you can simply type:
@@ -99,7 +103,7 @@ You can find some test drone images [here](https://github.com/dakotabenjamin/odm
 
 ## Contributing
 
-Make a pull request to the dev branch for small contributions. For big contributions, please open a discussion first. Please use ES6 syntax while writing new Javascript code so that we can keep the code base uniform.
+Make a pull request small contributions. For big contributions, please open a discussion first. Please use ES6 syntax while writing new Javascript code so that we can keep the code base uniform.
 
 ## Roadmap
 
@@ -109,7 +113,3 @@ Make a pull request to the dev branch for small contributions. For big contribut
 - [ ] Continuous Integration Setup
 - [X] Documentation
 - [ ] Unit Testing
-
-## API Docs
-
-Coming soon.
