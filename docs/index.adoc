@@ -44,11 +44,11 @@ _Schemes_ : HTTP
 [[_paths]]
 == Paths
 
-[[_getinfo_get]]
-=== GET /getInfo
+[[_info_get]]
+=== GET /info
 
 ==== Description
-Retrieves information about this node.
+Retrieves information about this node
 
 
 ==== Responses
@@ -56,10 +56,10 @@ Retrieves information about this node.
 [options="header", cols=".^2,.^14,.^4"]
 |===
 |HTTP Code|Description|Schema
-|*200*|Info|<<_getinfo_get_response_200,Response 200>>
+|*200*|Info|<<_info_get_response_200,Response 200>>
 |===
 
-[[_getinfo_get_response_200]]
+[[_info_get_response_200]]
 *Response 200*
 
 [options="header", cols=".^3,.^11,.^4"]
@@ -72,8 +72,8 @@ _required_|Current version|string
 |===
 
 
-[[_getoptions_get]]
-=== GET /getOptions
+[[_options_get]]
+=== GET /options
 
 ==== Description
 Retrieves the command line options that can be passed to process a task
@@ -149,7 +149,7 @@ _required_|Images to process, plus an optional GPC file. If included, the GPC fi
 |*FormData*|*name* +
 _optional_|An optional name to be associated with the task|string|
 |*FormData*|*options* +
-_optional_|Serialized JSON string of the options to use for processing, as an array of the format: [{name: option1, value: value1}, {name: option2, value: value2}, …]. For example, [{"name":"cmvs-maxImages","value":"500"},{"name":"time","value":true}]. For a list of all options, call /getOptions|string|
+_optional_|Serialized JSON string of the options to use for processing, as an array of the format: [{name: option1, value: value1}, {name: option2, value: value2}, …]. For example, [{"name":"cmvs-maxImages","value":"500"},{"name":"time","value":true}]. For a list of all options, call /options|string|
 |===
 
 

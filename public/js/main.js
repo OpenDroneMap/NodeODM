@@ -326,7 +326,7 @@ $(function(){
         this.showOptions = ko.observable(false);
         this.error = ko.observable();
 
-        $.get("/getOptions")
+        $.get("/options")
          .done(function(json){
             if (json.error) self.error(json.error);
             else{

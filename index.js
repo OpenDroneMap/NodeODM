@@ -92,7 +92,7 @@ let server;
 *        - 
 *          name: options
 *          in: formData
-*          description: 'Serialized JSON string of the options to use for processing, as an array of the format: [{name: option1, value: value1}, {name: option2, value: value2}, ...]. For example, [{"name":"cmvs-maxImages","value":"500"},{"name":"time","value":true}]. For a list of all options, call /getOptions'
+*          description: 'Serialized JSON string of the options to use for processing, as an array of the format: [{name: option1, value: value1}, {name: option2, value: value2}, ...]. For example, [{"name":"cmvs-maxImages","value":"500"},{"name":"time","value":true}]. For a list of all options, call /options'
 *          required: false
 *          type: string
 *      responses:
@@ -408,7 +408,7 @@ app.post('/task/restart', uuidCheck, (req, res) => {
 });
 
 /** @swagger
-* /getOptions:
+* /options:
 *   get:
 *     description: Retrieves the command line options that can be passed to process a task
 *     responses:
@@ -442,7 +442,7 @@ app.post('/task/restart', uuidCheck, (req, res) => {
 *                 type: string
 *                 description: Description of what this option does
 */
-app.get('/getOptions', (req, res) => {
+app.get('/options', (req, res) => {
 	odmOptions.getOptions((err, options) => {
 		if (err) res.json({error: err.message});
 		else res.json(options);
@@ -450,9 +450,9 @@ app.get('/getOptions', (req, res) => {
 });
 
 /** @swagger
-* /getInfo:
+* /info:
 *   get:
-*     description: Retrieves information about this node.
+*     description: Retrieves information about this node
 *     responses:
 *       200:
 *         description: Info
@@ -467,7 +467,7 @@ app.get('/getOptions', (req, res) => {
 *               type: integer
 *               description: Number of tasks currently being processed or waiting to be processed
 */
-app.get('/getInfo', (req, res) => {
+app.get('/info', (req, res) => {
     res.json({
         version: packageJson.version,
         currentTaskQueue:  taskManager.getQueueCount()
