@@ -1,3 +1,4 @@
+"use strict";
 module.exports = {
 	get: function(scope, prop, defaultValue){
 		let parts = prop.split(".");

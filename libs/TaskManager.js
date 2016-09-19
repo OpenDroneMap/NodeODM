@@ -241,4 +241,17 @@ module.exports = class TaskManager{
 			if (done !== undefined) done();
 		});
 	}
+
+    getQueueCount(){
+        let count = 0;
+        for (let uuid in this.tasks){
+            let task = this.tasks[uuid];
+
+            if ([statusCodes.QUEUED,
+                statusCodes.RUNNING].indexOf(task.status.code) !== -1){
+                count++;
+            }
+        }
+        return count;
+    }
 };

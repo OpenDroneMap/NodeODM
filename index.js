@@ -17,10 +17,11 @@ along with this program.  If not, see <http://www.gnu.org/licenses/>.
 */
 "use strict";
 
+let fs = require('fs');
 let config = require('./config.js');
+let packageJson = JSON.parse(fs.readFileSync('./package.json'));
 
 let logger = require('./libs/logger');
-let fs = require('fs');
 let path = require('path');
 let async = require('async');
 
@@ -359,7 +360,7 @@ let successHandler = res => {
 *            $ref: "#/definitions/Response"
 */
 app.post('/task/cancel', uuidCheck, (req, res) => {
-	taskManager.cancel(req.body.uuid, e(res));
+	taskManager.cancel(req.body.uuid, successHandler(res));
 });
 
 /** @swagger
@@ -446,6 +447,31 @@ app.get('/getOptions', (req, res) => {
 		if (err) res.json({error: err.message});
 		else res.json(options);
 	});
+});
+
+/** @swagger
+* /getInfo:
+*   get:
+*     description: Retrieves information about this node.
+*     responses:
+*       200:
+*         description: Info
+*         schema:
+*           type: object
+*           required: [version, taskQueueCount]
+*           properties:
+*             version:
+*               type: string
+*               description: Current version
+*             taskQueueCount:
+*               type: integer
+*               description: Number of tasks currently being processed or waiting to be processed
+*/
+app.get('/getInfo', (req, res) => {
+    res.json({
+        version: packageJson.version,
+        currentTaskQueue:  taskManager.getQueueCount()
+    });
 });
 
 let gracefulShutdown = done => {
