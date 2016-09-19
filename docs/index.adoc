@@ -44,6 +44,34 @@ _Schemes_ : HTTP
 [[_paths]]
 == Paths
 
+[[_getinfo_get]]
+=== GET /getInfo
+
+==== Description
+Retrieves information about this node.
+
+
+==== Responses
+
+[options="header", cols=".^2,.^14,.^4"]
+|===
+|HTTP Code|Description|Schema
+|*200*|Info|<<_getinfo_get_response_200,Response 200>>
+|===
+
+[[_getinfo_get_response_200]]
+*Response 200*
+
+[options="header", cols=".^3,.^11,.^4"]
+|===
+|Name|Description|Schema
+|*taskQueueCount* +
+_required_|Number of tasks currently being processed or waiting to be processed|integer
+|*version* +
+_required_|Current version|string
+|===
+
+
 [[_getoptions_get]]
 === GET /getOptions
 
