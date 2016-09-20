@@ -46,6 +46,7 @@ app.use(morgan('combined', { stream : winstonStream }));
 app.use(bodyParser.urlencoded({extended: true}));
 app.use(bodyParser.json());
 app.use(express.static('public'));
+app.use('/swagger.json', express.static('docs/swagger.json'));
 
 let upload = multer({
 	storage: multer.diskStorage({
@@ -470,7 +471,7 @@ app.get('/options', (req, res) => {
 app.get('/info', (req, res) => {
     res.json({
         version: packageJson.version,
-        currentTaskQueue:  taskManager.getQueueCount()
+        currentTaskQueue: taskManager.getQueueCount()
     });
 });
 
