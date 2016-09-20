@@ -75,6 +75,7 @@ let server;
 *  /task/new:
 *    post:
 *      description: Creates a new task and places it at the end of the processing queue
+*      tags: [task]
 *      consumes:
 *        - multipart/form-data
 *      parameters:
@@ -183,6 +184,7 @@ let getTaskFromUuid = (req, res, next) => {
 *  /task/{uuid}/info:
 *     get:
 *       description: Gets information about this task, such as name, creation date, processing time, status, command line options and number of images being processed. See schema definition for a full list.
+*       tags: [task]
 *       parameters:
 *        -
 *           name: uuid
@@ -243,6 +245,7 @@ app.get('/task/:uuid/info', getTaskFromUuid, (req, res) => {
 *  /task/{uuid}/output:
 *     get:
 *       description: Retrieves the console output of the OpenDroneMap's process. Useful for monitoring execution and to provide updates to the user.
+*       tags: [task]
 *       parameters:
 *        -
 *           name: uuid
@@ -275,6 +278,8 @@ app.get('/task/:uuid/output', getTaskFromUuid, (req, res) => {
 *  /task/{uuid}/download/{asset}:
 *    get:
 *      description: Retrieves an asset (the output of OpenDroneMap's processing) associated with a task
+*      tags: [task]
+*      produces: [application/zip]
 *      parameters:
 *        - name: uuid
 *          in: path
@@ -325,7 +330,7 @@ app.get('/task/:uuid/download/:asset', getTaskFromUuid, (req, res) => {
 *     properties:
 *       success:
 *         type: boolean
-*         description: true if the command succeeded, false otherwise.
+*         description: true if the command succeeded, false otherwise
 *       error:
 *         type: string
 *         description: Error message if an error occured
@@ -412,6 +417,7 @@ app.post('/task/restart', uuidCheck, (req, res) => {
 * /options:
 *   get:
 *     description: Retrieves the command line options that can be passed to process a task
+*     tags: [server]
 *     responses:
 *       200:
 *         description: Options
@@ -454,6 +460,7 @@ app.get('/options', (req, res) => {
 * /info:
 *   get:
 *     description: Retrieves information about this node
+*     tags: [server]
 *     responses:
 *       200:
 *         description: Info
@@ -471,7 +478,7 @@ app.get('/options', (req, res) => {
 app.get('/info', (req, res) => {
     res.json({
         version: packageJson.version,
-        currentTaskQueue: taskManager.getQueueCount()
+        taskQueueCount: taskManager.getQueueCount()
     });
 });
 

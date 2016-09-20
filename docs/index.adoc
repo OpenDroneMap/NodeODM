@@ -72,6 +72,11 @@ _required_|Current version|string
 |===
 
 
+==== Tags
+
+* server
+
+
 [[_options_get]]
 === GET /options
 
@@ -104,6 +109,11 @@ _required_|Datatype of the value of this option|enum (int, float, string, bool)
 |*value* +
 _required_|Default value of this option|string
 |===
+
+
+==== Tags
+
+* server
 
 
 [[_task_cancel_post]]
@@ -176,6 +186,11 @@ _required_|UUID of the newly created task|string
 ==== Consumes
 
 * `multipart/form-data`
+
+
+==== Tags
+
+* task
 
 
 [[_task_remove_post]]
@@ -259,6 +274,16 @@ _required_|UUID of the task|string|
 |===
 
 
+==== Produces
+
+* `application/zip`
+
+
+==== Tags
+
+* task
+
+
 [[_task_uuid_info_get]]
 === GET /task/{uuid}/info
 
@@ -320,6 +345,11 @@ _required_|Value (example: 9)|string
 |===
 
 
+==== Tags
+
+* task
+
+
 [[_task_uuid_output_get]]
 === GET /task/{uuid}/output
 
@@ -349,6 +379,11 @@ _optional_|Optional line number that the console output should be truncated from
 |===
 
 
+==== Tags
+
+* task
+
+
 
 
 [[_definitions]]
@@ -374,7 +409,7 @@ _required_|Description of the error|string
 |*error* +
 _optional_|Error message if an error occured|string
 |*success* +
-_required_|true if the command succeeded, false otherwise.|boolean
+_required_|true if the command succeeded, false otherwise|boolean
 |===
 
 
