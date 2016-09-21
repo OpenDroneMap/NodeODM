@@ -14,7 +14,6 @@
     "opendronemap"
   ],
   "author": "Piero Toffanin",
-  "authorEmail": "pt@masseranolabs.com",
   "license": "GPL-3.0",
   "bugs": {
     "url": "https://github.com/pierotofy/node-OpenDroneMap/issues"

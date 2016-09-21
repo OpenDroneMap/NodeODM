@@ -14,7 +14,6 @@ _Version_ : 1.0.0
 === Contact information
 [%hardbreaks]
 _Contact_ : Piero Toffanin
-_Contact Email_ : pt@masseranolabs.com
 
 
 === License information

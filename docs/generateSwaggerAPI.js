@@ -31,8 +31,7 @@ let options = {
         name: packageJson.license
       }, 
       contact: {
-        name: packageJson.author,
-        email: packageJson.authorEmail
+        name: packageJson.author
       }
     },
     consumes: ["application/json"],
