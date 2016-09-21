@@ -85,6 +85,10 @@ module.exports = {
 
 					help = help.replace(/\%\(default\)s/g, value);
 
+                    // In the end, all values must be converted back
+                    // to strings (per OpenAPI spec which doesn't allow mixed types)
+                    value = String(value);
+
 					odmOptions.push({
 						name, type, value, domain, help
 					});
