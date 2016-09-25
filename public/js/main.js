@@ -302,8 +302,7 @@ $(function(){
             $("#btnUpload").removeAttr('disabled')
                             .val(btnUploadLabel);
         })
-        .on('filebatchuploaderror', function(e, data, msg){
-        });
+        .on('filebatchuploaderror', console.warn);
 
     // Load options
     function Option(properties){

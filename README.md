@@ -97,6 +97,16 @@ http://www.buildsucceeded.com/2015/solved-pm2-startup-at-boot-time-centos-7-red-
 
 You can monitor the process using `pm2 status`.
 
+### Test Mode
+
+If you want to make a contribution, but don't want to setup OpenDroneMap, or perhaps you are working on a Windows machine, or if you want to run automated tests, you can turn test mode on:
+
+```
+node index.js --test
+```
+
+While in test mode all calls to OpenDroneMap's code will be simulated (see the /tests directory for the mock data that is returned).
+
 ### Test Images
 
 You can find some test drone images [here](https://github.com/dakotabenjamin/odm_data).

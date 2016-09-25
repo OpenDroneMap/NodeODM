@@ -36,6 +36,7 @@ let morgan = require('morgan');
 let TaskManager = require('./libs/TaskManager');
 let Task = require('./libs/Task');
 let odmOptions = require('./libs/odmOptions');
+let Directories = require('./libs/Directories');
 
 let winstonStream = {
     write: function(message, encoding){
@@ -51,14 +52,14 @@ app.use('/swagger.json', express.static('docs/swagger.json'));
 let upload = multer({
 	storage: multer.diskStorage({
 	  destination: (req, file, cb) => {
-	  	let path = `tmp/${req.id}/`;
-	  	fs.exists(path, exists => {
+	  	let dstPath = path.join("tmp", req.id);
+	  	fs.exists(dstPath, exists => {
 	  		if (!exists){
-	  			fs.mkdir(path, undefined, () => {
-	  				cb(null, path);
+	  			fs.mkdir(dstPath, undefined, () => {
+	  				cb(null, dstPath);
 	  			});
 	  		}else{
-	    		cb(null, path);
+	    		cb(null, dstPath);
 	  		}
 	  	});
 	  },
@@ -115,10 +116,10 @@ let server;
 app.post('/task/new', addRequestId, upload.array('images'), (req, res) => {
 	if (req.files.length === 0) res.json({error: "Need at least 1 file."});
 	else{
-		let srcPath = `tmp/${req.id}`;
-		let destPath = `data/${req.id}`;
-		let destImagesPath = `${destPath}/images`;
-		let destGpcPath = `${destPath}/gpc`;
+		let srcPath = path.join("tmp", req.id);
+		let destPath = path.join(Directories.data, req.id);
+		let destImagesPath = path.join(destPath, "images");
+		let destGpcPath = path.join(destPath, "gpc");
 
 		async.series([
 			cb => {

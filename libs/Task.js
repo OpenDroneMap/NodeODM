@@ -17,6 +17,7 @@ along with this program.  If not, see <http://www.gnu.org/licenses/>.
 */
 "use strict";
 
+let config = require('../config');
 let async = require('async');
 let assert = require('assert');
 let logger = require('./logger');
@@ -26,6 +27,7 @@ let rmdir = require('rimraf');
 let odmRunner = require('./odmRunner');
 let archiver = require('archiver');
 let os = require('os');
+let Directories = require('./Directories');
 
 let statusCodes = require('./statusCodes');
 
@@ -99,25 +101,25 @@ module.exports = class Task{
 	// Get path where images are stored for this task
 	// (relative to nodejs process CWD)
 	getImagesFolderPath(){
-		return `${this.getProjectFolderPath()}/images`;
+		return path.join(this.getProjectFolderPath(), "images");
 	}
 
 	// Get path where GPC file(s) are stored
 	// (relative to nodejs process CWD)
 	getGpcFolderPath(){
-		return `${this.getProjectFolderPath()}/gpc`;
+		return path.join(this.getProjectFolderPath(), "gpc");
 	}
 
 	// Get path of project (where all images and assets folder are contained)
 	// (relative to nodejs process CWD)
 	getProjectFolderPath(){
-		return `data/${this.uuid}`;
+		return path.join(Directories.data, this.uuid);
 	}
 
 	// Get the path of the archive where all assets
 	// outputted by this task are stored.
 	getAssetsArchivePath(){
-		return `${this.getProjectFolderPath()}/all.zip`;
+		return path.join(this.getProjectFolderPath(), "all.zip");
 	}
 
 	// Deletes files and folders related to this task
@@ -207,16 +209,21 @@ module.exports = class Task{
 
 			archive.on('error', err => {
 				this.setStatus(statusCodes.FAILED);
+				logger.error(`Could not archive .zip file: ${err.message}`);
 				finished(err);
 			});
 
 			archive.pipe(output);
-			archive
-			  .directory(`${this.getProjectFolderPath()}/odm_orthophoto`, 'odm_orthophoto')
-			  .directory(`${this.getProjectFolderPath()}/odm_georeferencing`, 'odm_georeferencing')
-			  .directory(`${this.getProjectFolderPath()}/odm_texturing`, 'odm_texturing')
-			  .directory(`${this.getProjectFolderPath()}/odm_meshing`, 'odm_meshing')
-			  .finalize();
+			['odm_orthophoto', 'odm_georeferencing', 'odm_texturing', 'odm_meshing'].forEach(folderToArchive => {
+				let sourcePath = !config.test ? 
+								this.getProjectFolderPath() : 
+								path.join("tests", "processing_results");
+				
+				archive.directory(
+						path.join(sourcePath, folderToArchive),
+					folderToArchive);
+			});
+			archive.finalize();
 		};
 
 		if (this.status.code === statusCodes.QUEUED){

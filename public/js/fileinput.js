@@ -2216,9 +2216,9 @@
                 }
                 if (!self.showPreview) {
                     self.addToStack(file);
-                    setTimeout(function () {
+                    // setTimeout(function () {
                         readFile(i + 1);
-                    }, 100);
+                    // }, 100);
                     self._raise('fileloaded', [file, previewId, i, reader]);
                     return;
                 }

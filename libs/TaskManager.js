@@ -26,9 +26,9 @@ let Task = require('./Task');
 let statusCodes = require('./statusCodes');
 let async = require('async');
 let schedule = require('node-schedule');
+let Directories = require('./Directories');
 
-const DATA_DIR = "data";
-const TASKS_DUMP_FILE = `${DATA_DIR}/tasks.json`;
+const TASKS_DUMP_FILE = path.join(Directories.data, "tasks.json");
 const CLEANUP_TASKS_IF_OLDER_THAN = 1000 * 60 * 60 * 24 * config.cleanupTasksAfter; // days
 
 module.exports = class TaskManager{
@@ -85,11 +85,11 @@ module.exports = class TaskManager{
 	removeOrphanedDirectories(done){
 		logger.info("Checking for orphaned directories to be removed...");
 
-		fs.readdir(DATA_DIR, (err, entries) => {
+		fs.readdir(Directories.data, (err, entries) => {
 			if (err) done(err);
 			else{
 				async.eachSeries(entries, (entry, cb) => {
-					let dirPath = path.join(DATA_DIR, entry);
+					let dirPath = path.join(Directories.data, entry);
 					if (fs.statSync(dirPath).isDirectory() &&
 						entry.match(/^[\w\d]+\-[\w\d]+\-[\w\d]+\-[\w\d]+\-[\w\d]+$/) &&
 						!this.tasks[entry]){

@@ -28,7 +28,7 @@ module.exports = {
 	run: function(options, done, outputReceived){
 		assert(options["project-path"] !== undefined, "project-path must be defined");
 
-		let command = [`${config.odm_path}/run.py`];
+		let command = [path.join(config.odm_path, "run.py")];
 		for (var name in options){
 			let value = options[name];
 
@@ -48,8 +48,18 @@ module.exports = {
 		if (config.test){
 			logger.info("Test mode is on, command will not execute");
 
-			// TODO: simulate test output
-			done(null, 0, null);
+			let outputTestFile = path.join("..", "tests", "odm_output.txt");
+			fs.readFile(path.resolve(__dirname, outputTestFile), 'utf8', (err, text) => {
+				if (!err){
+					let lines = text.split("\n");
+					lines.forEach(line => outputReceived(line));
+					
+					done(null, 0, null);
+				}else{
+					logger.warn(`Error: ${err.message}`);
+					done(err);
+				}
+			});
 
 			return; // Skip rest
 		}
@@ -71,22 +81,18 @@ module.exports = {
 		// In test mode, we don't call ODM, 
 		// instead we return a mock
 		if (config.test){
-			let optionsTestFile = "../tests/odm_options.json";
+			let optionsTestFile = path.join("..", "tests", "odm_options.json");
 			fs.readFile(path.resolve(__dirname, optionsTestFile), 'utf8', (err, json) => {
 				if (!err){
 					try{
 						let options = JSON.parse(json);
-						
-						// We also mark each description with "TEST" (to make sure we know this is not real data)
-						options.forEach(option => { option.help = "## TEST ##" + (option.help !== undefined ? ` ${option.help}` : ""); });
-
 						done(null, options);
 					}catch(e){
-						console.log(`Invalid test options ${optionsTestFile}: ${err.message}`);
+						logger.warn(`Invalid test options ${optionsTestFile}: ${err.message}`);
 						done(e);
 					}
 				}else{
-					console.log(`Error: ${err.message}`);
+					logger.warn(`Error: ${err.message}`);
 					done(err);
 				}
 			});
@@ -95,7 +101,7 @@ module.exports = {
 		}
 
 		// Launch
-		let childProcess = spawn("python", [`${__dirname}/../helpers/odmOptionsToJson.py`,
+		let childProcess = spawn("python", [path.join(__dirname, "..", "helpers", "odmOptionsToJson.py"),
 				"--project-path", config.odm_path]);
 		let output = [];
 

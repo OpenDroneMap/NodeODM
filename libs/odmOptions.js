@@ -189,6 +189,7 @@ module.exports = {
 			// Scan through all possible options
 			for (let odmOption of odmOptions){
 				// Was this option selected by the user?
+				/*jshint loopfunc: true */
 				let opt = options.find(o => o.name === odmOption.name);
 				if (opt){
 					try{

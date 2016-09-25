@@ -26,7 +26,7 @@ let path = require('path');
 // Configure custom File transport to write plain text messages
 let logPath = ( config.logger.logDirectory ? 
 				config.logger.logDirectory : 
-				`${__dirname}/../` );
+				path.join(__dirname, "..") );
 
 // Check that log file directory can be written to
 try {
