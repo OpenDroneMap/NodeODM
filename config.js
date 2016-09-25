@@ -33,6 +33,7 @@ Options:
 	-d, --deamonize 	Set process to run as a deamon
 	--parallel_queue_processing <number> Number of simultaneous processing tasks (default: 2)
 	--cleanup_tasks_after <number> Number of days that elapse before deleting finished and canceled tasks (default: 3) 
+	--test Enable test mode. In test mode, no commands are sent to OpenDroneMap. This can be useful during development or testing (default: false)
 Log Levels: 
 error | debug | info | verbose | debug | silly 
 `);
@@ -76,5 +77,6 @@ config.port = parseInt(argv.port || argv.p || fromConfigFile("port", process.env
 config.deamon = argv.deamonize || argv.d || fromConfigFile("daemon", false);
 config.parallelQueueProcessing = argv.parallel_queue_processing || fromConfigFile("parallelQueueProcessing", 2);
 config.cleanupTasksAfter = argv.cleanup_tasks_after || fromConfigFile("cleanupTasksAfter", 3);
+config.test = argv.test || fromConfigFile("test", false);
 
 module.exports = config;

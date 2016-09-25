@@ -501,6 +501,8 @@ process.on ('SIGTERM', gracefulShutdown);
 process.on ('SIGINT', gracefulShutdown);
 
 // Startup
+if (config.test) logger.info("Running in test mode");
+
 async.series([
 	cb => odmOptions.initialize(cb),
 	cb => { taskManager = new TaskManager(cb); },

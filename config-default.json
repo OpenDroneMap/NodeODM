@@ -12,5 +12,6 @@
 	"port": 3000,
 	"deamon": false,
 	"parallelQueueProcessing": 2,
-	"cleanupTasksAfter": 3
+	"cleanupTasksAfter": 3,
+	"test": false
 }

@@ -16,10 +16,13 @@ You should have received a copy of the GNU General Public License
 along with this program.  If not, see <http://www.gnu.org/licenses/>.
 */
 "use strict";
+let fs = require('fs');
+let path = require('path');
 let assert = require('assert');
 let spawn = require('child_process').spawn;
 let config = require('../config.js');
 let logger = require('./logger');
+
 
 module.exports = {
 	run: function(options, done, outputReceived){
@@ -42,6 +45,15 @@ module.exports = {
 
 		logger.info(`About to run: python ${command.join(" ")}`);
 
+		if (config.test){
+			logger.info("Test mode is on, command will not execute");
+
+			// TODO: simulate test output
+			done(null, 0, null);
+
+			return; // Skip rest
+		}
+
 		// Launch
 		let childProcess = spawn("python", command, {cwd: config.odm_path});
 
@@ -56,6 +68,32 @@ module.exports = {
 	},
 
 	getJsonOptions: function(done){
+		// In test mode, we don't call ODM, 
+		// instead we return a mock
+		if (config.test){
+			let optionsTestFile = "../tests/odm_options.json";
+			fs.readFile(path.resolve(__dirname, optionsTestFile), 'utf8', (err, json) => {
+				if (!err){
+					try{
+						let options = JSON.parse(json);
+						
+						// We also mark each description with "TEST" (to make sure we know this is not real data)
+						options.forEach(option => { option.help = "## TEST ##" + (option.help !== undefined ? ` ${option.help}` : ""); });
+
+						done(null, options);
+					}catch(e){
+						console.log(`Invalid test options ${optionsTestFile}: ${err.message}`);
+						done(e);
+					}
+				}else{
+					console.log(`Error: ${err.message}`);
+					done(err);
+				}
+			});
+
+			return; // Skip rest
+		}
+
 		// Launch
 		let childProcess = spawn("python", [`${__dirname}/../helpers/odmOptionsToJson.py`,
 				"--project-path", config.odm_path]);
