@@ -114,7 +114,7 @@ let server;
 *            $ref: '#/definitions/Error'
 */
 app.post('/task/new', addRequestId, upload.array('images'), (req, res) => {
-	if (req.files.length === 0) res.json({error: "Need at least 1 file."});
+	if (!req.files || req.files.length === 0) res.json({error: "Need at least 1 file."});
 	else{
 		let srcPath = path.join("tmp", req.id);
 		let destPath = path.join(Directories.data, req.id);
