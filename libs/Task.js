@@ -273,9 +273,9 @@ module.exports = class Task{
 	}
 
 	// Re-executes the task (by setting it's state back to QUEUED)
-	// Only tasks that have been canceled or have failed can be restarted.
+	// Only tasks that have been canceled, completed or have failed can be restarted.
 	restart(cb){
-		if (this.status.code === statusCodes.CANCELED || this.status.code === statusCodes.FAILED){
+		if ([statusCodes.CANCELED, statusCodes.FAILED, statusCodes.COMPLETED].indexOf(this.status.code) !== -1){
 			this.setStatus(statusCodes.QUEUED);
 			this.dateCreated = new Date().getTime();
 			this.output = [];
