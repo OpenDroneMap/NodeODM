@@ -111,6 +111,10 @@ While in test mode all calls to OpenDroneMap's code will be simulated (see the /
 
 You can find some test drone images [here](https://github.com/dakotabenjamin/odm_data).
 
+## What if I need more functionality?
+
+node-OpenDroneMap is meant to be a lightweight API. If you are looking for a more comprehensive solution to drone mapping, check out [WebODM](https://github.com/OpenDroneMap/WebODM), which uses node-OpenDroneMap for processing.
+
 ## Contributing
 
 Make a pull request small contributions. For big contributions, please open a discussion first. Please use ES6 syntax while writing new Javascript code so that we can keep the code base uniform.
@@ -119,7 +123,7 @@ Make a pull request small contributions. For big contributions, please open a di
 
 - [X] Command line options for OpenDroneMap
 - [X] GPC List support
-- [ ] Autoremove Abandoned Tasks
+- [ ] Video support when the [SLAM module](https://github.com/OpenDroneMap/OpenDroneMap/pull/317) becomes available
 - [ ] Continuous Integration Setup
 - [X] Documentation
 - [ ] Unit Testing

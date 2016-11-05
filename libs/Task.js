@@ -22,6 +22,7 @@ let async = require('async');
 let assert = require('assert');
 let logger = require('./logger');
 let fs = require('fs');
+let glob = require("glob");
 let path = require('path');
 let rmdir = require('rimraf');
 let odmRunner = require('./odmRunner');
@@ -118,8 +119,26 @@ module.exports = class Task{
 
 	// Get the path of the archive where all assets
 	// outputted by this task are stored.
-	getAssetsArchivePath(){
-		return path.join(this.getProjectFolderPath(), "all.zip");
+	getAssetsArchivePath(filename){
+		switch(filename){
+			case "all.zip":
+			case "georeferenced_model.ply.zip":
+			case "georeferenced_model.las.zip":
+			case "georeferenced_model.csv.zip":
+			case "textured_model.zip":
+				// OK
+				break;
+			case "orthophoto.png":
+			case "orthophoto.tif":
+				// Append missing pieces to the path
+				filename = path.join('odm_orthophoto', `odm_${filename}`);
+				break;
+			default:
+				// Invalid
+				return false;
+		}
+
+		return path.join(this.getProjectFolderPath(), filename);
 	}
 
 	// Deletes files and folders related to this task
@@ -198,32 +217,89 @@ module.exports = class Task{
 		};
 		
 		const postProcess = () => {
-			let output = fs.createWriteStream(this.getAssetsArchivePath());
-			let archive = archiver.create('zip', {});
+			const createZipArchive = (outputFilename, files) => {
+				return (done) => {
+					let output = fs.createWriteStream(this.getAssetsArchivePath(outputFilename));
+					let archive = archiver.create('zip', {});
 
-			archive.on('finish', () => {
-				// TODO: is this being fired twice?
-				this.setStatus(statusCodes.COMPLETED);
-				finished();
-			});
+					archive.on('finish', () => {
+						// TODO: is this being fired twice?
+						done();
+					});
 
-			archive.on('error', err => {
-				this.setStatus(statusCodes.FAILED);
-				logger.error(`Could not archive .zip file: ${err.message}`);
-				finished(err);
-			});
+					archive.on('error', err => {
+						logger.error(`Could not archive .zip file: ${err.message}`);
+						done(err);
+					});
 
-			archive.pipe(output);
-			['odm_orthophoto', 'odm_georeferencing', 'odm_texturing', 'odm_meshing'].forEach(folderToArchive => {
-				let sourcePath = !config.test ? 
-								this.getProjectFolderPath() : 
-								path.join("tests", "processing_results");
-				
-				archive.directory(
-						path.join(sourcePath, folderToArchive),
-					folderToArchive);
+					archive.pipe(output);
+					let globs = [];
+
+					// Process files and directories first
+					files.forEach(file => {
+						let sourcePath = !config.test ? 
+										this.getProjectFolderPath() : 
+										path.join("tests", "processing_results");
+						let filePath = path.join(sourcePath, file),
+							isGlob = /\*/.test(file),
+							isDirectory = !isGlob && fs.lstatSync(filePath).isDirectory();
+
+						if (isDirectory){
+							archive.directory(filePath, file);
+						}else if (isGlob){
+							globs.push(filePath);
+						}else{
+							archive.file(filePath, {name: path.basename(file)});
+						}
+					});
+
+					// Check for globs
+					if (globs.length !== 0){
+						let pending = globs.length;
+
+						globs.forEach(pattern => {
+							glob(pattern, (err, files) => {
+								if (err) done(err);
+								else{
+									files.forEach(file => {
+										if (fs.lstatSync(file).isFile()){
+											archive.file(file, {name: path.basename(file)});
+										}else{
+											logger.debug(`Could not add ${file} from glob`);
+										}
+									});
+
+									if (--pending === 0){
+										archive.finalize();
+									}
+								}
+							});
+						});
+					}else{
+						archive.finalize()
+					}
+				};
+			};
+
+			async.series([
+				createZipArchive("all.zip", ['odm_orthophoto', 'odm_georeferencing', 'odm_texturing', 'odm_meshing']),
+				createZipArchive("georeferenced_model.ply.zip", [path.join('odm_georeferencing', 'odm_georeferenced_model.ply')]),
+				createZipArchive("georeferenced_model.las.zip", [path.join('odm_georeferencing', 'odm_georeferenced_model.ply.las')]),
+				createZipArchive("georeferenced_model.csv.zip", [path.join('odm_georeferencing', 'odm_georeferenced_model.csv')]),
+				createZipArchive("textured_model.zip", [
+										path.join("odm_texturing", "*.jpg"), 
+										path.join("odm_texturing", "odm_textured_model_geo.obj"),
+										path.join("odm_texturing", "odm_textured_model_geo.mtl")
+									])
+			], (err) => {
+				if (!err){
+					this.setStatus(statusCodes.COMPLETED);
+					finished();
+				}else{
+					this.setStatus(statusCodes.FAILED);
+					finished(err);
+				}
 			});
-			archive.finalize();
 		};
 
 		if (this.status.code === statusCodes.QUEUED){

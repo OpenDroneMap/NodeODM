@@ -39,7 +39,7 @@ module.exports = {
 				for (let option in json){
 					// Not all options are useful to the end user
 					// (num cores can be set programmatically, so can gcpFile, etc.)
-					if (["-h", "--project-path", 
+					if (["-h", "--project-path", "--cmvs-maxImages", "--time",
 						"--zip-results", "--pmvs-num-cores", "--odm_georeferencing-useGcp",
 						"--start-with", "--odm_georeferencing-gcpFile", "--end-with"].indexOf(option) !== -1) continue;
 

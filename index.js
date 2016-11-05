@@ -290,10 +290,16 @@ app.get('/task/:uuid/output', getTaskFromUuid, (req, res) => {
 *        - name: asset
 *          in: path
 *          type: string
-*          description: Type of asset to download. Use "all" for zip file containing all assets. Other options are not yet available
+*          description: Type of asset to download. Use "all.zip" for zip file containing all assets. Other options are not yet available
 *          required: true
 *          enum:
-*            - all
+*            - all.zip
+*            - georeferenced_model.ply.zip
+*            - georeferenced_model.las.zip
+*            - georeferenced_model.csv.zip
+*            - orthophoto.png
+*            - orthophoto.tif
+*            - textured_model.zip
 *      responses:
 *        200:
 *          description: Asset File
@@ -305,8 +311,10 @@ app.get('/task/:uuid/output', getTaskFromUuid, (req, res) => {
 *            $ref: '#/definitions/Error'
 */
 app.get('/task/:uuid/download/:asset', getTaskFromUuid, (req, res) => {
-	if (!req.params.asset || req.params.asset === "all"){
-		res.download(req.task.getAssetsArchivePath(), "all.zip", err => {
+	let asset = req.params.asset !== undefined ? req.params.asset : "all.zip";
+	let filePath = req.task.getAssetsArchivePath(asset);
+	if (filePath){
+		res.download(filePath, filePath, err => {
 			if (err) res.json({error: "Asset not ready"});
 		});
 	}else{
