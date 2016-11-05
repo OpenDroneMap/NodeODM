@@ -290,7 +290,7 @@ app.get('/task/:uuid/output', getTaskFromUuid, (req, res) => {
 *        - name: asset
 *          in: path
 *          type: string
-*          description: Type of asset to download. Use "all.zip" for zip file containing all assets. Other options are not yet available
+*          description: Type of asset to download. Use "all.zip" for zip file containing all assets.
 *          required: true
 *          enum:
 *            - all.zip
