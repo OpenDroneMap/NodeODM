@@ -139,7 +139,7 @@ module.exports = class Task{
 				// Invalid
 				return false;
 		}
-		console.log(path.join(this.getProjectFolderPath(), filename))
+
 		return path.join(this.getProjectFolderPath(), filename);
 	}
 
