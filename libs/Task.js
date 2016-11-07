@@ -131,13 +131,15 @@ module.exports = class Task{
 			case "orthophoto.png":
 			case "orthophoto.tif":
 				// Append missing pieces to the path
-				filename = path.join('odm_orthophoto', `odm_${filename}`);
+				filename = !config.test ? 
+							path.join('odm_orthophoto', `odm_${filename}`) :
+							path.join('..', '..', 'processing_results', 'odm_orthophoto', `odm_${filename}`);
 				break;
 			default:
 				// Invalid
 				return false;
 		}
-
+		console.log(path.join(this.getProjectFolderPath(), filename))
 		return path.join(this.getProjectFolderPath(), filename);
 	}
 
