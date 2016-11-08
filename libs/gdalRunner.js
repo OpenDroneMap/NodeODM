@@ -32,6 +32,7 @@ module.exports = {
 
 		let command = ["-z", options.zoomLevels,
 						"-n", 
+						"-w", "none",
 						options.inputFile, 
 						options.outputDir
 					];
