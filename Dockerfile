@@ -5,7 +5,7 @@ EXPOSE 3000
 
 USER root
 RUN curl --silent --location https://deb.nodesource.com/setup_6.x | sudo bash -
-RUN apt-get install -y nodejs
+RUN apt-get install -y nodejs python-gdal
 RUN npm install -g nodemon
 
 RUN mkdir /var/www

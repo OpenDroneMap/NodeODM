@@ -26,6 +26,7 @@ let glob = require("glob");
 let path = require('path');
 let rmdir = require('rimraf');
 let odmRunner = require('./odmRunner');
+let gdalRunner = require('./gdalRunner');
 let archiver = require('archiver');
 let os = require('os');
 let Directories = require('./Directories');
@@ -46,6 +47,7 @@ module.exports = class Task{
 		this.gpcFiles = [];
 		this.output = [];
 		this.runnerProcess = null;
+		this.tilingProcess = null;
 
 		async.series([
 			// Read images info
@@ -126,6 +128,7 @@ module.exports = class Task{
 			case "georeferenced_model.las.zip":
 			case "georeferenced_model.csv.zip":
 			case "textured_model.zip":
+			case "orthophoto_tiles.zip":
 				// OK
 				break;
 			case "orthophoto.png":
@@ -194,13 +197,20 @@ module.exports = class Task{
 			let wasRunning = this.status.code === statusCodes.RUNNING;
 			this.setStatus(statusCodes.CANCELED);
 
-			if (wasRunning && this.runnerProcess){
-				// TODO: this does NOT guarantee that
-				// the process will immediately terminate.
-				// In fact, often times ODM will continue running for a while
-				// This might need to be fixed on ODM's end.
-				this.runnerProcess.kill('SIGINT');
-				this.runnerProcess = null;
+			if (wasRunning){
+				if (this.runnerProcess){
+					// TODO: this does NOT guarantee that
+					// the process will immediately terminate.
+					// In fact, often times ODM will continue running for a while
+					// This might need to be fixed on ODM's end.
+					this.runnerProcess.kill('SIGINT');
+					this.runnerProcess = null;
+				}
+				
+				if (this.tilingProcess){
+					this.tilingProcess.kill('SIGINT');
+					this.tilingProcess = null;
+				}
 			}
 
 			this.stopTrackingProcessingTime(true);
@@ -283,16 +293,38 @@ module.exports = class Task{
 				};
 			};
 
+			const generateTiles = (inputFile, outputDir) => {
+				return (done) => {
+					this.tilingProcess = gdalRunner.runTiler({
+						zoomLevels: "16-22",
+						inputFile: path.join(this.getProjectFolderPath(), inputFile),
+						outputDir: path.join(this.getProjectFolderPath(), outputDir)
+					}, (err, code, signal) => {
+						if (err) done(err);
+						}else{
+							// Don't evaluate if we caused the process to exit via SIGINT?
+							if (code === 0) done();
+							else done(new Error(`Process exited with code ${code}`));
+						}
+					}, output => {
+						this.output.push(output);
+					});
+				};
+			};
+
+			// All paths are relative to the project directory (./data/<uuid>/)
 			async.series([
-				createZipArchive("all.zip", ['odm_orthophoto', 'odm_georeferencing', 'odm_texturing', 'odm_meshing']),
-				createZipArchive("georeferenced_model.ply.zip", [path.join('odm_georeferencing', 'odm_georeferenced_model.ply')]),
-				createZipArchive("georeferenced_model.las.zip", [path.join('odm_georeferencing', 'odm_georeferenced_model.ply.las')]),
-				createZipArchive("georeferenced_model.csv.zip", [path.join('odm_georeferencing', 'odm_georeferenced_model.csv')]),
-				createZipArchive("textured_model.zip", [
-										path.join("odm_texturing", "*.jpg"), 
-										path.join("odm_texturing", "odm_textured_model_geo.obj"),
-										path.join("odm_texturing", "odm_textured_model_geo.mtl")
-									])
+                generateTiles(path.join('odm_orthophoto', 'odm_orthophoto.tif'), 'orthophoto_tiles'),
+                createZipArchive('all.zip', ['odm_orthophoto', 'odm_georeferencing', 'odm_texturing', 'odm_meshing']),
+                createZipArchive('georeferenced_model.ply.zip', [path.join('odm_georeferencing', 'odm_georeferenced_model.ply')]),
+                createZipArchive('georeferenced_model.las.zip', [path.join('odm_georeferencing', 'odm_georeferenced_model.ply.las')]),
+                createZipArchive('georeferenced_model.csv.zip', [path.join('odm_georeferencing', 'odm_georeferenced_model.csv')]),
+                createZipArchive('textured_model.zip', [
+                                        path.join('odm_texturing', '*.jpg'), 
+                                        path.join('odm_texturing', 'odm_textured_model_geo.obj'),
+                                        path.join('odm_texturing', 'odm_textured_model_geo.mtl')
+                                    ]),
+                createZipArchive('orthophoto_tiles.zip', ['orthophoto_tiles'])
 			], (err) => {
 				if (!err){
 					this.setStatus(statusCodes.COMPLETED);
@@ -324,7 +356,7 @@ module.exports = class Task{
 			this.runnerProcess = odmRunner.run(runnerOptions, (err, code, signal) => {
 					if (err){
 						this.setStatus(statusCodes.FAILED, {errorMessage: `Could not start process (${err.message})`});
-						finished();
+						finished(err);
 					}else{
 						// Don't evaluate if we caused the process to exit via SIGINT?
 						if (this.status.code !== statusCodes.CANCELED){
