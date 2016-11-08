@@ -257,7 +257,7 @@ Retrieves an asset (the output of OpenDroneMap's processing) associated with a t
 |===
 |Type|Name|Description|Schema|Default
 |*Path*|*asset* +
-_required_|Type of asset to download. Use "all.zip" for zip file containing all assets.|enum (all.zip, georeferenced_model.ply.zip, georeferenced_model.las.zip, georeferenced_model.csv.zip, orthophoto.png, orthophoto.tif, textured_model.zip)|
+_required_|Type of asset to download. Use "all.zip" for zip file containing all assets.|enum (all.zip, georeferenced_model.ply.zip, georeferenced_model.las.zip, georeferenced_model.csv.zip, orthophoto.png, orthophoto.tif, textured_model.zip, orthophoto_tiles.zip)|
 |*Path*|*uuid* +
 _required_|UUID of the task|string|
 |===

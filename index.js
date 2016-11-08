@@ -300,7 +300,7 @@ app.get('/task/:uuid/output', getTaskFromUuid, (req, res) => {
 *            - orthophoto.png
 *            - orthophoto.tif
 *            - textured_model.zip
-*			 - orthophoto_tiles.zip
+*            - orthophoto_tiles.zip
 *      responses:
 *        200:
 *          description: Asset File
