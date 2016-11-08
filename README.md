@@ -42,7 +42,7 @@ If you are already running [OpenDroneMap](https://github.com/OpenDroneMap/OpenDr
 
 ```
 sudo curl --silent --location https://deb.nodesource.com/setup_6.x | sudo bash -
-sudo apt-get install -y nodejs
+sudo apt-get install -y nodejs python-gdal
 git clone https://github.com/pierotofy/node-OpenDroneMap
 cd node-OpenDroneMap
 npm install

@@ -14,4 +14,7 @@ WORKDIR "/var/www"
 RUN git clone https://github.com/pierotofy/node-OpenDroneMap .
 RUN npm install
 
+# Fix old version of gdal2tiles.py
+RUN (cd / && patch -p0) <patches/gdal2tiles.patch
+
 ENTRYPOINT ["/usr/bin/nodejs", "/var/www/index.js"]

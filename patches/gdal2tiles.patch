@@ -1,0 +1,11 @@
+--- /usr/bin/gdal2tiles.py	2014-04-05 14:21:17.000000000 +0000
++++ gdal2tiles.py	2016-11-08 19:33:42.162188732 +0000
+@@ -783,7 +783,7 @@
+         self.out_srs = osr.SpatialReference()
+ 
+         if self.options.profile == 'mercator':
+-            self.out_srs.ImportFromEPSG(900913)
++            self.out_srs.ImportFromEPSG(3857)
+         elif self.options.profile == 'geodetic':
+             self.out_srs.ImportFromEPSG(4326)
+         else:
