@@ -301,7 +301,7 @@ module.exports = class Task{
 						outputDir: path.join(this.getProjectFolderPath(), outputDir)
 					}, (err, code, signal) => {
 						if (err) done(err);
-						}else{
+						else{
 							// Don't evaluate if we caused the process to exit via SIGINT?
 							if (code === 0) done();
 							else done(new Error(`Process exited with code ${code}`));
@@ -315,7 +315,7 @@ module.exports = class Task{
 			// All paths are relative to the project directory (./data/<uuid>/)
 			async.series([
                 generateTiles(path.join('odm_orthophoto', 'odm_orthophoto.tif'), 'orthophoto_tiles'),
-                createZipArchive('all.zip', ['odm_orthophoto', 'odm_georeferencing', 'odm_texturing', 'odm_meshing']),
+                createZipArchive('all.zip', ['odm_orthophoto', 'odm_georeferencing', 'odm_texturing', 'odm_meshing', 'orthophoto_tiles']),
                 createZipArchive('georeferenced_model.ply.zip', [path.join('odm_georeferencing', 'odm_georeferenced_model.ply')]),
                 createZipArchive('georeferenced_model.las.zip', [path.join('odm_georeferencing', 'odm_georeferenced_model.ply.las')]),
                 createZipArchive('georeferenced_model.csv.zip', [path.join('odm_georeferencing', 'odm_georeferenced_model.csv')]),

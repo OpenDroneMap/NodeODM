@@ -32,8 +32,8 @@ module.exports = {
 
 		let command = ["-z", options.zoomLevels,
 						"-n", 
-						fs.realpathSync(options.inputFile), 
-						fs.realpathSync(option.outputDir)
+						options.inputFile, 
+						options.outputDir
 					];
 		logger.info(`About to run: gdal2tiles.py ${command.join(" ")}`);
 
@@ -57,7 +57,7 @@ module.exports = {
 		}
 
 		// Launch
-		let childProcess = spawn("gdal2tiles.py", command, {cwd: config.odm_path});
+		let childProcess = spawn("gdal2tiles.py", command);
 
 		childProcess
 			.on('exit', (code, signal) => done(null, code, signal))
