@@ -231,7 +231,7 @@ module.exports = class Task{
 		const postProcess = () => {
 			const createZipArchive = (outputFilename, files) => {
 				return (done) => {
-					this.output.push(`Compressing ${outputFilename}`);
+					this.output.push(`Compressing ${outputFilename}\n`);
 
 					let output = fs.createWriteStream(this.getAssetsArchivePath(outputFilename));
 					let archive = archiver.create('zip', {});
