@@ -24,6 +24,7 @@ let packageJson = JSON.parse(fs.readFileSync('./package.json'));
 let logger = require('./libs/logger');
 let path = require('path');
 let async = require('async');
+let mime = require('mime');
 
 let express = require('express');
 let app = express();
@@ -315,9 +316,16 @@ app.get('/task/:uuid/download/:asset', getTaskFromUuid, (req, res) => {
 	let asset = req.params.asset !== undefined ? req.params.asset : "all.zip";
 	let filePath = req.task.getAssetsArchivePath(asset);
 	if (filePath){
-		res.download(filePath, filePath, err => {
-			if (err) res.json({error: "Asset not ready"});
-		});
+		if (fs.existsSync(filePath)){
+			res.setHeader('Content-Disposition', `attachment; filename=${asset}`);
+			res.setHeader('Content-Type', mime.lookup(asset));
+			res.setHeader('Content-Length', fs.statSync(filePath)["size"]);
+
+			const filestream = fs.createReadStream(filePath);
+	  		filestream.pipe(res);
+		}else{
+			res.json({error: "Asset not ready"});
+		}
 	}else{
 		res.json({error: "Invalid asset"});
 	}

@@ -231,6 +231,8 @@ module.exports = class Task{
 		const postProcess = () => {
 			const createZipArchive = (outputFilename, files) => {
 				return (done) => {
+					this.output.push(`Compressing ${outputFilename}`);
+
 					let output = fs.createWriteStream(this.getAssetsArchivePath(outputFilename));
 					let archive = archiver.create('zip', {});
 
@@ -296,7 +298,7 @@ module.exports = class Task{
 			const generateTiles = (inputFile, outputDir) => {
 				return (done) => {
 					this.tilingProcess = gdalRunner.runTiler({
-						zoomLevels: "16-22",
+						zoomLevels: "16-21",
 						inputFile: path.join(this.getProjectFolderPath(), inputFile),
 						outputDir: path.join(this.getProjectFolderPath(), outputDir)
 					}, (err, code, signal) => {
