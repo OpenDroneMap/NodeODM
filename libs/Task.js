@@ -26,7 +26,7 @@ let glob = require("glob");
 let path = require('path');
 let rmdir = require('rimraf');
 let odmRunner = require('./odmRunner');
-let gdalRunner = require('./gdalRunner');
+let processRunner = require('./processRunner');
 let archiver = require('archiver');
 let os = require('os');
 let Directories = require('./Directories');
@@ -46,8 +46,7 @@ module.exports = class Task{
 		this.options = options;
 		this.gpcFiles = [];
 		this.output = [];
-		this.runnerProcess = null;
-		this.tilingProcess = null;
+		this.runningProcesses = [];
 
 		async.series([
 			// Read images info
@@ -198,19 +197,14 @@ module.exports = class Task{
 			this.setStatus(statusCodes.CANCELED);
 
 			if (wasRunning){
-				if (this.runnerProcess){
+				this.runningProcesses.forEach(proc => {
 					// TODO: this does NOT guarantee that
 					// the process will immediately terminate.
-					// In fact, often times ODM will continue running for a while
+					// For eaxmple in the case of the ODM process, the process will continue running for a while
 					// This might need to be fixed on ODM's end.
-					this.runnerProcess.kill('SIGINT');
-					this.runnerProcess = null;
-				}
-				
-				if (this.tilingProcess){
-					this.tilingProcess.kill('SIGINT');
-					this.tilingProcess = null;
-				}
+					proc.kill('SIGINT');					
+				});
+				this.runningProcesses = [];
 			}
 
 			this.stopTrackingProcessingTime(true);
@@ -290,34 +284,50 @@ module.exports = class Task{
 							});
 						});
 					}else{
-						archive.finalize()
+						archive.finalize();
 					}
 				};
 			};
 
+			const handleProcessExit = (done) => {
+				return (err, code, signal) => {
+					if (err) done(err);
+					else{
+						// Don't evaluate if we caused the process to exit via SIGINT?
+						if (code === 0) done();
+						else done(new Error(`Process exited with code ${code}`));
+					}
+				};
+			};
+
+			const handleOutput = output => {
+				this.output.push(output);
+			};
+
 			const generateTiles = (inputFile, outputDir) => {
 				return (done) => {
-					this.tilingProcess = gdalRunner.runTiler({
+					this.runningProcesses.push(processRunner.runTiler({
 						zoomLevels: "16-21",
 						inputFile: path.join(this.getProjectFolderPath(), inputFile),
 						outputDir: path.join(this.getProjectFolderPath(), outputDir)
-					}, (err, code, signal) => {
-						if (err) done(err);
-						else{
-							// Don't evaluate if we caused the process to exit via SIGINT?
-							if (code === 0) done();
-							else done(new Error(`Process exited with code ${code}`));
-						}
-					}, output => {
-						this.output.push(output);
-					});
+					}, handleProcessExit(done), handleOutput));
+				};
+			};
+
+			const generatePotreeCloud = (inputFile, outputDir) => {
+				return (done) => {
+					this.runningProcesses.push(processRunner.runPotreeConverter({
+						inputFile: path.join(this.getProjectFolderPath(), inputFile),
+						outputDir: path.join(this.getProjectFolderPath(), outputDir)
+					}, handleProcessExit(done), handleOutput));
 				};
 			};
 
 			// All paths are relative to the project directory (./data/<uuid>/)
 			async.series([
                 generateTiles(path.join('odm_orthophoto', 'odm_orthophoto.tif'), 'orthophoto_tiles'),
-                createZipArchive('all.zip', ['odm_orthophoto', 'odm_georeferencing', 'odm_texturing', 'odm_meshing', 'orthophoto_tiles']),
+                generatePotreeCloud(path.join('odm_georeferencing', 'odm_georeferenced_model.ply.las'), 'potree_pointcloud'),
+                createZipArchive('all.zip', ['odm_orthophoto', 'odm_georeferencing', 'odm_texturing', 'odm_meshing', 'orthophoto_tiles', 'potree_pointcloud']),
                 createZipArchive('georeferenced_model.ply.zip', [path.join('odm_georeferencing', 'odm_georeferenced_model.ply')]),
                 createZipArchive('georeferenced_model.las.zip', [path.join('odm_georeferencing', 'odm_georeferenced_model.ply.las')]),
                 createZipArchive('georeferenced_model.csv.zip', [path.join('odm_georeferencing', 'odm_georeferenced_model.csv')]),
@@ -355,7 +365,7 @@ module.exports = class Task{
 				runnerOptions["odm_georeferencing-gcpFile"] = fs.realpathSync(path.join(this.getGpcFolderPath(), this.gpcFiles[0]));
 			}
 
-			this.runnerProcess = odmRunner.run(runnerOptions, (err, code, signal) => {
+			this.runningProcesses.push(odmRunner.run(runnerOptions, (err, code, signal) => {
 					if (err){
 						this.setStatus(statusCodes.FAILED, {errorMessage: `Could not start process (${err.message})`});
 						finished(err);
@@ -376,7 +386,8 @@ module.exports = class Task{
 					// Replace console colors
 					output = output.replace(/\x1b\[[0-9;]*m/g, "");
 					this.output.push(output);
-				});
+				})
+			);
 
 			return true;
 		}else{

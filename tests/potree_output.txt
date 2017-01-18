@@ -1,0 +1,28 @@
+== params ==
+source[0]:         	/home/user/file.las
+outdir:            	/home/user/output
+spacing:           	0
+diagonal-fraction: 	250
+levels:            	-1
+format:            	
+scale:             	0
+pageName:          	
+output-format:     	BINARY
+
+AABB: 
+min: [319,738, 3.0939e+06, -45.3844]
+max: [319,831, 3.09405e+06, 11.8638]
+size: [92.2953, 145.944, 57.2482]
+
+cubic AABB: 
+min: [319,738, 3.0939e+06, -45.3844]
+max: [319,884, 3.09405e+06, 100.56]
+size: [145.944, 145.944, 145.944]
+
+spacing calculated from diagonal: 1.01113
+READING:  /home/user/file.las
+closing writer
+
+conversion finished
+268,568 points were processed and 268,568 points ( 100% ) were written to the output. 
+duration: 0.267s
