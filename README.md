@@ -40,7 +40,7 @@ See the [API documentation page](/docs/index.adoc).
 
 If you are already running [OpenDroneMap](https://github.com/OpenDroneMap/OpenDroneMap) on Ubuntu natively you can follow these steps:
 
-1. Install PotreeConverter and LASzip dependency
+1) Install PotreeConverter and LASzip dependency
  
 ```bash
 apt-get install -y libboost-dev libboost-program-options-dev
@@ -61,7 +61,7 @@ cd build
 cmake -DCMAKE_BUILD_TYPE=Release -DLASZIP_INCLUDE_DIRS=/staging/LAStools/LASzip/dll -DLASZIP_LIBRARY=/staging/LAStools/LASzip/build/src/liblaszip.so ..
 make && make install
 ```
-2. Install gdal2tiles.py script, node.js and npm dependencies
+2) Install gdal2tiles.py script, node.js and npm dependencies
 
 ```bash
 sudo curl --silent --location https://deb.nodesource.com/setup_6.x | sudo bash -
@@ -71,7 +71,7 @@ cd node-OpenDroneMap
 npm install
 ```
 
-3. Start node-OpenDroneMap
+3) Start node-OpenDroneMap
 
 ```bash
 node index.js
