@@ -105,7 +105,13 @@ module.exports = class TaskManager{
 	restoreTaskListFromDump(done){
 		fs.readFile(TASKS_DUMP_FILE, (err, data) => {
 			if (!err){
-				let tasks = JSON.parse(data.toString());
+				let tasks;
+				try{
+					tasks = JSON.parse(data.toString());
+				}catch(e){
+					done(new Error(`Could not load task list. It looks like the ${TASKS_DUMP_FILE} is corrupted (${e.message}). Please manually delete the file and try again.`));
+					return;
+				}
 
 				async.each(tasks, (taskJson, done) => {
 					Task.CreateFromSerialized(taskJson, (err, task) => {

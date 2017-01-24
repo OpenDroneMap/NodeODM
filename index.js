@@ -530,5 +530,6 @@ async.series([
 		});
 	}
 ], err => {
+	debugger;
 	if (err) logger.error("Error during startup: " + err.message);
 });

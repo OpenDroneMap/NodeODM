@@ -111,7 +111,7 @@ module.exports = {
 					let json = JSON.parse(output.join(""));
 					done(null, json);
 				}catch(err){
-					done(err);
+					done(new Error(`Could not load list of options from OpenDroneMap. Is OpenDroneMap installed in ${config.odm_path}? Make sure that OpenDroneMap is installed and that --odm_path is set properly: ${err.message}`));
 				}
 			})
 			.on('error', done);
