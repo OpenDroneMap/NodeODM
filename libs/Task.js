@@ -361,8 +361,7 @@ module.exports = class Task{
 			runnerOptions["pmvs-num-cores"] = os.cpus().length;
 
 			if (this.gpcFiles.length > 0){
-				runnerOptions["odm_georeferencing-useGcp"] = true;
-				runnerOptions["odm_georeferencing-gcpFile"] = fs.realpathSync(path.join(this.getGpcFolderPath(), this.gpcFiles[0]));
+				runnerOptions["gcp"] = fs.realpathSync(path.join(this.getGpcFolderPath(), this.gpcFiles[0]));
 			}
 
 			this.runningProcesses.push(odmRunner.run(runnerOptions, (err, code, signal) => {
