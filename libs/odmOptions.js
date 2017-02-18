@@ -126,6 +126,9 @@ module.exports = {
 					else if (value === 'false') return false;
 					else if (typeof value === 'boolean') return value;
 					else throw new Error(`Cannot convert ${value} to boolean`);
+				},
+				'string': function(value){
+					return value; // No conversion needed
 				}
 			};
 			
