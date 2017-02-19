@@ -176,7 +176,13 @@ module.exports = {
 								return false;
 						}
 					}
-				}			
+				},
+				{
+					regex: /^string$/,
+					validate: function(){
+						return true; // All strings are fine
+					}
+				}		
 			];
 
 			let checkDomain = function(domain, value){
