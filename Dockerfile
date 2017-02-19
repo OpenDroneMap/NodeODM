@@ -30,7 +30,7 @@ RUN cd /staging/PotreeConverter && \
 RUN mkdir /var/www
 
 WORKDIR "/var/www"
-RUN git clone https://github.com/pierotofy/node-OpenDroneMap .
+RUN git clone https://github.com/OpenDroneMap/node-OpenDroneMap .
 RUN npm install
 
 # Fix old version of gdal2tiles.py
