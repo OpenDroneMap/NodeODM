@@ -13,10 +13,7 @@ If you want to do your own imagery processing, we recommend that you setup your 
 
 * From the Docker Quickstart Terminal (Windows / OSX) or from the command line (Linux) type:
 ```
-git clone https://github.com/pierotofy/node-OpenDroneMap
-cd node-OpenDroneMap
-docker build -t nodeodm:latest .
-docker run -p 3000:3000 nodeodm:latest
+docker run -p 3000:3000 opendronemap/node-opendronemap
 ```
 
 * If you're on Windows/OSX, find the IP of your Docker machine by running this command from your Docker Quickstart Terminal:
