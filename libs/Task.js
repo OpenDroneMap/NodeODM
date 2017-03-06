@@ -307,7 +307,7 @@ module.exports = class Task{
 			const generateTiles = (inputFile, outputDir) => {
 				return (done) => {
 					this.runningProcesses.push(processRunner.runTiler({
-						zoomLevels: "16-21",
+						zoomLevels: "12-21",
 						inputFile: path.join(this.getProjectFolderPath(), inputFile),
 						outputDir: path.join(this.getProjectFolderPath(), outputDir)
 					}, handleProcessExit(done), handleOutput));
