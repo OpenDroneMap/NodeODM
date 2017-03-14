@@ -41,7 +41,8 @@ module.exports = {
 					// (num cores can be set programmatically, so can gcpFile, etc.)
 					if (["-h", "--project-path", "--cmvs-maxImages", "--time",
 						"--zip-results", "--pmvs-num-cores",
-						"--start-with", "--gcp", "--end-with"].indexOf(option) !== -1) continue;
+						"--start-with", "--gcp", "--end-with", "--images", 
+						"--slam-config", "--video"].indexOf(option) !== -1) continue;
 
 					let values = json[option];
 
@@ -129,6 +130,9 @@ module.exports = {
 				},
 				'string': function(value){
 					return value; // No conversion needed
+				},
+				'path': function(value){
+					return value; // No conversion needed
 				}
 			};
 			
@@ -178,9 +182,9 @@ module.exports = {
 					}
 				},
 				{
-					regex: /^string$/,
+					regex: /^(string|path)$/,
 					validate: function(){
-						return true; // All strings are fine
+						return true; // All strings/paths are fine
 					}
 				}		
 			];

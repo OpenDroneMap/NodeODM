@@ -13,5 +13,6 @@
 	"deamon": false,
 	"parallelQueueProcessing": 2,
 	"cleanupTasksAfter": 3,
-	"test": false
+	"test": false,
+	"testSkipOrthophotos": false
 }

@@ -121,27 +121,19 @@ module.exports = class Task{
 	// Get the path of the archive where all assets
 	// outputted by this task are stored.
 	getAssetsArchivePath(filename){
-		switch(filename){
-			case "all.zip":
-			case "georeferenced_model.ply.zip":
-			case "georeferenced_model.las.zip":
-			case "georeferenced_model.csv.zip":
-			case "textured_model.zip":
-			case "orthophoto_tiles.zip":
-				// OK
-				break;
-			case "orthophoto.png":
-			case "orthophoto.tif":
-				// Append missing pieces to the path
-				filename = !config.test ? 
-							path.join('odm_orthophoto', `odm_${filename}`) :
-							path.join('..', '..', 'processing_results', 'odm_orthophoto', `odm_${filename}`);
-				break;
-			default:
-				// Invalid
-				return false;
+		if (filename == 'all.zip'){
+			// OK, do nothing
+		}else if (filename == 'orthophoto.tif'){
+			if (config.test){
+				if (config.testSkipOrthophotos) return false;
+				else filename = path.join('..', '..', 'processing_results', 'odm_orthophoto', `odm_${filename}`);
+			}else{
+				filename = path.join('odm_orthophoto', `odm_${filename}`);
+			}
+		}else{
+			return false; // Invalid
 		}
-
+		
 		return path.join(this.getProjectFolderPath(), filename);
 	}
 
@@ -306,11 +298,20 @@ module.exports = class Task{
 
 			const generateTiles = (inputFile, outputDir) => {
 				return (done) => {
-					this.runningProcesses.push(processRunner.runTiler({
-						zoomLevels: "12-21",
-						inputFile: path.join(this.getProjectFolderPath(), inputFile),
-						outputDir: path.join(this.getProjectFolderPath(), outputDir)
-					}, handleProcessExit(done), handleOutput));
+					const inputFilePath = path.join(this.getProjectFolderPath(), inputFile);
+					
+					// Not all datasets generate an orthophoto, so we skip
+					// tiling if the orthophoto is missing
+					if (fs.existsSync(inputFilePath)){
+						this.runningProcesses.push(processRunner.runTiler({
+							zoomLevels: "12-21",
+							inputFile: inputFilePath,
+							outputDir: path.join(this.getProjectFolderPath(), outputDir)
+						}, handleProcessExit(done), handleOutput));
+					}else{
+						handleOutput(`${inputFilePath} file not found, skipping tiles generation\n`);
+						done();
+					}
 				};
 			};
 
@@ -324,19 +325,21 @@ module.exports = class Task{
 			};
 
 			// All paths are relative to the project directory (./data/<uuid>/)
+			let allFolders = ['odm_orthophoto', 'odm_georeferencing', 'odm_texturing', 'odm_meshing', 'orthophoto_tiles', 'potree_pointcloud'];
+			
+			if (config.test && config.testSkipOrthophotos){
+				logger.info("Test mode will skip orthophoto generation");
+
+				// Exclude these folders from the all.zip archive
+				['odm_orthophoto', 'orthophoto_tiles'].forEach(dir => {
+					allFolders.splice(allFolders.indexOf(dir), 1);
+				});
+			}
+
 			async.series([
                 generateTiles(path.join('odm_orthophoto', 'odm_orthophoto.tif'), 'orthophoto_tiles'),
                 generatePotreeCloud(path.join('odm_georeferencing', 'odm_georeferenced_model.ply.las'), 'potree_pointcloud'),
-                createZipArchive('all.zip', ['odm_orthophoto', 'odm_georeferencing', 'odm_texturing', 'odm_meshing', 'orthophoto_tiles', 'potree_pointcloud']),
-                createZipArchive('georeferenced_model.ply.zip', [path.join('odm_georeferencing', 'odm_georeferenced_model.ply')]),
-                createZipArchive('georeferenced_model.las.zip', [path.join('odm_georeferencing', 'odm_georeferenced_model.ply.las')]),
-                createZipArchive('georeferenced_model.csv.zip', [path.join('odm_georeferencing', 'odm_georeferenced_model.csv')]),
-                createZipArchive('textured_model.zip', [
-                                        path.join('odm_texturing', '*.jpg'), 
-                                        path.join('odm_texturing', 'odm_textured_model_geo.obj'),
-                                        path.join('odm_texturing', 'odm_textured_model_geo.mtl')
-                                    ]),
-                createZipArchive('orthophoto_tiles.zip', ['orthophoto_tiles'])
+                createZipArchive('all.zip', allFolders)
 			], (err) => {
 				if (!err){
 					this.setStatus(statusCodes.COMPLETED);
@@ -361,7 +364,7 @@ module.exports = class Task{
 			runnerOptions["pmvs-num-cores"] = os.cpus().length;
 
 			if (this.gpcFiles.length > 0){
-				runnerOptions["gcp"] = fs.realpathSync(path.join(this.getGpcFolderPath(), this.gpcFiles[0]));
+				runnerOptions.gcp = fs.realpathSync(path.join(this.getGpcFolderPath(), this.gpcFiles[0]));
 			}
 
 			this.runningProcesses.push(odmRunner.run(runnerOptions, (err, code, signal) => {

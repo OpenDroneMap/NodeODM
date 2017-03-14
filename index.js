@@ -295,13 +295,7 @@ app.get('/task/:uuid/output', getTaskFromUuid, (req, res) => {
 *          required: true
 *          enum:
 *            - all.zip
-*            - georeferenced_model.ply.zip
-*            - georeferenced_model.las.zip
-*            - georeferenced_model.csv.zip
-*            - orthophoto.png
 *            - orthophoto.tif
-*            - textured_model.zip
-*            - orthophoto_tiles.zip
 *      responses:
 *        200:
 *          description: Asset File
