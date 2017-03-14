@@ -240,8 +240,12 @@ module.exports = class Task{
 						let sourcePath = !config.test ? 
 										this.getProjectFolderPath() : 
 										path.join("tests", "processing_results");
-						let filePath = path.join(sourcePath, file),
-							isGlob = /\*/.test(file),
+						let filePath = path.join(sourcePath, file);
+						
+						// Skip non-existing items
+						if (!fs.existsSync(filePath)) return;
+
+						let isGlob = /\*/.test(file),
 							isDirectory = !isGlob && fs.lstatSync(filePath).isDirectory();
 
 						if (isDirectory){
