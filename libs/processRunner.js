@@ -89,5 +89,13 @@ module.exports = {
 												"-o", options.outputDir];
 									},
 									["inputFile", "outputDir"],
-									path.join("..", "tests", "potree_output.txt"))
+									path.join("..", "tests", "potree_output.txt")),
+
+	runPdalTranslate: makeRunner("/code/SuperBuild/build/pdal/bin/pdal",
+									function(options){
+										return ["translate",
+												"-i", options.inputFile,
+												"-o", options.outputFile];
+									},
+									["inputFile", "outputFile"])
 };
