@@ -328,6 +328,15 @@ module.exports = class Task{
 				};
 			};
 
+			const pdalTranslate = (inputPath, outputPath) => {
+				return (done) => {
+					this.runningProcesses.push(processRunner.runPdalTranslate({
+						inputFile: inputPath,
+						outputFile: outputPath
+					}, handleProcessExit(done), handleOutput));
+				};
+			};
+
 			// All paths are relative to the project directory (./data/<uuid>/)
 			let allFolders = ['odm_orthophoto', 'odm_georeferencing', 'odm_texturing', 'odm_meshing', 'orthophoto_tiles', 'potree_pointcloud'];
 			
@@ -340,11 +349,28 @@ module.exports = class Task{
 				});
 			}
 
-			async.series([
-                generateTiles(path.join('odm_orthophoto', 'odm_orthophoto.tif'), 'orthophoto_tiles'),
-                generatePotreeCloud(path.join('odm_georeferencing', 'odm_georeferenced_model.ply.las'), 'potree_pointcloud'),
+			let orthophotoPath = path.join('odm_orthophoto', 'odm_orthophoto.tif'),
+				lasPointCloudPath = path.join('odm_georeferencing', 'odm_georeferenced_model.ply.las'),
+				projectFolderPath = this.getProjectFolderPath();
+
+			let commands = [
+                generateTiles(orthophotoPath, 'orthophoto_tiles'),
+                generatePotreeCloud(lasPointCloudPath, 'potree_pointcloud'),
                 createZipArchive('all.zip', allFolders)
-			], (err) => {
+			];
+
+			// If point cloud file does not exist, it's likely because location (GPS/GPC) information
+			// was missing and the file was not generated.
+			let fullLasPointCloudPath = path.join(projectFolderPath, lasPointCloudPath);
+			if (!fs.existsSync(fullLasPointCloudPath)){
+				let unreferencedPointCloudPath = path.join(projectFolderPath, "opensfm", "depthmaps", "merged.ply");
+				if (fs.existsSync(unreferencedPointCloudPath)){
+					logger.info(`${lasPointCloudPath} is missing, will attempt to generate it from ${unreferencedPointCloudPath}`);
+					commands.unshift(pdalTranslate(unreferencedPointCloudPath, fullLasPointCloudPath));
+				}
+			}
+
+			async.series(commands, (err) => {
 				if (!err){
 					this.setStatus(statusCodes.COMPLETED);
 					finished();
