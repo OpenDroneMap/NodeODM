@@ -355,7 +355,7 @@ module.exports = class Task{
 
 			let commands = [
                 generateTiles(orthophotoPath, 'orthophoto_tiles'),
-                generatePotreeCloud(orthophotoPath, 'potree_pointcloud'),
+                generatePotreeCloud(lasPointCloudPath, 'potree_pointcloud'),
                 createZipArchive('all.zip', allFolders)
 			];
 
