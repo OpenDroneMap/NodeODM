@@ -93,9 +93,18 @@ module.exports = {
 
 	runPdalTranslate: makeRunner("/code/SuperBuild/build/pdal/bin/pdal",
 									function(options){
-										return ["translate",
+										let opts = ["translate",
 												"-i", options.inputFile,
 												"-o", options.outputFile];
+										
+										if (options.filters){
+											opts = opts.concat([
+												"--json",
+												JSON.stringify(options.filters)
+											]);
+										}
+										
+										return opts;
 									},
 									["inputFile", "outputFile"])
 };

@@ -328,11 +328,12 @@ module.exports = class Task{
 				};
 			};
 
-			const pdalTranslate = (inputPath, outputPath) => {
+			const pdalTranslate = (inputPath, outputPath, filters) => {
 				return (done) => {
 					this.runningProcesses.push(processRunner.runPdalTranslate({
 						inputFile: inputPath,
-						outputFile: outputPath
+						outputFile: outputPath,
+						filters: filters
 					}, handleProcessExit(done), handleOutput));
 				};
 			};
@@ -366,7 +367,13 @@ module.exports = class Task{
 				let unreferencedPointCloudPath = path.join(projectFolderPath, "opensfm", "depthmaps", "merged.ply");
 				if (fs.existsSync(unreferencedPointCloudPath)){
 					logger.info(`${lasPointCloudPath} is missing, will attempt to generate it from ${unreferencedPointCloudPath}`);
-					commands.unshift(pdalTranslate(unreferencedPointCloudPath, fullLasPointCloudPath));
+					commands.unshift(pdalTranslate(unreferencedPointCloudPath, fullLasPointCloudPath, [
+							{
+							  // opensfm's ply files map colors with the diffuse_ prefix
+							  dimensions: "diffuse_red = red, diffuse_green = green, diffuse_blue = blue",
+							  type: "filters.ferry"
+							}
+						]));
 				}
 			}
 
