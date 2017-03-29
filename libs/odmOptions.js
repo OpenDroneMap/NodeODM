@@ -18,6 +18,7 @@ along with this program.  If not, see <http://www.gnu.org/licenses/>.
 "use strict";
 let odmRunner = require('./odmRunner');
 let assert = require('assert');
+let logger = require('./logger');
 
 let odmOptions = null;
 
@@ -82,6 +83,20 @@ module.exports = {
 					}else if (values['default'] === "False"){
 						type = "bool";
 						value = false;
+					}
+
+					// If 'choices' is specified, try to convert it to array
+					if (values.choices){
+						try{
+							values.choices = JSON.parse(values.choices.replace(/'/g, '"')); // Convert ' to "
+						}catch(e){
+							logger.warn(`Cannot parse choices: ${values.choices}`);
+						}	
+					}
+
+					if (Array.isArray(values.choices)){
+						type = "string"; // TODO: change to enum
+						domain = values.choices;
 					}
 
 					help = help.replace(/\%\(default\)s/g, value);
@@ -186,7 +201,9 @@ module.exports = {
 					validate: function(){
 						return true; // All strings/paths are fine
 					}
-				}		
+				}
+
+				// TODO: handle enum
 			];
 
 			let checkDomain = function(domain, value){

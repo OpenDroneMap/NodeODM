@@ -25,7 +25,8 @@ let logger = require('./logger');
 
 
 module.exports = {
-	run: function(options, done, outputReceived){
+	run: function(options, projectName, done, outputReceived){
+		assert(projectName !== undefined, "projectName must be specified");
 		assert(options["project-path"] !== undefined, "project-path must be defined");
 
 		let command = [path.join(config.odm_path, "run.py")];
@@ -42,6 +43,8 @@ module.exports = {
 				command.push(value);
 			}
 		}
+
+		command.push(projectName);
 
 		logger.info(`About to run: python ${command.join(" ")}`);
 
@@ -102,7 +105,7 @@ module.exports = {
 
 		// Launch
 		let childProcess = spawn("python", [path.join(__dirname, "..", "helpers", "odmOptionsToJson.py"),
-				"--project-path", config.odm_path]);
+				"--project-path", config.odm_path, "bogusname"]);
 		let output = [];
 
 		childProcess

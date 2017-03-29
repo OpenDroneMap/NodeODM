@@ -397,14 +397,14 @@ module.exports = class Task{
 				return result;
 			}, {});
 
-			runnerOptions["project-path"] = fs.realpathSync(this.getProjectFolderPath());
+			runnerOptions["project-path"] = fs.realpathSync(Directories.data);
 			runnerOptions["pmvs-num-cores"] = os.cpus().length;
 
 			if (this.gpcFiles.length > 0){
 				runnerOptions.gcp = fs.realpathSync(path.join(this.getGpcFolderPath(), this.gpcFiles[0]));
 			}
 
-			this.runningProcesses.push(odmRunner.run(runnerOptions, (err, code, signal) => {
+			this.runningProcesses.push(odmRunner.run(runnerOptions, this.uuid, (err, code, signal) => {
 					if (err){
 						this.setStatus(statusCodes.FAILED, {errorMessage: `Could not start process (${err.message})`});
 						finished(err);
