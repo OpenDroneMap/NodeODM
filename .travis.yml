@@ -9,6 +9,5 @@ services:
 
 before_install:
   - docker build -t opendronemap/node-opendronemap .
-  - docker run opendronemap/node-opendronemap /bin/sh -c "cd /var/www; node index.js --powercycle"
 
-script: node index.js --powercycle
+script: docker run opendronemap/node-opendronemap --powercycle
