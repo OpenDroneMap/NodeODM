@@ -515,7 +515,7 @@ process.on ('SIGINT', gracefulShutdown);
 // Startup
 if (config.test) logger.info("Running in test mode");
 
-async.series([
+let commands = [
 	cb => odmOptions.initialize(cb),
 	cb => { taskManager = new TaskManager(cb); },
 	cb => { server = app.listen(config.port, err => {
@@ -523,7 +523,15 @@ async.series([
 			cb(err);
 		});
 	}
-], err => {
-	debugger;
+];
+
+if (config.powercycle){
+	commands.push(cb => {
+		logger.info("Power cycling is set, application will shut down...");
+		process.exit(0);
+	});
+}
+
+async.series(commands, err => {
 	if (err) logger.error("Error during startup: " + err.message);
 });
