@@ -533,6 +533,8 @@ if (config.powercycle){
 }
 
 async.series(commands, err => {
-	if (err) logger.error("Error during startup: " + err.message);
-	process.exit(1);
+	if (err){
+		logger.error("Error during startup: " + err.message);
+		process.exit(1);
+	}
 });
