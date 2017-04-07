@@ -33,449 +33,453 @@ let Directories = require('./Directories');
 
 let statusCodes = require('./statusCodes');
 
-module.exports = class Task{
-	constructor(uuid, name, done, options = []){
-		assert(uuid !== undefined, "uuid must be set");
-		assert(done !== undefined, "ready must be set");
+module.exports = class Task {
+    constructor(uuid, name, done, options = []) {
+        assert(uuid !== undefined, "uuid must be set");
+        assert(done !== undefined, "ready must be set");
 
-		this.uuid = uuid;
-		this.name = name !== "" ? name : "Task of " + (new Date()).toISOString();
-		this.dateCreated = new Date().getTime();
-		this.processingTime = -1;
-		this.setStatus(statusCodes.QUEUED);
-		this.options = options;
-		this.gpcFiles = [];
-		this.output = [];
-		this.runningProcesses = [];
+        this.uuid = uuid;
+        this.name = name !== "" ? name : "Task of " + (new Date()).toISOString();
+        this.dateCreated = new Date().getTime();
+        this.processingTime = -1;
+        this.setStatus(statusCodes.QUEUED);
+        this.options = options;
+        this.gpcFiles = [];
+        this.output = [];
+        this.runningProcesses = [];
 
-		async.series([
-			// Read images info
-			cb => {
-				fs.readdir(this.getImagesFolderPath(), (err, files) => {
-					if (err) cb(err);
-					else{
-						this.images = files;
-						logger.debug(`Found ${this.images.length} images for ${this.uuid}`);
-						cb(null);
-					}
-				});
-			},
+        async.series([
+            // Read images info
+            cb => {
+                fs.readdir(this.getImagesFolderPath(), (err, files) => {
+                    if (err) cb(err);
+                    else {
+                        this.images = files;
+                        logger.debug(`Found ${this.images.length} images for ${this.uuid}`);
+                        cb(null);
+                    }
+                });
+            },
 
-			// Find GCP (if any)
-			cb => {
-				fs.readdir(this.getGpcFolderPath(), (err, files) => {
-					if (err) cb(err);
-					else{
-						files.forEach(file => {
-							if (/\.txt$/gi.test(file)){
-								this.gpcFiles.push(file);
-							}
-						});
-						logger.debug(`Found ${this.gpcFiles.length} GPC files (${this.gpcFiles.join(" ")}) for ${this.uuid}`);
-						cb(null);
-					}
-				});
-			}
-		], err => {
-			done(err, this);
-		});
-	}
+            // Find GCP (if any)
+            cb => {
+                fs.readdir(this.getGpcFolderPath(), (err, files) => {
+                    if (err) cb(err);
+                    else {
+                        files.forEach(file => {
+                            if (/\.txt$/gi.test(file)) {
+                                this.gpcFiles.push(file);
+                            }
+                        });
+                        logger.debug(`Found ${this.gpcFiles.length} GPC files (${this.gpcFiles.join(" ")}) for ${this.uuid}`);
+                        cb(null);
+                    }
+                });
+            }
+        ], err => {
+            done(err, this);
+        });
+    }
 
-	static CreateFromSerialized(taskJson, done){
-		new Task(taskJson.uuid, taskJson.name, (err, task) => {
-			if (err) done(err);
-			else{
-				// Override default values with those
-				// provided in the taskJson
-				for (let k in taskJson){
-					task[k] = taskJson[k];
-				}
+    static CreateFromSerialized(taskJson, done) {
+        new Task(taskJson.uuid, taskJson.name, (err, task) => {
+            if (err) done(err);
+            else {
+                // Override default values with those
+                // provided in the taskJson
+                for (let k in taskJson) {
+                    task[k] = taskJson[k];
+                }
 
-				// Tasks that were running should be put back to QUEUED state
-				if (task.status.code === statusCodes.RUNNING){
-					task.status.code = statusCodes.QUEUED;
-				}
-				done(null, task);
-			}
-		}, taskJson.options);
-	}
+                // Tasks that were running should be put back to QUEUED state
+                if (task.status.code === statusCodes.RUNNING) {
+                    task.status.code = statusCodes.QUEUED;
+                }
+                done(null, task);
+            }
+        }, taskJson.options);
+    }
 
-	// Get path where images are stored for this task
-	// (relative to nodejs process CWD)
-	getImagesFolderPath(){
-		return path.join(this.getProjectFolderPath(), "images");
-	}
+    // Get path where images are stored for this task
+    // (relative to nodejs process CWD)
+    getImagesFolderPath() {
+        return path.join(this.getProjectFolderPath(), "images");
+    }
 
-	// Get path where GPC file(s) are stored
-	// (relative to nodejs process CWD)
-	getGpcFolderPath(){
-		return path.join(this.getProjectFolderPath(), "gpc");
-	}
+    // Get path where GPC file(s) are stored
+    // (relative to nodejs process CWD)
+    getGpcFolderPath() {
+        return path.join(this.getProjectFolderPath(), "gpc");
+    }
 
-	// Get path of project (where all images and assets folder are contained)
-	// (relative to nodejs process CWD)
-	getProjectFolderPath(){
-		return path.join(Directories.data, this.uuid);
-	}
+    // Get path of project (where all images and assets folder are contained)
+    // (relative to nodejs process CWD)
+    getProjectFolderPath() {
+        return path.join(Directories.data, this.uuid);
+    }
 
-	// Get the path of the archive where all assets
-	// outputted by this task are stored.
-	getAssetsArchivePath(filename){
-		if (filename == 'all.zip'){
-			// OK, do nothing
-		}else if (filename == 'orthophoto.tif'){
-			if (config.test){
-				if (config.testSkipOrthophotos) return false;
-				else filename = path.join('..', '..', 'processing_results', 'odm_orthophoto', `odm_${filename}`);
-			}else{
-				filename = path.join('odm_orthophoto', `odm_${filename}`);
-			}
-		}else{
-			return false; // Invalid
-		}
-		
-		return path.join(this.getProjectFolderPath(), filename);
-	}
+    // Get the path of the archive where all assets
+    // outputted by this task are stored.
+    getAssetsArchivePath(filename) {
+        if (filename == 'all.zip') {
+            // OK, do nothing
+        } else if (filename == 'orthophoto.tif') {
+            if (config.test) {
+                if (config.testSkipOrthophotos) return false;
+                else filename = path.join('..', '..', 'processing_results', 'odm_orthophoto', `odm_${filename}`);
+            } else {
+                filename = path.join('odm_orthophoto', `odm_${filename}`);
+            }
+        } else {
+            return false; // Invalid
+        }
 
-	// Deletes files and folders related to this task
-	cleanup(cb){
-		rmdir(this.getProjectFolderPath(), cb);
-	}
+        return path.join(this.getProjectFolderPath(), filename);
+    }
 
-	setStatus(code, extra){
-		this.status = {
-			code: code
-		};
-		for (let k in extra){
-			this.status[k] = extra[k];
-		}
-	}
+    // Deletes files and folders related to this task
+    cleanup(cb) {
+        rmdir(this.getProjectFolderPath(), cb);
+    }
 
-	updateProcessingTime(resetTime){
-		this.processingTime = resetTime ?
-								-1		:
-								new Date().getTime() - this.dateCreated;
-	}
+    setStatus(code, extra) {
+        this.status = {
+            code: code
+        };
+        for (let k in extra) {
+            this.status[k] = extra[k];
+        }
+    }
 
-	startTrackingProcessingTime(){
-		this.updateProcessingTime();
-		if (!this._updateProcessingTimeInterval){
-			this._updateProcessingTimeInterval = setInterval(() => {
-				this.updateProcessingTime();
-			}, 1000);
-		}
-	}
+    updateProcessingTime(resetTime) {
+        this.processingTime = resetTime ?
+            -1 :
+            new Date().getTime() - this.dateCreated;
+    }
 
-	stopTrackingProcessingTime(resetTime){
-		this.updateProcessingTime(resetTime);
-		if (this._updateProcessingTimeInterval){
-			clearInterval(this._updateProcessingTimeInterval);
-			this._updateProcessingTimeInterval = null;
-		}
-	}
+    startTrackingProcessingTime() {
+        this.updateProcessingTime();
+        if (!this._updateProcessingTimeInterval) {
+            this._updateProcessingTimeInterval = setInterval(() => {
+                this.updateProcessingTime();
+            }, 1000);
+        }
+    }
 
-	getStatus(){
-		return this.status.code;
-	}
+    stopTrackingProcessingTime(resetTime) {
+        this.updateProcessingTime(resetTime);
+        if (this._updateProcessingTimeInterval) {
+            clearInterval(this._updateProcessingTimeInterval);
+            this._updateProcessingTimeInterval = null;
+        }
+    }
 
-	isCanceled(){
-		return this.status.code === statusCodes.CANCELED;
-	}
+    getStatus() {
+        return this.status.code;
+    }
 
-	// Cancels the current task (unless it's already canceled)
-	cancel(cb){
-		if (this.status.code !== statusCodes.CANCELED){
-			let wasRunning = this.status.code === statusCodes.RUNNING;
-			this.setStatus(statusCodes.CANCELED);
+    isCanceled() {
+        return this.status.code === statusCodes.CANCELED;
+    }
 
-			if (wasRunning){
-				this.runningProcesses.forEach(proc => {
-					// TODO: this does NOT guarantee that
-					// the process will immediately terminate.
-					// For eaxmple in the case of the ODM process, the process will continue running for a while
-					// This might need to be fixed on ODM's end.
-					proc.kill('SIGINT');					
-				});
-				this.runningProcesses = [];
-			}
+    // Cancels the current task (unless it's already canceled)
+    cancel(cb) {
+        if (this.status.code !== statusCodes.CANCELED) {
+            let wasRunning = this.status.code === statusCodes.RUNNING;
+            this.setStatus(statusCodes.CANCELED);
 
-			this.stopTrackingProcessingTime(true);
-			cb(null);
-		}else{
-			cb(new Error("Task already cancelled"));
-		}
-	}
+            if (wasRunning) {
+                this.runningProcesses.forEach(proc => {
+                    // TODO: this does NOT guarantee that
+                    // the process will immediately terminate.
+                    // For eaxmple in the case of the ODM process, the process will continue running for a while
+                    // This might need to be fixed on ODM's end.
+                    proc.kill('SIGINT');
+                });
+                this.runningProcesses = [];
+            }
 
-	// Starts processing the task with OpenDroneMap
-	// This will spawn a new process.
-	start(done){
-		const finished = err => {
-			this.stopTrackingProcessingTime();
-			done(err);
-		};
-		
-		const postProcess = () => {
-			const createZipArchive = (outputFilename, files) => {
-				return (done) => {
-					this.output.push(`Compressing ${outputFilename}\n`);
+            this.stopTrackingProcessingTime(true);
+            cb(null);
+        } else {
+            cb(new Error("Task already cancelled"));
+        }
+    }
 
-					let output = fs.createWriteStream(this.getAssetsArchivePath(outputFilename));
-					let archive = archiver.create('zip', {});
+    // Starts processing the task with OpenDroneMap
+    // This will spawn a new process.
+    start(done) {
+        const finished = err => {
+            this.stopTrackingProcessingTime();
+            done(err);
+        };
 
-					archive.on('finish', () => {
-						// TODO: is this being fired twice?
-						done();
-					});
+        const postProcess = () => {
+            const createZipArchive = (outputFilename, files) => {
+                return (done) => {
+                    this.output.push(`Compressing ${outputFilename}\n`);
 
-					archive.on('error', err => {
-						logger.error(`Could not archive .zip file: ${err.message}`);
-						done(err);
-					});
+                    let output = fs.createWriteStream(this.getAssetsArchivePath(outputFilename));
+                    let archive = archiver.create('zip', {});
 
-					archive.pipe(output);
-					let globs = [];
+                    archive.on('finish', () => {
+                        // TODO: is this being fired twice?
+                        done();
+                    });
 
-					// Process files and directories first
-					files.forEach(file => {
-						let sourcePath = !config.test ? 
-										this.getProjectFolderPath() : 
-										path.join("tests", "processing_results");
-						let filePath = path.join(sourcePath, file);
-						
-						// Skip non-existing items
-						if (!fs.existsSync(filePath)) return;
+                    archive.on('error', err => {
+                        logger.error(`Could not archive .zip file: ${err.message}`);
+                        done(err);
+                    });
 
-						let isGlob = /\*/.test(file),
-							isDirectory = !isGlob && fs.lstatSync(filePath).isDirectory();
+                    archive.pipe(output);
+                    let globs = [];
 
-						if (isDirectory){
-							archive.directory(filePath, file);
-						}else if (isGlob){
-							globs.push(filePath);
-						}else{
-							archive.file(filePath, {name: path.basename(file)});
-						}
-					});
+                    // Process files and directories first
+                    files.forEach(file => {
+                        let sourcePath = !config.test ?
+                            this.getProjectFolderPath() :
+                            path.join("tests", "processing_results");
+                        let filePath = path.join(sourcePath, file);
 
-					// Check for globs
-					if (globs.length !== 0){
-						let pending = globs.length;
+                        // Skip non-existing items
+                        if (!fs.existsSync(filePath)) return;
 
-						globs.forEach(pattern => {
-							glob(pattern, (err, files) => {
-								if (err) done(err);
-								else{
-									files.forEach(file => {
-										if (fs.lstatSync(file).isFile()){
-											archive.file(file, {name: path.basename(file)});
-										}else{
-											logger.debug(`Could not add ${file} from glob`);
-										}
-									});
+                        let isGlob = /\*/.test(file),
+                            isDirectory = !isGlob && fs.lstatSync(filePath).isDirectory();
 
-									if (--pending === 0){
-										archive.finalize();
-									}
-								}
-							});
-						});
-					}else{
-						archive.finalize();
-					}
-				};
-			};
+                        if (isDirectory) {
+                            archive.directory(filePath, file);
+                        } else if (isGlob) {
+                            globs.push(filePath);
+                        } else {
+                            archive.file(filePath, { name: path.basename(file) });
+                        }
+                    });
 
-			const handleProcessExit = (done) => {
-				return (err, code, signal) => {
-					if (err) done(err);
-					else{
-						// Don't evaluate if we caused the process to exit via SIGINT?
-						if (code === 0) done();
-						else done(new Error(`Process exited with code ${code}`));
-					}
-				};
-			};
+                    // Check for globs
+                    if (globs.length !== 0) {
+                        let pending = globs.length;
 
-			const handleOutput = output => {
-				this.output.push(output);
-			};
+                        globs.forEach(pattern => {
+                            glob(pattern, (err, files) => {
+                                if (err) done(err);
+                                else {
+                                    files.forEach(file => {
+                                        if (fs.lstatSync(file).isFile()) {
+                                            archive.file(file, { name: path.basename(file) });
+                                        } else {
+                                            logger.debug(`Could not add ${file} from glob`);
+                                        }
+                                    });
 
-			const generateTiles = (inputFile, outputDir) => {
-				return (done) => {
-					const inputFilePath = path.join(this.getProjectFolderPath(), inputFile);
-					
-					// Not all datasets generate an orthophoto, so we skip
-					// tiling if the orthophoto is missing
-					if (fs.existsSync(inputFilePath)){
-						this.runningProcesses.push(processRunner.runTiler({
-							zoomLevels: "12-21",
-							inputFile: inputFilePath,
-							outputDir: path.join(this.getProjectFolderPath(), outputDir)
-						}, handleProcessExit(done), handleOutput));
-					}else{
-						handleOutput(`${inputFilePath} file not found, skipping tiles generation\n`);
-						done();
-					}
-				};
-			};
+                                    if (--pending === 0) {
+                                        archive.finalize();
+                                    }
+                                }
+                            });
+                        });
+                    } else {
+                        archive.finalize();
+                    }
+                };
+            };
 
-			const generatePotreeCloud = (inputFile, outputDir) => {
-				return (done) => {
-					this.runningProcesses.push(processRunner.runPotreeConverter({
-						inputFile: path.join(this.getProjectFolderPath(), inputFile),
-						outputDir: path.join(this.getProjectFolderPath(), outputDir)
-					}, handleProcessExit(done), handleOutput));
-				};
-			};
+            const handleProcessExit = (done) => {
+                return (err, code, signal) => {
+                    if (err) done(err);
+                    else {
+                        // Don't evaluate if we caused the process to exit via SIGINT?
+                        if (code === 0) done();
+                        else done(new Error(`Process exited with code ${code}`));
+                    }
+                };
+            };
 
-			const pdalTranslate = (inputPath, outputPath, filters) => {
-				return (done) => {
-					this.runningProcesses.push(processRunner.runPdalTranslate({
-						inputFile: inputPath,
-						outputFile: outputPath,
-						filters: filters
-					}, handleProcessExit(done), handleOutput));
-				};
-			};
+            const handleOutput = output => {
+                this.output.push(output);
+            };
 
-			// All paths are relative to the project directory (./data/<uuid>/)
-			let allFolders = ['odm_orthophoto', 'odm_georeferencing', 'odm_texturing', 'odm_meshing', 'orthophoto_tiles', 'potree_pointcloud'];
-			
-			if (config.test && config.testSkipOrthophotos){
-				logger.info("Test mode will skip orthophoto generation");
+            const generateTiles = (inputFile, outputDir) => {
+                return (done) => {
+                    const inputFilePath = path.join(this.getProjectFolderPath(), inputFile);
 
-				// Exclude these folders from the all.zip archive
-				['odm_orthophoto', 'orthophoto_tiles'].forEach(dir => {
-					allFolders.splice(allFolders.indexOf(dir), 1);
-				});
-			}
+                    // Not all datasets generate an orthophoto, so we skip
+                    // tiling if the orthophoto is missing
+                    if (fs.existsSync(inputFilePath)) {
+                        this.runningProcesses.push(processRunner.runTiler({
+                            zoomLevels: "12-21",
+                            inputFile: inputFilePath,
+                            outputDir: path.join(this.getProjectFolderPath(), outputDir)
+                        }, handleProcessExit(done), handleOutput));
+                    } else {
+                        handleOutput(`${inputFilePath} file not found, skipping tiles generation\n`);
+                        done();
+                    }
+                };
+            };
 
-			let orthophotoPath = path.join('odm_orthophoto', 'odm_orthophoto.tif'),
-				lasPointCloudPath = path.join('odm_georeferencing', 'odm_georeferenced_model.ply.las'),
-				projectFolderPath = this.getProjectFolderPath();
+            const generatePotreeCloud = (inputFile, outputDir) => {
+                return (done) => {
+                    this.runningProcesses.push(processRunner.runPotreeConverter({
+                        inputFile: path.join(this.getProjectFolderPath(), inputFile),
+                        outputDir: path.join(this.getProjectFolderPath(), outputDir)
+                    }, handleProcessExit(done), handleOutput));
+                };
+            };
 
-			let commands = [
+            const pdalTranslate = (inputPath, outputPath, filters) => {
+                return (done) => {
+                    this.runningProcesses.push(processRunner.runPdalTranslate({
+                        inputFile: inputPath,
+                        outputFile: outputPath,
+                        filters: filters
+                    }, handleProcessExit(done), handleOutput));
+                };
+            };
+
+            // All paths are relative to the project directory (./data/<uuid>/)
+            let allFolders = ['odm_orthophoto', 'odm_georeferencing', 'odm_texturing', 'odm_meshing', 'orthophoto_tiles', 'potree_pointcloud'];
+
+            if (config.test && config.testSkipOrthophotos) {
+                logger.info("Test mode will skip orthophoto generation");
+
+                // Exclude these folders from the all.zip archive
+                ['odm_orthophoto', 'orthophoto_tiles'].forEach(dir => {
+                    allFolders.splice(allFolders.indexOf(dir), 1);
+                });
+            }
+
+            let orthophotoPath = path.join('odm_orthophoto', 'odm_orthophoto.tif'),
+                lasPointCloudPath = path.join('odm_georeferencing', 'odm_georeferenced_model.ply.las'),
+                projectFolderPath = this.getProjectFolderPath();
+
+            let commands = [
                 generateTiles(orthophotoPath, 'orthophoto_tiles'),
                 generatePotreeCloud(lasPointCloudPath, 'potree_pointcloud'),
                 createZipArchive('all.zip', allFolders)
-			];
+            ];
 
-			// If point cloud file does not exist, it's likely because location (GPS/GPC) information
-			// was missing and the file was not generated.
-			let fullLasPointCloudPath = path.join(projectFolderPath, lasPointCloudPath);
-			if (!fs.existsSync(fullLasPointCloudPath)){
-				let unreferencedPointCloudPath = path.join(projectFolderPath, "opensfm", "depthmaps", "merged.ply");
-				if (fs.existsSync(unreferencedPointCloudPath)){
-					logger.info(`${lasPointCloudPath} is missing, will attempt to generate it from ${unreferencedPointCloudPath}`);
-					commands.unshift(pdalTranslate(unreferencedPointCloudPath, fullLasPointCloudPath, [
-							{
-							  // opensfm's ply files map colors with the diffuse_ prefix
-							  dimensions: "diffuse_red = red, diffuse_green = green, diffuse_blue = blue",
-							  type: "filters.ferry"
-							}
-						]));
-				}
-			}
+            // If point cloud file does not exist, it's likely because location (GPS/GPC) information
+            // was missing and the file was not generated.
+            let fullLasPointCloudPath = path.join(projectFolderPath, lasPointCloudPath);
+            if (!fs.existsSync(fullLasPointCloudPath)) {
+                let unreferencedPointCloudPath = path.join(projectFolderPath, "opensfm", "depthmaps", "merged.ply");
+                if (fs.existsSync(unreferencedPointCloudPath)) {
+                    logger.info(`${lasPointCloudPath} is missing, will attempt to generate it from ${unreferencedPointCloudPath}`);
+                    commands.unshift(pdalTranslate(unreferencedPointCloudPath, fullLasPointCloudPath, [{
+                        // opensfm's ply files map colors with the diffuse_ prefix
+                        dimensions: "diffuse_red = red, diffuse_green = green, diffuse_blue = blue",
+                        type: "filters.ferry"
+                    }]));
+                }
+            }
 
-			async.series(commands, (err) => {
-				if (!err){
-					this.setStatus(statusCodes.COMPLETED);
-					finished();
-				}else{
-					this.setStatus(statusCodes.FAILED);
-					finished(err);
-				}
-			});
-		};
+            async.series(commands, (err) => {
+                if (!err) {
+                    this.setStatus(statusCodes.COMPLETED);
+                    finished();
+                } else {
+                    this.setStatus(statusCodes.FAILED);
+                    finished(err);
+                }
+            });
+        };
 
-		if (this.status.code === statusCodes.QUEUED){
-			this.startTrackingProcessingTime();
-			this.setStatus(statusCodes.RUNNING);
+        if (this.status.code === statusCodes.QUEUED) {
+            this.startTrackingProcessingTime();
+            this.setStatus(statusCodes.RUNNING);
+            // rmeove webhoook
+            var optionsToRun = this.options.filter(function(opt) {
+                if (opt.name !== 'webhook') {
+                    return opt;
+                }
 
-			let runnerOptions = this.options.reduce((result, opt) => {
-				result[opt.name] = opt.value;
-				return result;
-			}, {});
+            });
 
-			runnerOptions["project-path"] = fs.realpathSync(Directories.data);
-			runnerOptions["pmvs-num-cores"] = os.cpus().length;
+            let runnerOptions = optionsToRun.reduce((result, opt) => {
+                result[opt.name] = opt.value;
+                return result;
+            }, {});
 
-			if (this.gpcFiles.length > 0){
-				runnerOptions.gcp = fs.realpathSync(path.join(this.getGpcFolderPath(), this.gpcFiles[0]));
-			}
+            runnerOptions["project-path"] = fs.realpathSync(Directories.data);
+            runnerOptions["pmvs-num-cores"] = os.cpus().length;
 
-			this.runningProcesses.push(odmRunner.run(runnerOptions, this.uuid, (err, code, signal) => {
-					if (err){
-						this.setStatus(statusCodes.FAILED, {errorMessage: `Could not start process (${err.message})`});
-						finished(err);
-					}else{
-						// Don't evaluate if we caused the process to exit via SIGINT?
-						if (this.status.code !== statusCodes.CANCELED){
-							if (code === 0){
-								postProcess();
-							}else{
-								this.setStatus(statusCodes.FAILED, {errorMessage: `Process exited with code ${code}`});
-								finished();
-							}
-						}else{
-							finished();
-						}
-					}
-				}, output => {
-					// Replace console colors
-					output = output.replace(/\x1b\[[0-9;]*m/g, "");
-					this.output.push(output);
-				})
-			);
+            if (this.gpcFiles.length > 0) {
+                runnerOptions.gcp = fs.realpathSync(path.join(this.getGpcFolderPath(), this.gpcFiles[0]));
+            }
 
-			return true;
-		}else{
-			return false;
-		}
-	}
+            this.runningProcesses.push(odmRunner.run(runnerOptions, this.uuid, (err, code, signal) => {
+                if (err) {
+                    this.setStatus(statusCodes.FAILED, { errorMessage: `Could not start process (${err.message})` });
+                    finished(err);
+                } else {
+                    // Don't evaluate if we caused the process to exit via SIGINT?
+                    if (this.status.code !== statusCodes.CANCELED) {
+                        if (code === 0) {
+                            postProcess();
+                        } else {
+                            this.setStatus(statusCodes.FAILED, { errorMessage: `Process exited with code ${code}` });
+                            finished();
+                        }
+                    } else {
+                        finished();
+                    }
+                }
+            }, output => {
+                // Replace console colors
+                output = output.replace(/\x1b\[[0-9;]*m/g, "");
+                this.output.push(output);
+            }));
 
-	// Re-executes the task (by setting it's state back to QUEUED)
-	// Only tasks that have been canceled, completed or have failed can be restarted.
-	restart(cb){
-		if ([statusCodes.CANCELED, statusCodes.FAILED, statusCodes.COMPLETED].indexOf(this.status.code) !== -1){
-			this.setStatus(statusCodes.QUEUED);
-			this.dateCreated = new Date().getTime();
-			this.output = [];
-			this.stopTrackingProcessingTime(true);
-			cb(null);
-		}else{
-			cb(new Error("Task cannot be restarted"));
-		}
-	}
+            return true;
+        } else {
+            return false;
+        }
+    }
 
-	// Returns the description of the task.
-	getInfo(){
-		return {
-			uuid: this.uuid,
-			name: this.name,
-			dateCreated: this.dateCreated,
-			processingTime: this.processingTime,
-			status: this.status,
-			options: this.options,
-			imagesCount: this.images.length
-		};
-	}
+    // Re-executes the task (by setting it's state back to QUEUED)
+    // Only tasks that have been canceled, completed or have failed can be restarted.
+    restart(cb) {
+        if ([statusCodes.CANCELED, statusCodes.FAILED, statusCodes.COMPLETED].indexOf(this.status.code) !== -1) {
+            this.setStatus(statusCodes.QUEUED);
+            this.dateCreated = new Date().getTime();
+            this.output = [];
+            this.stopTrackingProcessingTime(true);
+            cb(null);
+        } else {
+            cb(new Error("Task cannot be restarted"));
+        }
+    }
 
-	// Returns the output of the OpenDroneMap process
-	// Optionally starting from a certain line number
-	getOutput(startFromLine = 0){
-		return this.output.slice(startFromLine, this.output.length);
-	}
+    // Returns the description of the task.
+    getInfo() {
+        return {
+            uuid: this.uuid,
+            name: this.name,
+            dateCreated: this.dateCreated,
+            processingTime: this.processingTime,
+            status: this.status,
+            options: this.options,
+            imagesCount: this.images.length
+        };
+    }
 
-	// Returns the data necessary to serialize this
-	// task to restore it later.
-	serialize(){
-		return {
-			uuid: this.uuid,
-			name: this.name,
-			dateCreated: this.dateCreated,
-			status: this.status,
-			options: this.options
-		};
-	}
+    // Returns the output of the OpenDroneMap process
+    // Optionally starting from a certain line number
+    getOutput(startFromLine = 0) {
+        return this.output.slice(startFromLine, this.output.length);
+    }
+
+    // Returns the data necessary to serialize this
+    // task to restore it later.
+    serialize() {
+        return {
+            uuid: this.uuid,
+            name: this.name,
+            dateCreated: this.dateCreated,
+            status: this.status,
+            options: this.options
+        };
+    }
 };
