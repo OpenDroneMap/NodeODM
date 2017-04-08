@@ -15,30 +15,30 @@ GNU General Public License for more details.
 You should have received a copy of the GNU General Public License
 along with this program.  If not, see <http://www.gnu.org/licenses/>.
 */
-$(function(){
-    function hoursMinutesSecs(t){
+$(function() {
+    function hoursMinutesSecs(t) {
         var ch = 60 * 60 * 1000,
             cm = 60 * 1000,
             h = Math.floor(t / ch),
-            m = Math.floor( (t - h * ch) / cm),
-            s = Math.round( (t - h * ch - m * cm) / 1000),
-            pad = function(n){ return n < 10 ? '0' + n : n; };
-      if( s === 60 ){
-        m++;
-        s = 0;
-      }
-      if( m === 60 ){
-        h++;
-        m = 0;
-      }
-      return [pad(h), pad(m), pad(s)].join(':');
+            m = Math.floor((t - h * ch) / cm),
+            s = Math.round((t - h * ch - m * cm) / 1000),
+            pad = function(n) { return n < 10 ? '0' + n : n; };
+        if (s === 60) {
+            m++;
+            s = 0;
+        }
+        if (m === 60) {
+            h++;
+            m = 0;
+        }
+        return [pad(h), pad(m), pad(s)].join(':');
     }
 
-    function TaskList(){
+    function TaskList() {
         var uuids = JSON.parse(localStorage.getItem("odmTaskList") || "[]");
         if (Object.prototype.toString.call(uuids) !== "[object Array]") uuids = [];
 
-        this.tasks = ko.observableArray($.map(uuids, function(uuid){
+        this.tasks = ko.observableArray($.map(uuids, function(uuid) {
             return new Task(uuid);
         }));
     }
@@ -46,14 +46,13 @@ $(function(){
         this.tasks.push(task);
         this.saveTaskListToLocalStorage();
     };
-    TaskList.prototype.saveTaskListToLocalStorage = function(){
-        localStorage.setItem("odmTaskList", JSON.stringify($.map(this.tasks(), function(task){
-                return task.uuid;
-            })
-        ));
+    TaskList.prototype.saveTaskListToLocalStorage = function() {
+        localStorage.setItem("odmTaskList", JSON.stringify($.map(this.tasks(), function(task) {
+            return task.uuid;
+        })));
     };
-    TaskList.prototype.remove = function(task){
-        this.tasks.remove(function(t){
+    TaskList.prototype.remove = function(task) {
+        this.tasks.remove(function(t) {
             return t === task;
         });
         this.saveTaskListToLocalStorage();
@@ -67,7 +66,7 @@ $(function(){
         CANCELED: 50
     };
 
-    function Task(uuid){
+    function Task(uuid) {
         var self = this;
 
         this.uuid = uuid;
@@ -101,90 +100,90 @@ $(function(){
             }
         };
 
-        this.statusDescr = ko.pureComputed(function(){
-            if (this.info().status && this.info().status.code){
-                if(statusCodes[this.info().status.code]){
+        this.statusDescr = ko.pureComputed(function() {
+            if (this.info().status && this.info().status.code) {
+                if (statusCodes[this.info().status.code]) {
                     return statusCodes[this.info().status.code].descr;
-                }else return "Unknown (Status Code: " + this.info().status.code + ")";
-            }else return "-";
+                } else return "Unknown (Status Code: " + this.info().status.code + ")";
+            } else return "-";
         }, this);
-        this.icon = ko.pureComputed(function(){
-            if (this.info().status && this.info().status.code){
-                if(statusCodes[this.info().status.code]){
+        this.icon = ko.pureComputed(function() {
+            if (this.info().status && this.info().status.code) {
+                if (statusCodes[this.info().status.code]) {
                     return statusCodes[this.info().status.code].icon;
-                }else return "glyphicon-question-sign";
-            }else return "";
+                } else return "glyphicon-question-sign";
+            } else return "";
         }, this);
-        this.showCancel = ko.pureComputed(function(){
-            return this.info().status && 
-            (this.info().status.code === codes.QUEUED || this.info().status.code === codes.RUNNING);
+        this.showCancel = ko.pureComputed(function() {
+            return this.info().status &&
+                (this.info().status.code === codes.QUEUED || this.info().status.code === codes.RUNNING);
         }, this);
-        this.showRestart = ko.pureComputed(function(){
-            return this.info().status && 
-            (this.info().status.code === codes.CANCELED);
+        this.showRestart = ko.pureComputed(function() {
+            return this.info().status &&
+                (this.info().status.code === codes.CANCELED);
         }, this);
-        this.showRemove = ko.pureComputed(function(){
-            return this.info().status && 
-            (this.info().status.code === codes.FAILED || this.info().status.code === codes.COMPLETED || this.info().status.code === codes.CANCELED);
+        this.showRemove = ko.pureComputed(function() {
+            return this.info().status &&
+                (this.info().status.code === codes.FAILED || this.info().status.code === codes.COMPLETED || this.info().status.code === codes.CANCELED);
         }, this);
-        this.showDownload = ko.pureComputed(function(){
-            return this.info().status && 
-            (this.info().status.code === codes.COMPLETED);
+        this.showDownload = ko.pureComputed(function() {
+            return this.info().status &&
+                (this.info().status.code === codes.COMPLETED);
         }, this);
         this.startRefreshingInfo();
     }
-    Task.prototype.refreshInfo = function(){
+    Task.prototype.refreshInfo = function() {
         var self = this;
         var url = "/task/" + this.uuid + "/info";
         $.get(url)
-         .done(function(json){
-            // Track time
+            .done(function(json) {
+                // Track time
 
-            if (json.processingTime && json.processingTime !== -1){
-                self.timeElapsed(hoursMinutesSecs(json.processingTime));
-            }
-            self.info(json);
-         })
-         .fail(function(){
-            self.info({error: url + " is unreachable."});
-         })
-         .always(function(){ self.loading(false); });
+                if (json.processingTime && json.processingTime !== -1) {
+                    self.timeElapsed(hoursMinutesSecs(json.processingTime));
+                }
+                self.info(json);
+            })
+            .fail(function() {
+                self.info({ error: url + " is unreachable." });
+            })
+            .always(function() { self.loading(false); });
     };
-    Task.prototype.consoleMouseOver = function(){ this.autoScrollOutput = false; };
-    Task.prototype.consoleMouseOut = function(){ this.autoScrollOutput = true; };
-    Task.prototype.resetOutput = function(){
+    Task.prototype.consoleMouseOver = function() { this.autoScrollOutput = false; };
+    Task.prototype.consoleMouseOut = function() { this.autoScrollOutput = true; };
+    Task.prototype.resetOutput = function() {
         this.viewOutputLine = 0;
         this.autoScrollOutput = true;
         this.output.removeAll();
     };
-    Task.prototype.viewOutput = function(){
+    Task.prototype.viewOutput = function() {
         var self = this;
 
-        function fetchOutput(){
+        function fetchOutput() {
             var url = "/task/" + self.uuid + "/output";
-            $.get(url, {line: self.viewOutputLine})
-             .done(function(output){
-                for (var i in output){
-                    self.output.push(output[i]);
-                }
-                if (output.length){
-                    self.viewOutputLine += output.length;
-                    if (self.autoScrollOutput){
-                        var $console = $("#console_" + self.uuid);
-                        $console.scrollTop($console[0].scrollHeight - $console.height());
+            $.get(url, { line: self.viewOutputLine })
+                .done(function(output) {
+                    for (var i in output) {
+                        self.output.push(output[i]);
                     }
-                }
-             })
-             .fail(function(){
-                self.info({error: url + " is unreachable."});
-             });
+                    if (output.length) {
+                        self.viewOutputLine += output.length;
+                        if (self.autoScrollOutput) {
+                            var $console = $("#console_" + self.uuid);
+                            $console.scrollTop($console[0].scrollHeight - $console.height());
+                        }
+                    }
+                })
+                .fail(function() {
+                    self.info({ error: url + " is unreachable." });
+                });
         }
         this.fetchOutputInterval = setInterval(fetchOutput, 2000);
         fetchOutput();
 
         this.viewingOutput(true);
     };
-    Task.prototype.hideOutput = function(){
+    Task.prototype.hideOutput = function() {
         if (this.fetchOutputInterval) clearInterval(this.fetchOutputInterval);
         this.viewingOutput(false);
     };
@@ -192,12 +191,12 @@ $(function(){
         var self = this;
         this.stopRefreshingInfo();
         this.refreshInfo();
-        this.refreshInterval = setInterval(function(){
+        this.refreshInterval = setInterval(function() {
             self.refreshInfo();
         }, 500); // TODO: change to larger value
     };
     Task.prototype.stopRefreshingInfo = function() {
-        if (this.refreshInterval){
+        if (this.refreshInterval) {
             clearInterval(this.refreshInterval);
             this.refreshInterval = null;
         }
@@ -206,62 +205,62 @@ $(function(){
         var self = this;
         var url = "/task/remove";
 
-        function doRemove(){
+        function doRemove() {
             $.post(url, {
-                uuid: self.uuid
-            })
-            .done(function(json){
-                if (json.success || self.info().error){
-                    taskList.remove(self);
-                }else{
-                    self.info({error: json.error});
-                }
+                    uuid: self.uuid
+                })
+                .done(function(json) {
+                    if (json.success || self.info().error) {
+                        taskList.remove(self);
+                    } else {
+                        self.info({ error: json.error });
+                    }
 
-                self.stopRefreshingInfo();
-            })
-            .fail(function(){
-                self.info({error: url + " is unreachable."});
-                self.stopRefreshingInfo();
-            });
+                    self.stopRefreshingInfo();
+                })
+                .fail(function() {
+                    self.info({ error: url + " is unreachable." });
+                    self.stopRefreshingInfo();
+                });
         }
 
-        if (this.info().status && this.info().status.code === codes.COMPLETED){
+        if (this.info().status && this.info().status.code === codes.COMPLETED) {
             if (confirm("Are you sure?")) doRemove();
-        }else{
+        } else {
             doRemove();
         }
     };
 
-    function genApiCall(url, onSuccess){
-        return function(){
+    function genApiCall(url, onSuccess) {
+        return function() {
             var self = this;
 
             $.post(url, {
-                uuid: this.uuid
-            })
-            .done(function(json){
-                if (json.success){
-                    if (onSuccess !== undefined) onSuccess(self, json);
-                    self.startRefreshingInfo();
-                }else{
+                    uuid: this.uuid
+                })
+                .done(function(json) {
+                    if (json.success) {
+                        if (onSuccess !== undefined) onSuccess(self, json);
+                        self.startRefreshingInfo();
+                    } else {
+                        self.stopRefreshingInfo();
+                        self.info({ error: json.error });
+                    }
+                })
+                .fail(function() {
+                    self.info({ error: url + " is unreachable." });
                     self.stopRefreshingInfo();
-                    self.info({error: json.error});
-                }
-            })
-            .fail(function(){
-                self.info({error: url + " is unreachable."});
-                self.stopRefreshingInfo();
-            });
+                });
         };
     }
     Task.prototype.cancel = genApiCall("/task/cancel");
-    Task.prototype.restart = genApiCall("/task/restart", function(task){
+    Task.prototype.restart = genApiCall("/task/restart", function(task) {
         task.resetOutput();
     });
-    Task.prototype.download = function(){
+    Task.prototype.download = function() {
         location.href = "/task/" + this.uuid + "/download/all.zip";
     };
-    Task.prototype.downloadOrthophoto = function(){
+    Task.prototype.downloadOrthophoto = function() {
         location.href = "/task/" + this.uuid + "/download/orthophoto.tif";
     };
 
@@ -276,52 +275,75 @@ $(function(){
         elErrorContainer: '#errorBlock',
         showUpload: false,
         uploadAsync: false,
-        uploadExtraData: function(){
+        uploadExtraData: function() {
             return {
                 name: $("#taskName").val(),
+                zipurl: $("#zipurl").val(),
                 options: JSON.stringify(optionsModel.getUserOptions())
             };
         }
     });
 
-    $("#btnUpload").click(function(){
+    $("#btnUpload").click(function() {
         $("#btnUpload").attr('disabled', true)
-                        .val("Uploading...");
+            .val("Uploading...");
 
         // Start upload
         $("#images").fileinput('upload');
-    });     
+    });
+
+// zip file control
+$('#btnShowImport').on('click', function(e){
+    e.preventDefault();
+    $('#zipFileInput').removeClass('hidden');
+    $('#btnShowUpload').removeClass('hidden');
+
+      $('#imagesInput').addClass('hidden');
+    $('#btnShowImport').addClass('hidden');
+
+});
+
+$('#btnShowUpload').on('click', function(e){
+    e.preventDefault();
+    $('#imagesInput').removeClass('hidden');
+    $('#btnShowImport').removeClass('hidden');
+
+       $('#zipFileInput').addClass('hidden');
+    $('#btnShowUpload').addClass('hidden');
+
+})
+
 
     var btnUploadLabel = $("#btnUpload").val();
     $("#images")
-        .on('filebatchuploadsuccess', function(e, params){
+        .on('filebatchuploadsuccess', function(e, params) {
             $("#images").fileinput('reset');
 
-            if (params.response && params.response.uuid){
+            if (params.response && params.response.uuid) {
                 taskList.add(new Task(params.response.uuid));
             }
         })
-        .on('filebatchuploadcomplete', function(){
+        .on('filebatchuploadcomplete', function() {
             $("#btnUpload").removeAttr('disabled')
-                            .val(btnUploadLabel);
+                .val(btnUploadLabel);
         })
         .on('filebatchuploaderror', console.warn);
 
     // Load options
-    function Option(properties){
+    function Option(properties) {
         this.properties = properties;
         this.value = ko.observable();
     }
-    Option.prototype.resetToDefault = function(){
+    Option.prototype.resetToDefault = function() {
         this.value(undefined);
     };
 
-    function OptionsModel(){
+    function OptionsModel() {
         var self = this;
 
         this.options = ko.observableArray();
-        this.options.subscribe(function(){
-            setTimeout(function(){
+        this.options.subscribe(function() {
+            setTimeout(function() {
                 $('#options [data-toggle="tooltip"]').tooltip();
             }, 100);
         });
@@ -329,23 +351,23 @@ $(function(){
         this.error = ko.observable();
 
         $.get("/options")
-         .done(function(json){
-            if (json.error) self.error(json.error);
-            else{
-                for (var i in json){
-                    self.options.push(new Option(json[i]));
+            .done(function(json) {
+                if (json.error) self.error(json.error);
+                else {
+                    for (var i in json) {
+                        self.options.push(new Option(json[i]));
+                    }
                 }
-            }
-         })
-         .fail(function(){
-            self.error("options are not available.");
-         });
+            })
+            .fail(function() {
+                self.error("options are not available.");
+            });
     }
-    OptionsModel.prototype.getUserOptions = function(){
+    OptionsModel.prototype.getUserOptions = function() {
         var result = [];
-        for (var i = 0; i < this.options().length; i++){
+        for (var i = 0; i < this.options().length; i++) {
             var opt = this.options()[i];
-            if (opt.value() !== undefined){
+            if (opt.value() !== undefined) {
                 result.push({
                     name: opt.properties.name,
                     value: opt.value()
