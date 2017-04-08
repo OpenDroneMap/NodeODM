@@ -134,7 +134,9 @@ let server;
  *            $ref: '#/definitions/Error'
  */
 app.post('/task/new', addRequestId, upload.array('images'), (req, res) => {
+
     if ((!req.files || req.files.length === 0) && !req.body.zipurl) res.json({ error: "Need at least 1 file or a zip file url." });
+
     else {
         let srcPath = path.join("tmp", req.id);
         let destPath = path.join(Directories.data, req.id);
@@ -144,8 +146,10 @@ app.post('/task/new', addRequestId, upload.array('images'), (req, res) => {
 
 
 
+
         async.series([
             // moved these up  becaus ei need to populat ethem if zip file first
+
 
             cb => {
                 odmOptions.filterOptions(req.body.options, (err, options) => {
@@ -159,6 +163,7 @@ app.post('/task/new', addRequestId, upload.array('images'), (req, res) => {
 
             // Move all uploads to data/<uuid>/images dir
             cb => {
+
                 if (req.files && req.files.length > 0) {
                     setTimeout(function() {
                         fs.stat(destPath, (err, stat) => {
@@ -194,6 +199,7 @@ app.post('/task/new', addRequestId, upload.array('images'), (req, res) => {
                     cb();
                 }
             },
+
 
             cb => {
                 // Find any *.txt (GPC) file and move it to the data/<uuid>/gpc directory

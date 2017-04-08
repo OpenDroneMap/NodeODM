@@ -39,9 +39,6 @@ jspm_packages
 
 # Elastic Beanstalk
 .elasticbeanstalk
- 
 
- .vscode
-.vscode/formatter.json
-.vscode/settings.json
-.vscode/launch.json
+.vscode
+
