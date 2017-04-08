@@ -45,7 +45,10 @@ let request = require('request');
 
 let download = function(uri, filename, callback) {
     request.head(uri, function(err, res, body) {
-        request(uri).pipe(fs.createWriteStream(filename)).on('close', callback);
+        if (err) callback(err);
+        else{
+            request(uri).pipe(fs.createWriteStream(filename)).on('close', callback);
+        }
     });
 };
 
@@ -98,14 +101,14 @@ let server;
  *          name: images
  *          in: formData
  *          description: Images to process, plus an optional GPC file. If included, the GPC file should have .txt extension
- *          required: true
+ *          required: false
  *          type: file
  *        -
  *          name: zipurl
  *          in: formData
- *          description: Images to process from a url zip file, plus an optional GPC file. If included, the GPC file should have .txt extension
- *          required: optional
- *          type: file
+ *          description: URL of the zip file containing the images to process, plus an optional GPC file. If included, the GPC file should have .txt extension
+ *          required: false
+ *          type: string
  *        - 
  *          name: name
  *          in: formData
@@ -143,14 +146,7 @@ app.post('/task/new', addRequestId, upload.array('images'), (req, res) => {
         let destImagesPath = path.join(destPath, "images");
         let destGpcPath = path.join(destPath, "gpc");
 
-
-
-
-
         async.series([
-            // moved these up  becaus ei need to populat ethem if zip file first
-
-
             cb => {
                 odmOptions.filterOptions(req.body.options, (err, options) => {
                     if (err) cb(err);
@@ -161,39 +157,41 @@ app.post('/task/new', addRequestId, upload.array('images'), (req, res) => {
                 });
             },
 
+            cb => { fs.mkdir(srcPath, undefined, cb); },
+            cb => { fs.mkdir(destPath, undefined, cb); },
+            cb => { fs.mkdir(destGpcPath, undefined, cb); },
+
             // Move all uploads to data/<uuid>/images dir
             cb => {
-
                 if (req.files && req.files.length > 0) {
-                    setTimeout(function() {
-                        fs.stat(destPath, (err, stat) => {
-                            if (err && err.code === 'ENOENT') cb();
-                            else cb(new Error(`Directory exists (should not have happened: ${err.code})`));
-                        });
-                    }, 500);
+                    fs.stat(destPath, (err, stat) => {
+                        if (err && err.code === 'ENOENT') cb();
+                        else cb(new Error(`Directory exists (should not have happened: ${err.code})`));
+                    });
                 } else {
                     cb();
                 }
             },
-            cb => { fs.mkdir(srcPath, undefined, cb) },
-            cb => { fs.mkdir(destPath, undefined, cb) },
-            cb => { fs.mkdir(destGpcPath, undefined, cb) },
             cb => fs.rename(srcPath, destImagesPath, cb),
             cb => {
                 if (req.body.zipurl) {
-                    var filename = path.basename(req.body.zipurl);
-                    download(req.body.zipurl, destPath + '/' + filename, function() {
-                        // unzip and flatten the zip file (incase there are folders in the zip)
-                        fs.createReadStream(destPath + '/' + filename).pipe(unzip.Parse())
-                            .on('entry', function(entry) {
-                                if (entry.type === 'File') {
-                                    entry.pipe(fs.createWriteStream(destImagesPath + '/' + path.basename(entry.path)));
-                                } else {
-                                    entry.autodrain();
-                                }
-                            }).on('close', function() {
-                                cb();
-                            });
+                    let archiveDestPath = path.join(destPath, "zipurl.zip");
+
+                    download(req.body.zipurl, archiveDestPath, err => {
+                        if (err) cb(err);
+                        else{
+                            // unzip and flatten the zip file (in case there are folders in the zip)
+                            fs.createReadStream(archiveDestPath).pipe(unzip.Parse())
+                                .on('entry', function(entry) {
+                                    if (entry.type === 'File') {
+                                        entry.pipe(fs.createWriteStream(destImagesPath + '/' + path.basename(entry.path)));
+                                    } else {
+                                        entry.autodrain();
+                                    }
+                                })
+                                .on('close', cb)
+                                .on('error', cb);
+                        }
                     });
                 } else {
                     cb();
@@ -371,8 +369,8 @@ app.get('/task/:uuid/download/:asset', getTaskFromUuid, (req, res) => {
     if (filePath) {
         if (fs.existsSync(filePath)) {
             res.setHeader('Content-Disposition', `attachment; filename=${asset}`);
-            res.setHeader('Content-Type', mime.lookup(asset));
-            res.setHeader('Content-Length', fs.statSync(filePath)["size"]);
+            res.setHeader('Content-Type', mime.lookup(filePath));
+            res.setHeader('Content-Length', fs.statSync(filePath).size);
 
             const filestream = fs.createReadStream(filePath);
             filestream.pipe(res);
