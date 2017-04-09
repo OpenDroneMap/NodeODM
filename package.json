@@ -1,6 +1,6 @@
 {
   "name": "node-opendronemap",
-  "version": "1.0.2",
+  "version": "1.0.3",
   "description": "REST API to access OpenDroneMap",
   "main": "index.js",
   "scripts": {

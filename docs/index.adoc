@@ -8,7 +8,7 @@ REST API to access OpenDroneMap
 
 === Version information
 [%hardbreaks]
-_Version_ : 1.0.2
+_Version_ : 1.0.3
 
 
 === Contact information
@@ -154,11 +154,13 @@ Creates a new task and places it at the end of the processing queue
 |===
 |Type|Name|Description|Schema|Default
 |*FormData*|*images* +
-_required_|Images to process, plus an optional GPC file. If included, the GPC file should have .txt extension|file|
+_optional_|Images to process, plus an optional GPC file. If included, the GPC file should have .txt extension|file|
 |*FormData*|*name* +
 _optional_|An optional name to be associated with the task|string|
 |*FormData*|*options* +
 _optional_|Serialized JSON string of the options to use for processing, as an array of the format: [{name: option1, value: value1}, {name: option2, value: value2}, …]. For example, [{"name":"cmvs-maxImages","value":"500"},{"name":"time","value":true}]. For a list of all options, call /options|string|
+|*FormData*|*zipurl* +
+_optional_|URL of the zip file containing the images to process, plus an optional GPC file. If included, the GPC file should have .txt extension|string|
 |===
 
 
