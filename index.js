@@ -64,8 +64,6 @@ app.use(bodyParser.json());
 app.use(express.static('public'));
 app.use('/swagger.json', express.static('docs/swagger.json'));
 
-
-
 let upload = multer({
     storage: multer.diskStorage({
         destination: (req, file, cb) => {
@@ -157,11 +155,7 @@ app.post('/task/new', addRequestId, upload.array('images'), (req, res) => {
                 });
             },
 
-            cb => { fs.mkdir(srcPath, undefined, cb); },
-            cb => { fs.mkdir(destPath, undefined, cb); },
-            cb => { fs.mkdir(destGpcPath, undefined, cb); },
-
-            // Move all uploads to data/<uuid>/images dir
+            // Move all uploads to data/<uuid>/images dir (if any)
             cb => {
                 if (req.files && req.files.length > 0) {
                     fs.stat(destPath, (err, stat) => {
@@ -172,25 +166,33 @@ app.post('/task/new', addRequestId, upload.array('images'), (req, res) => {
                     cb();
                 }
             },
-            cb => fs.rename(srcPath, destImagesPath, cb),
+
+            // Unzips zip URL to data/<uuid>/ (if any)
             cb => {
                 if (req.body.zipurl) {
-                    let archiveDestPath = path.join(destPath, "zipurl.zip");
+                    let archive = "zipurl.zip";
 
-                    download(req.body.zipurl, archiveDestPath, err => {
+                    upload.storage.getDestination(req, archive, (err, dstPath) => {
                         if (err) cb(err);
                         else{
-                            // unzip and flatten the zip file (in case there are folders in the zip)
-                            fs.createReadStream(archiveDestPath).pipe(unzip.Parse())
-                                .on('entry', function(entry) {
-                                    if (entry.type === 'File') {
-                                        entry.pipe(fs.createWriteStream(destImagesPath + '/' + path.basename(entry.path)));
-                                    } else {
-                                        entry.autodrain();
-                                    }
-                                })
-                                .on('close', cb)
-                                .on('error', cb);
+                            let archiveDestPath = path.join(dstPath, archive);
+
+                            download(req.body.zipurl, archiveDestPath, err => {
+                                if (err) cb(err);
+                                else{
+                                    // unzip and flatten the zip file (in case there are folders in the zip)
+                                    fs.createReadStream(archiveDestPath).pipe(unzip.Parse())
+                                        .on('entry', function(entry) {
+                                            if (entry.type === 'File') {
+                                                entry.pipe(fs.createWriteStream(path.join(srcPath, path.basename(entry.path))));
+                                            } else {
+                                                entry.autodrain();
+                                            }
+                                        })
+                                        .on('close', cb)
+                                        .on('error', cb);
+                                }
+                            });
                         }
                     });
                 } else {
@@ -198,15 +200,21 @@ app.post('/task/new', addRequestId, upload.array('images'), (req, res) => {
                 }
             },
 
-
+            cb => fs.mkdir(destPath, undefined, cb),
+            cb => fs.mkdir(destGpcPath, undefined, cb),
+            cb => fs.rename(srcPath, destImagesPath, cb),
+            
             cb => {
                 // Find any *.txt (GPC) file and move it to the data/<uuid>/gpc directory
+                // also remove any lingering zipurl.zip
                 fs.readdir(destImagesPath, (err, entries) => {
                     if (err) cb(err);
                     else {
                         async.eachSeries(entries, (entry, cb) => {
                             if (/\.txt$/gi.test(entry)) {
                                 fs.rename(path.join(destImagesPath, entry), path.join(destGpcPath, entry), cb);
+                            }else if (entry === 'zipurl.zip'){
+                                fs.unlink(path.join(destImagesPath, entry), cb);
                             } else cb();
                         }, cb);
                     }

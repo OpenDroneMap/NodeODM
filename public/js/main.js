@@ -292,27 +292,26 @@ $(function() {
         $("#images").fileinput('upload');
     });
 
-// zip file control
-$('#btnShowImport').on('click', function(e){
-    e.preventDefault();
-    $('#zipFileInput').removeClass('hidden');
-    $('#btnShowUpload').removeClass('hidden');
+    // zip file control
+    $('#btnShowImport').on('click', function(e){
+        e.preventDefault();
+        $('#zipFileInput').removeClass('hidden');
+        $('#btnShowUpload').removeClass('hidden');
 
-      $('#imagesInput').addClass('hidden');
-    $('#btnShowImport').addClass('hidden');
+        $('#imagesInput').addClass('hidden');
+        $('#btnShowImport').addClass('hidden');
 
-});
+    });
 
-$('#btnShowUpload').on('click', function(e){
-    e.preventDefault();
-    $('#imagesInput').removeClass('hidden');
-    $('#btnShowImport').removeClass('hidden');
+    $('#btnShowUpload').on('click', function(e){
+        e.preventDefault();
+        $('#imagesInput').removeClass('hidden');
+        $('#btnShowImport').removeClass('hidden');
 
-       $('#zipFileInput').addClass('hidden');
-    $('#btnShowUpload').addClass('hidden');
-
-})
-
+        $('#zipFileInput').addClass('hidden');
+        $('#btnShowUpload').addClass('hidden');
+        $('#zipurl').val('');
+    });
 
     var btnUploadLabel = $("#btnUpload").val();
     $("#images")
