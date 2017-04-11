@@ -95,7 +95,7 @@ module.exports = {
 					}
 
 					if (Array.isArray(values.choices)){
-						type = "string"; // TODO: change to enum
+						type = "enum";
 						domain = values.choices;
 					}
 
@@ -147,6 +147,9 @@ module.exports = {
 					return value; // No conversion needed
 				},
 				'path': function(value){
+					return value; // No conversion needed
+				},
+				'enum': function(value){
 					return value; // No conversion needed
 				}
 			};
@@ -202,18 +205,21 @@ module.exports = {
 						return true; // All strings/paths are fine
 					}
 				}
-
-				// TODO: handle enum
 			];
 
 			let checkDomain = function(domain, value){
-				let matches,
-					dc = domainChecks.find(dc => matches = domain.match(dc.regex));
-
-				if (dc){
-					if (!dc.validate(matches, value)) throw new Error(`Invalid value ${value} (out of range)`);
+				if (Array.isArray(domain)){
+					// Special case for enum checks
+					if (domain.indexOf(value) === -1) throw new Error(`Invalid value ${value} (not in enum)`);
 				}else{
-					throw new Error(`Domain value cannot be handled: '${domain}' : '${value}'`);
+					let matches,
+						dc = domainChecks.find(dc => matches = domain.match(dc.regex));
+
+					if (dc){
+						if (!dc.validate(matches, value)) throw new Error(`Invalid value ${value} (out of range)`);
+					}else{
+						throw new Error(`Domain value cannot be handled: '${domain}' : '${value}'`);
+					}
 				}
 			};
 
