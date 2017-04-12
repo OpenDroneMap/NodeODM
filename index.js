@@ -167,7 +167,7 @@ app.post('/task/new', addRequestId, upload.array('images'), (req, res) => {
                 }
             },
 
-            // Unzips zip URL to data/<uuid>/ (if any)
+            // Unzips zip URL to tmp/<uuid>/ (if any)
             cb => {
                 if (req.body.zipurl) {
                     let archive = "zipurl.zip";
@@ -177,23 +177,7 @@ app.post('/task/new', addRequestId, upload.array('images'), (req, res) => {
                         else{
                             let archiveDestPath = path.join(dstPath, archive);
 
-                            download(req.body.zipurl, archiveDestPath, err => {
-                                if (err) cb(err);
-                                else{
-                                    // unzip and flatten the zip file (in case there are folders in the zip)
-                                    // fs.createReadStream(archiveDestPath).pipe(unzip.Parse())
-                                    //     .on('entry', function(entry) {
-                                    //         if (entry.type === 'File') {
-                                    //             entry.pipe(fs.createWriteStream(path.join(srcPath, path.basename(entry.path))));
-                                    //         } else {
-                                    //             entry.autodrain();
-                                    //         }
-                                    //     })
-                                    //     .on('close', cb)
-                                    //     .on('error', cb);
-                                    cb();
-                                }
-                            });
+                            download(req.body.zipurl, archiveDestPath, cb);
                         }
                     });
                 } else {
@@ -213,8 +197,6 @@ app.post('/task/new', addRequestId, upload.array('images'), (req, res) => {
                     else {
                         async.eachSeries(entries, (entry, cb) => {
                             if (/\.zip$/gi.test(entry)) {
-
-
                                 fs.createReadStream(path.join(destImagesPath, entry)).pipe(unzip.Parse())
                                         .on('entry', function(entry) {
                                             if (entry.type === 'File') {
