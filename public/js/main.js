@@ -271,7 +271,7 @@ $(function() {
     $("#images").fileinput({
         uploadUrl: '/task/new',
         showPreview: false,
-        allowedFileExtensions: ['jpg', 'jpeg', 'txt'],
+        allowedFileExtensions: ['jpg', 'jpeg', 'txt', 'zip'],
         elErrorContainer: '#errorBlock',
         showUpload: false,
         uploadAsync: false,
@@ -279,6 +279,7 @@ $(function() {
             return {
                 name: $("#taskName").val(),
                 zipurl: $("#zipurl").val(),
+                webhook: $("#webhook").val(),
                 options: JSON.stringify(optionsModel.getUserOptions())
             };
         }
@@ -290,6 +291,13 @@ $(function() {
 
         // Start upload
         $("#images").fileinput('upload');
+    });
+
+    $('#resetWebhook').on('click', function(){
+
+
+
+        $("#webhook").val('');
     });
 
     // zip file control
