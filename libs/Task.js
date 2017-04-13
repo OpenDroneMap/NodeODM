@@ -101,7 +101,7 @@ module.exports = class Task{
 				}
 				done(null, task);
 			}
-		}, taskJson.options);
+		}, taskJson.options, taskJson.webhook);
 	}
 
 	// Get path where images are stored for this task
