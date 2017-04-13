@@ -48,6 +48,8 @@ module.exports = class Task{
 		this.output = [];
 		this.runningProcesses = [];
 		this.webhook = webhook;
+
+
 		
 
 		async.series([
@@ -477,7 +479,8 @@ module.exports = class Task{
 			name: this.name,
 			dateCreated: this.dateCreated,
 			status: this.status,
-			options: this.options
+			options: this.options,
+			webhook: this.webhook 
 		};
 	}
 };
