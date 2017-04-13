@@ -160,9 +160,7 @@ module.exports = class TaskManager{
 							json: task.getInfo()
 						}, 
 						function (error, response, body) {
-							if (!error && response.statusCode == 200) {
-
-							}
+							if (error || response.statusCode != 200) logger.warn(`Call to webhook failed: ${task.webhook}`);
 						});
 					}
 
