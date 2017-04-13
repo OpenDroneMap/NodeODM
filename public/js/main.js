@@ -271,7 +271,7 @@ $(function() {
     $("#images").fileinput({
         uploadUrl: '/task/new',
         showPreview: false,
-        allowedFileExtensions: ['jpg', 'jpeg', 'txt'],
+        allowedFileExtensions: ['jpg', 'jpeg', 'txt', 'zip'],
         elErrorContainer: '#errorBlock',
         showUpload: false,
         uploadAsync: false,
@@ -279,6 +279,7 @@ $(function() {
             return {
                 name: $("#taskName").val(),
                 zipurl: $("#zipurl").val(),
+                webhook: $("#webhook").val(),
                 options: JSON.stringify(optionsModel.getUserOptions())
             };
         }
@@ -288,8 +289,29 @@ $(function() {
         $("#btnUpload").attr('disabled', true)
             .val("Uploading...");
 
-        // Start upload
-        $("#images").fileinput('upload');
+            // validate webhook if exists
+            var webhook = $("#webhook").val();
+            var regex = new RegExp("^(http[s]?:\\/\\/(www\\.)?|ftp:\\/\\/(www\\.)?|www\\.){1}([0-9A-Za-z-\\.@:%_\+~#=]+)+((\\.[a-zA-Z]{2,3})+)(/(.)*)?(\\?(.)*)?");
+
+            if(webhook.length > 0 && !regex.test(webhook)){
+                $('#errorBlock').text("Webhook url is not valid..");
+                $("#btnUpload").attr('disabled', false).val("Start Task");
+                return;
+            }
+        
+
+            // Start upload
+            $("#images").fileinput('upload');
+
+
+        
+    });
+
+    $('#resetWebhook').on('click', function(){
+
+
+
+        $("#webhook").val('');
     });
 
     // zip file control

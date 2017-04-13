@@ -167,7 +167,7 @@ app.post('/task/new', addRequestId, upload.array('images'), (req, res) => {
                 }
             },
 
-            // Unzips zip URL to data/<uuid>/ (if any)
+            // Unzips zip URL to tmp/<uuid>/ (if any)
             cb => {
                 if (req.body.zipurl) {
                     let archive = "zipurl.zip";
@@ -177,22 +177,7 @@ app.post('/task/new', addRequestId, upload.array('images'), (req, res) => {
                         else{
                             let archiveDestPath = path.join(dstPath, archive);
 
-                            download(req.body.zipurl, archiveDestPath, err => {
-                                if (err) cb(err);
-                                else{
-                                    // unzip and flatten the zip file (in case there are folders in the zip)
-                                    fs.createReadStream(archiveDestPath).pipe(unzip.Parse())
-                                        .on('entry', function(entry) {
-                                            if (entry.type === 'File') {
-                                                entry.pipe(fs.createWriteStream(path.join(srcPath, path.basename(entry.path))));
-                                            } else {
-                                                entry.autodrain();
-                                            }
-                                        })
-                                        .on('close', cb)
-                                        .on('error', cb);
-                                }
-                            });
+                            download(req.body.zipurl, archiveDestPath, cb);
                         }
                     });
                 } else {
@@ -204,6 +189,32 @@ app.post('/task/new', addRequestId, upload.array('images'), (req, res) => {
             cb => fs.mkdir(destGpcPath, undefined, cb),
             cb => fs.rename(srcPath, destImagesPath, cb),
             
+
+            cb => {
+                // Find any *.zip file and extract
+                fs.readdir(destImagesPath, (err, entries) => {
+                    if (err) cb(err);
+                    else {
+                        async.eachSeries(entries, (entry, cb) => {
+                            if (/\.zip$/gi.test(entry)) {
+                                fs.createReadStream(path.join(destImagesPath, entry)).pipe(unzip.Parse())
+                                        .on('entry', function(entry) {
+                                            if (entry.type === 'File') {
+                                                entry.pipe(fs.createWriteStream(path.join(destImagesPath, path.basename(entry.path))));
+                                            } else {
+                                                entry.autodrain();
+                                            }
+                                        })
+                                        .on('close', cb)
+                                        .on('error', cb);
+
+                               
+                            } else cb();
+                        }, cb);
+                    }
+                });
+            },
+
             cb => {
                 // Find any *.txt (GPC) file and move it to the data/<uuid>/gpc directory
                 // also remove any lingering zipurl.zip
@@ -213,7 +224,7 @@ app.post('/task/new', addRequestId, upload.array('images'), (req, res) => {
                         async.eachSeries(entries, (entry, cb) => {
                             if (/\.txt$/gi.test(entry)) {
                                 fs.rename(path.join(destImagesPath, entry), path.join(destGpcPath, entry), cb);
-                            }else if (entry === 'zipurl.zip'){
+                            }else if (/\.zip$/gi.test(entry)){
                                 fs.unlink(path.join(destImagesPath, entry), cb);
                             } else cb();
                         }, cb);
@@ -230,7 +241,7 @@ app.post('/task/new', addRequestId, upload.array('images'), (req, res) => {
                         res.json({ uuid: req.id });
                         cb();
                     }
-                }, req.body.options);
+                }, req.body.options, req.body.webhook);
             }
         ], err => {
             if (err) res.json({ error: err.message });

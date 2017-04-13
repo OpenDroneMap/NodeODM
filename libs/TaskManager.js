@@ -27,6 +27,10 @@ let statusCodes = require('./statusCodes');
 let async = require('async');
 let schedule = require('node-schedule');
 let Directories = require('./Directories');
+let request = require('request');
+
+
+
 
 const TASKS_DUMP_FILE = path.join(Directories.data, "tasks.json");
 const CLEANUP_TASKS_IF_OLDER_THAN = 1000 * 60 * 60 * 24 * config.cleanupTasksAfter; // days
@@ -149,6 +153,19 @@ module.exports = class TaskManager{
 			if (task){
 				this.addToRunningQueue(task);
 				task.start(() => {
+					if(task.webhook && task.webhook.length > 3){
+						request({
+							uri: task.webhook,
+							method: 'POST',
+							json: task.getInfo()
+						}, 
+						function (error, response, body) {
+							if (!error && response.statusCode == 200) {
+
+							}
+						});
+					}
+
 					this.removeFromRunningQueue(task);
 					this.processNextTask();
 				});

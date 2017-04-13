@@ -34,7 +34,7 @@ let Directories = require('./Directories');
 let statusCodes = require('./statusCodes');
 
 module.exports = class Task{
-	constructor(uuid, name, done, options = []){
+	constructor(uuid, name, done, options = [], webhook){
 		assert(uuid !== undefined, "uuid must be set");
 		assert(done !== undefined, "ready must be set");
 
@@ -47,6 +47,10 @@ module.exports = class Task{
 		this.gpcFiles = [];
 		this.output = [];
 		this.runningProcesses = [];
+		this.webhook = webhook;
+
+
+		
 
 		async.series([
 			// Read images info
@@ -97,7 +101,7 @@ module.exports = class Task{
 				}
 				done(null, task);
 			}
-		}, taskJson.options);
+		}, taskJson.options, taskJson.webhook);
 	}
 
 	// Get path where images are stored for this task
@@ -475,7 +479,8 @@ module.exports = class Task{
 			name: this.name,
 			dateCreated: this.dateCreated,
 			status: this.status,
-			options: this.options
+			options: this.options,
+			webhook: this.webhook 
 		};
 	}
 };
