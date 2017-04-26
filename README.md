@@ -1,10 +1,6 @@
-# Open Source Drone Aerial Imagery Processing
-
 [![Build Status](https://travis-ci.org/OpenDroneMap/node-OpenDroneMap.svg?branch=master)](https://travis-ci.org/OpenDroneMap/node-OpenDroneMap)
 
-node-OpenDroneMap is a Node.js App and REST API to access [OpenDroneMap](https://github.com/OpenDroneMap/OpenDroneMap)
-
-[http://nodeodm.masseranolabs.com](http://nodeodm.masseranolabs.com)
+node-OpenDroneMap is a Node.js App and REST API to access [OpenDroneMap](https://github.com/OpenDroneMap/OpenDroneMap). It exposes an API which is used by [WebODM](https://github.com/OpenDroneMap/WebODM).
 
 ![Alt text](/screenshots/main.png?raw=true "Node-OpenDroneMap")
 
