@@ -355,7 +355,7 @@ module.exports = class Task{
 			}
 
 			let orthophotoPath = path.join('odm_orthophoto', 'odm_orthophoto.tif'),
-				lasPointCloudPath = path.join('odm_georeferencing', 'odm_georeferenced_model.ply.las'),
+				lasPointCloudPath = path.join('odm_georeferencing', 'odm_georeferenced_model.las'),
 				projectFolderPath = this.getProjectFolderPath();
 
 			let commands = [
