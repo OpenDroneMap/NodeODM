@@ -34,7 +34,7 @@ let Directories = require('./Directories');
 let statusCodes = require('./statusCodes');
 
 module.exports = class Task{
-	constructor(uuid, name, done, options = [], webhook){
+	constructor(uuid, name, done, options = [], webhook = null){
 		assert(uuid !== undefined, "uuid must be set");
 		assert(done !== undefined, "ready must be set");
 
@@ -48,9 +48,6 @@ module.exports = class Task{
 		this.output = [];
 		this.runningProcesses = [];
 		this.webhook = webhook;
-
-
-		
 
 		async.series([
 			// Read images info
@@ -356,22 +353,23 @@ module.exports = class Task{
 
 			let orthophotoPath = path.join('odm_orthophoto', 'odm_orthophoto.tif'),
 				lasPointCloudPath = path.join('odm_georeferencing', 'odm_georeferenced_model.las'),
+				plyPointCloudPath = path.join('odm_georeferencing', 'odm_georeferenced_model.ply'),
 				projectFolderPath = this.getProjectFolderPath();
 
 			let commands = [
                 generateTiles(orthophotoPath, 'orthophoto_tiles'),
-                generatePotreeCloud(lasPointCloudPath, 'potree_pointcloud'),
+                generatePotreeCloud(plyPointCloudPath, 'potree_pointcloud'),
                 createZipArchive('all.zip', allFolders)
 			];
 
 			// If point cloud file does not exist, it's likely because location (GPS/GPC) information
 			// was missing and the file was not generated.
-			let fullLasPointCloudPath = path.join(projectFolderPath, lasPointCloudPath);
-			if (!fs.existsSync(fullLasPointCloudPath)){
+			let fullPlyPointCloudPath = path.join(projectFolderPath, plyPointCloudPath);
+			if (!fs.existsSync(fullPlyPointCloudPath)){
 				let unreferencedPointCloudPath = path.join(projectFolderPath, "opensfm", "depthmaps", "merged.ply");
 				if (fs.existsSync(unreferencedPointCloudPath)){
-					logger.info(`${lasPointCloudPath} is missing, will attempt to generate it from ${unreferencedPointCloudPath}`);
-					commands.unshift(pdalTranslate(unreferencedPointCloudPath, fullLasPointCloudPath, [
+					logger.info(`${plyPointCloudPath} is missing, will attempt to generate it from ${unreferencedPointCloudPath}`);
+					commands.unshift(pdalTranslate(unreferencedPointCloudPath, fullPlyPointCloudPath, [
 							{
 							  // opensfm's ply files map colors with the diffuse_ prefix
 							  dimensions: "diffuse_red = red, diffuse_green = green, diffuse_blue = blue",
