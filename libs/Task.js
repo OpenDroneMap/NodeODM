@@ -286,57 +286,22 @@ module.exports = class Task{
 				};
 			};
 
-			const handleProcessExit = (done) => {
-				return (err, code, signal) => {
-					if (err) done(err);
-					else{
-						// Don't evaluate if we caused the process to exit via SIGINT?
-						if (code === 0) done();
-						else done(new Error(`Process exited with code ${code}`));
-					}
-				};
-			};
-
-			const handleOutput = output => {
-				this.output.push(output);
-			};
-
-			const generateTiles = (inputFile, outputDir) => {
+			const runPostProcessingScript = () => {
 				return (done) => {
-					const inputFilePath = path.join(this.getProjectFolderPath(), inputFile);
-					
-					// Not all datasets generate an orthophoto, so we skip
-					// tiling if the orthophoto is missing
-					if (fs.existsSync(inputFilePath)){
-						this.runningProcesses.push(processRunner.runTiler({
-							zoomLevels: "12-21",
-							inputFile: inputFilePath,
-							outputDir: path.join(this.getProjectFolderPath(), outputDir)
-						}, handleProcessExit(done), handleOutput));
-					}else{
-						handleOutput(`${inputFilePath} file not found, skipping tiles generation\n`);
-						done();
-					}
-				};
-			};
-
-			const generatePotreeCloud = (inputFile, outputDir) => {
-				return (done) => {
-					this.runningProcesses.push(processRunner.runPotreeConverter({
-						inputFile: path.join(this.getProjectFolderPath(), inputFile),
-						outputDir: path.join(this.getProjectFolderPath(), outputDir)
-					}, handleProcessExit(done), handleOutput));
-				};
-			};
-
-			const pdalTranslate = (inputPath, outputPath, filters) => {
-				return (done) => {
-					this.runningProcesses.push(processRunner.runPdalTranslate({
-						inputFile: inputPath,
-						outputFile: outputPath,
-						filters: filters
-					}, handleProcessExit(done), handleOutput));
-				};
+					this.runningProcesses.push(
+						processRunner.runPostProcessingScript({
+							projectFolderPath: this.getProjectFolderPath() 
+						}, (err, code, signal) => {
+							if (err) done(err);
+							else{
+								if (code === 0) done();
+								else done(new Error(`Process exited with code ${code}`));
+							}
+						}, output => {
+							this.output.push(output);
+						})
+					);
+				}
 			};
 
 			// All paths are relative to the project directory (./data/<uuid>/)
@@ -351,35 +316,10 @@ module.exports = class Task{
 				});
 			}
 
-			let orthophotoPath = path.join('odm_orthophoto', 'odm_orthophoto.tif'),
-				lasPointCloudPath = path.join('odm_georeferencing', 'odm_georeferenced_model.las'),
-				plyPointCloudPath = path.join('odm_georeferencing', 'odm_georeferenced_model.ply'),
-				projectFolderPath = this.getProjectFolderPath();
-
-			let commands = [
-                generateTiles(orthophotoPath, 'orthophoto_tiles'),
-                generatePotreeCloud(plyPointCloudPath, 'potree_pointcloud'),
+			async.series([
+                runPostProcessingScript(),
                 createZipArchive('all.zip', allFolders)
-			];
-
-			// If point cloud file does not exist, it's likely because location (GPS/GPC) information
-			// was missing and the file was not generated.
-			let fullPlyPointCloudPath = path.join(projectFolderPath, plyPointCloudPath);
-			if (!fs.existsSync(fullPlyPointCloudPath)){
-				let unreferencedPointCloudPath = path.join(projectFolderPath, "opensfm", "depthmaps", "merged.ply");
-				if (fs.existsSync(unreferencedPointCloudPath)){
-					logger.info(`${plyPointCloudPath} is missing, will attempt to generate it from ${unreferencedPointCloudPath}`);
-					commands.unshift(pdalTranslate(unreferencedPointCloudPath, fullPlyPointCloudPath, [
-							{
-							  // opensfm's ply files map colors with the diffuse_ prefix
-							  dimensions: "diffuse_red = red, diffuse_green = green, diffuse_blue = blue",
-							  type: "filters.ferry"
-							}
-						]));
-				}
-			}
-
-			async.series(commands, (err) => {
+			], (err) => {
 				if (!err){
 					this.setStatus(statusCodes.COMPLETED);
 					finished();
