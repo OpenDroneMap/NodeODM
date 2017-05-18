@@ -301,7 +301,7 @@ module.exports = class Task{
 							this.output.push(output);
 						})
 					);
-				}
+				};
 			};
 
 			// All paths are relative to the project directory (./data/<uuid>/)

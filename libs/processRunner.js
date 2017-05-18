@@ -70,7 +70,7 @@ function makeRunner(command, args, requiredOptions = [], outputTestFile = null){
 }
 
 module.exports = {
-	runPostProcessingScript: makeRunner(os.path.join(__dirname, "..", "scripts", "postprocess.sh"),
+	runPostProcessingScript: makeRunner(path.join(__dirname, "..", "scripts", "postprocess.sh"),
 					 function(options){
 					 	return [options.projectFolderPath];
 					 },
