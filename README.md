@@ -143,7 +143,7 @@ node-OpenDroneMap is meant to be a lightweight API. If you are looking for a mor
 
 ## Contributing
 
-Make a pull request small contributions. For big contributions, please open a discussion first. Please use ES6 syntax while writing new Javascript code so that we can keep the code base uniform.
+Make a pull request for small contributions. For big contributions, please open a discussion first. Please use ES6 syntax while writing new Javascript code so that we can keep the code base uniform.
 
 ## Roadmap
 
