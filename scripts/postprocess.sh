@@ -46,6 +46,13 @@ if hash PotreeConverter 2>/dev/null; then
 
 	if [ ! -z "$potree_input_path" ]; then
 		PotreeConverter $potree_input_path -o potree_pointcloud
+
+		# Copy the failsafe PLY point cloud to odm_georeferencing 
+		# if necessary, otherwise it will not get zipped
+		if [ "$potree_input_path" != "odm_georeferencing/odm_georeferenced_model.ply" ]; then
+			echo "Copying $potree_input_path to odm_georeferencing/odm_georeferenced_model.ply, even though it's not georeferenced..."
+			cp $potree_input_path "odm_georeferencing/odm_georeferenced_model.ply"
+		fi
 	else
 		echo "Potree point cloud will not be generated (no suitable input files found)"
 	fi
