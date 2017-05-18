@@ -69,42 +69,10 @@ function makeRunner(command, args, requiredOptions = [], outputTestFile = null){
 	};
 }
 
-
 module.exports = {
-	runTiler: makeRunner("gdal2tiles.py",
-						 function(options){
-						 	return ["-z", options.zoomLevels,
-								"-n", 
-								"-w", "none",
-								options.inputFile, 
-								options.outputDir
-							];
-						 },
-						 ["zoomLevels", "inputFile", "outputDir"],
-						 path.join("..", "tests", "gdal2tiles_output.txt")),
-
-	runPotreeConverter: makeRunner("PotreeConverter",
-									function(options){
-										return [options.inputFile,
-												"-o", options.outputDir];
-									},
-									["inputFile", "outputDir"],
-									path.join("..", "tests", "potree_output.txt")),
-
-	runPdalTranslate: makeRunner("/code/SuperBuild/build/pdal/bin/pdal",
-									function(options){
-										let opts = ["translate",
-												"-i", options.inputFile,
-												"-o", options.outputFile];
-										
-										if (options.filters){
-											opts = opts.concat([
-												"--json",
-												JSON.stringify(options.filters)
-											]);
-										}
-										
-										return opts;
-									},
-									["inputFile", "outputFile"])
+	runPostProcessingScript: makeRunner(path.join(__dirname, "..", "scripts", "postprocess.sh"),
+					 function(options){
+					 	return [options.projectFolderPath];
+					 },
+					 ["projectFolderPath"])
 };
