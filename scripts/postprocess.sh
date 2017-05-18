@@ -1,7 +1,7 @@
 #!/bin/bash
 
 # This file executes the post-processing steps for a task after a dataset 
-# has been processed by OpenDroneMap. It generates derivative computations.
+# has been processed by OpenDroneMap. It generates secondary outputs.
 # 
 # As a general rule, post-processing commands should never fail the task 
 #(for example, if a point cloud could not be generated, the PotreeConverter 
