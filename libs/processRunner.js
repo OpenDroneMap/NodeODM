@@ -50,6 +50,8 @@ function makeRunner(command, args, requiredOptions = [], outputTestFile = null){
 						done(err);
 					}
 				});
+			}else{
+				done(null, 0, null);
 			}
 
 			return;// Skip rest
