@@ -50,7 +50,7 @@ mkdir build
 cd build
 cmake -DCMAKE_BUILD_TYPE=Release ..
 sudo make && sudo make install
-ldconfig
+sudo ldconfig
 
 git clone https://github.com/pierotofy/PotreeConverter /staging/PotreeConverter
 cd /staging/PotreeConverter
