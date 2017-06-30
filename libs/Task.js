@@ -305,20 +305,33 @@ module.exports = class Task{
 			};
 
 			// All paths are relative to the project directory (./data/<uuid>/)
-			let allFolders = ['odm_orthophoto', 'odm_georeferencing', 'odm_texturing', 'odm_meshing', 'orthophoto_tiles', 'potree_pointcloud'];
+			let allPaths = ['odm_orthophoto', 'odm_georeferencing', 'odm_texturing', 
+							  'odm_dem/dsm.tif', 'odm_dem/dtm.tif', 'dsm_tiles', 'dtm_tiles',
+							  'odm_meshing', 'orthophoto_tiles', 'potree_pointcloud'];
 			
-			if (config.test && config.testSkipOrthophotos){
-				logger.info("Test mode will skip orthophoto generation");
+			if (config.test){
+				if (config.testSkipOrthophotos){
+					logger.info("Test mode will skip orthophoto generation");
 
-				// Exclude these folders from the all.zip archive
-				['odm_orthophoto', 'orthophoto_tiles'].forEach(dir => {
-					allFolders.splice(allFolders.indexOf(dir), 1);
-				});
+					// Exclude these folders from the all.zip archive
+					['odm_orthophoto', 'orthophoto_tiles'].forEach(dir => {
+						allPaths.splice(allPaths.indexOf(dir), 1);
+					});
+				}
+				
+				if (config.testSkipDems){
+					logger.info("Test mode will skip DEMs generation");
+
+					// Exclude these folders from the all.zip archive
+					['odm_dem/dsm.tif', 'odm_dem/dtm.tif', 'dsm_tiles', 'dtm_tiles'].forEach(p => {
+						allPaths.splice(allPaths.indexOf(p), 1);
+					});
+				}
 			}
 
 			async.series([
                 runPostProcessingScript(),
-                createZipArchive('all.zip', allFolders)
+                createZipArchive('all.zip', allPaths)
 			], (err) => {
 				if (!err){
 					this.setStatus(statusCodes.COMPLETED);
