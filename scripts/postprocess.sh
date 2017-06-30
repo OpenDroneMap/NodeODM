@@ -28,7 +28,7 @@ if hash gdaldem 2>/dev/null; then
 	for dem_product in ${dem_products[@]}; do
 		dem_path="odm_dem/""$dem_product"".tif"
 
-		gdaldem color-relief $dem_path $script_path/color_relief.txt "odm_dem/""$dem_product""_colored.tif"
+		gdaldem color-relief $dem_path $script_path/color_relief.txt "odm_dem/""$dem_product""_colored.tif" -alpha -co ALPHA=YES
 		gdaldem hillshade $dem_path "odm_dem/""$dem_product""_hillshade.tif" -z 1.0 -s 1.0 -az 315.0 -alt 45.0
 		python "$script_path/hsv_merge.py" "odm_dem/""$dem_product""_colored.tif" "odm_dem/""$dem_product""_hillshade.tif" "odm_dem/""$dem_product""_colored_hillshade.tif"
 	done
