@@ -254,7 +254,7 @@ module.exports = class Task{
 						}else if (isGlob){
 							globs.push(filePath);
 						}else{
-							archive.file(filePath, {name: path.basename(file)});
+							archive.file(filePath, {name: file});
 						}
 					});
 
