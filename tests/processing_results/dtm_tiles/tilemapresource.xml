@@ -1,0 +1,15 @@
+<?xml version="1.0" encoding="utf-8"?>
+    <TileMap version="1.0.0" tilemapservice="http://tms.osgeo.org/1.0.0">
+      <Title>odm_orthophoto.tif</Title>
+      <Abstract></Abstract>
+      <SRS>EPSG:900913</SRS>
+      <BoundingBox minx="46.84211941279546" miny="-91.99451018369371" maxx="46.84307906547136" maxy="-91.99311178848434"/>
+      <Origin x="46.84211941279546" y="-91.99451018369371"/>
+      <TileFormat width="256" height="256" mime-type="image/png" extension="png"/>
+      <TileSets profile="mercator">
+        <TileSet href="16" units-per-pixel="2.38865713348389" order="16"/>
+        <TileSet href="17" units-per-pixel="1.19432856674194" order="17"/>
+        <TileSet href="18" units-per-pixel="0.59716428337097" order="18"/>
+      </TileSets>
+    </TileMap>
+    

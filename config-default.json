@@ -14,5 +14,6 @@
 	"parallelQueueProcessing": 2,
 	"cleanupTasksAfter": 3,
 	"test": false,
-	"testSkipOrthophotos": false
+	"testSkipOrthophotos": false,
+	"testSkipDems": false
 }

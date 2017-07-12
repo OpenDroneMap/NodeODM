@@ -35,6 +35,7 @@ Options:
 	--cleanup_tasks_after <number> Number of days that elapse before deleting finished and canceled tasks (default: 3) 
 	--test Enable test mode. In test mode, no commands are sent to OpenDroneMap. This can be useful during development or testing (default: false)
 	--test_skip_orthophotos	If test mode is enabled, skip orthophoto results when generating assets. (default: false) 
+	--test_skip_dems	If test mode is enabled, skip dems results when generating assets. (default: false) 
 	--powercycle	When set, the application exits immediately after powering up. Useful for testing launch and compilation issues.
 Log Levels: 
 error | debug | info | verbose | debug | silly 
@@ -81,6 +82,7 @@ config.parallelQueueProcessing = argv.parallel_queue_processing || fromConfigFil
 config.cleanupTasksAfter = argv.cleanup_tasks_after || fromConfigFile("cleanupTasksAfter", 3);
 config.test = argv.test || fromConfigFile("test", false);
 config.testSkipOrthophotos = argv.test_skip_orthophotos || fromConfigFile("testSkipOrthophotos", false);
+config.testSkipDems = argv.test_skip_dems || fromConfigFile("testSkipDems", false);
 config.powercycle = argv.powercycle || fromConfigFile("powercycle", false);
 
 module.exports = config;
