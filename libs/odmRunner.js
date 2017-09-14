@@ -29,24 +29,26 @@ module.exports = {
 		assert(projectName !== undefined, "projectName must be specified");
 		assert(options["project-path"] !== undefined, "project-path must be defined");
 
-		let command = [path.join(config.odm_path, "run.py")];
+		const command = path.join(config.odm_path, "run.sh"),
+			  params = [];
+
 		for (var name in options){
 			let value = options[name];
 
 			// Skip false booleans
 			if (value === false) continue;
 
-			command.push("--" + name);
+			params.push("--" + name);
 
 			// We don't specify "--time true" (just "--time")
 			if (typeof value !== 'boolean'){
-				command.push(value);
+				params.push(value);
 			}
 		}
 
-		command.push(projectName);
+		params.push(projectName);
 
-		logger.info(`About to run: python ${command.join(" ")}`);
+		logger.info(`About to run: ${command} ${params.join(" ")}`);
 
 		if (config.test){
 			logger.info("Test mode is on, command will not execute");
@@ -68,7 +70,7 @@ module.exports = {
 		}
 
 		// Launch
-		let childProcess = spawn("python", command, {cwd: config.odm_path});
+		let childProcess = spawn(command, params, {cwd: config.odm_path});
 
 		childProcess
 			.on('exit', (code, signal) => done(null, code, signal))
