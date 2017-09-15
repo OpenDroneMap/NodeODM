@@ -1,0 +1,16 @@
+[Unit]
+Description=Start node-ODM Service Container
+
+[Service]
+Type=simple
+PIDFile=/run/nodeodm.pid
+User=odm
+Group=odm
+WorkingDirectory=/www
+ExecStart=/usr/bin/node index.js
+ExecStop=/bin/kill -s QUIT $MAINPID
+Restart=on-failure
+
+[Install]
+WantedBy=multi-user.target
+
