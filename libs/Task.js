@@ -30,6 +30,7 @@ let processRunner = require('./processRunner');
 let archiver = require('archiver');
 let os = require('os');
 let Directories = require('./Directories');
+let kill = require('tree-kill');
 
 let statusCodes = require('./statusCodes');
 
@@ -195,7 +196,7 @@ module.exports = class Task{
 					// the process will immediately terminate.
 					// For eaxmple in the case of the ODM process, the process will continue running for a while
 					// This might need to be fixed on ODM's end.
-					proc.kill('SIGINT');					
+					kill(proc.pid);
 				});
 				this.runningProcesses = [];
 			}
