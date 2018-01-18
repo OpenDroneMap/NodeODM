@@ -34,7 +34,10 @@ class ArgumentParserStub(argparse.ArgumentParser):
 		options[args[0]] = {}
 		for name, value in kwargs.items():
 			options[args[0]][str(name)] = str(value)
-			
+	
+	def add_mutually_exclusive_group(self):
+		return ArgumentParserStub()
+
 odm.parser = ArgumentParserStub()
 odm.config()
 print json.dumps(options)
