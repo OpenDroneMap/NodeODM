@@ -30,6 +30,8 @@ Linux users can connect to 127.0.0.1.
 * Press "Start Task"
 * Go for a walk :)
 
+If the computer running node-opendronemap is using an old or 32bit CPU, you need to compile OpenDroneMap from sources and setup node-opendronemap natively. You cannot use docker. Docker images work with CPUs with 64-bit extensions, MMX, SSE, SSE2, SSE3 and SSSE3 instruction set support or higher. Seeing a `Illegal instruction` error while processing images is an indication that your CPU is too old. 
+
 ## API Docs
 
 See the [API documentation page](/docs/index.adoc).
