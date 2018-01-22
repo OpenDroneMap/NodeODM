@@ -62,7 +62,8 @@ fi
 # Generate Potree point cloud (if PotreeConverter is available)
 if hash PotreeConverter 2>/dev/null; then
 	potree_input_path=""
-	for path in "odm_georeferencing/odm_georeferenced_model.ply" \
+	for path in "odm_georeferencing/odm_georeferenced_model.las" \
+				"odm_georeferencing/odm_georeferenced_model.ply" \
 				"opensfm/depthmaps/merged.ply" \
 				"pmvs/recon0/models/option-0000.ply"; do
 		if [ -e $path ]; then
@@ -73,11 +74,11 @@ if hash PotreeConverter 2>/dev/null; then
 	done
 
 	if [ ! -z "$potree_input_path" ]; then
-		PotreeConverter $potree_input_path -o potree_pointcloud
+		PotreeConverter $potree_input_path -o potree_pointcloud --overwrite -a RGB CLASSIFICATION
 
 		# Copy the failsafe PLY point cloud to odm_georeferencing 
 		# if necessary, otherwise it will not get zipped
-		if [ "$potree_input_path" != "odm_georeferencing/odm_georeferenced_model.ply" ]; then
+		if [ "$potree_input_path" == "opensfm/depthmaps/merged.ply" ] || [ "$potree_input_path" == "pmvs/recon0/models/option-0000.ply" ]; then
 			echo "Copying $potree_input_path to odm_georeferencing/odm_georeferenced_model.ply, even though it's not georeferenced..."
 			cp $potree_input_path "odm_georeferencing/odm_georeferenced_model.ply"
 		fi
