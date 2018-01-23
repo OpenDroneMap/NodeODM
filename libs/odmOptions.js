@@ -54,8 +54,8 @@ module.exports = {
 					let help = values.help || "";
 					let domain = values.metavar !== undefined ? 
 								 values.metavar.replace(/^[<>]/g, "")
-								 				.replace(/[<>]$/g, "")
-							 					.trim() : 
+												.replace(/[<>]$/g, "")
+												.trim() : 
 								 "";
 
 					switch((values.type || "").trim()){
@@ -74,8 +74,8 @@ module.exports = {
 						default:
 							type = "string";
 							value = values['default'] !== undefined ? 
-								    values['default'].trim() :
-								    "";
+									values['default'].trim() :
+									"";
 					}
 
 					if (values['default'] === "True"){
@@ -95,9 +95,9 @@ module.exports = {
 						}	
 					}
 
-                    // In the end, all values must be converted back
-                    // to strings (per OpenAPI spec which doesn't allow mixed types)
-                    value = String(value);
+					// In the end, all values must be converted back
+					// to strings (per OpenAPI spec which doesn't allow mixed types)
+					value = String(value);
 
 					if (Array.isArray(values.choices)){
 						type = "enum";
