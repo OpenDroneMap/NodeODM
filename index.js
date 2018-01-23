@@ -482,7 +482,7 @@ app.post('/task/remove', uuidCheck, (req, res) => {
 /** @swagger
  * /task/restart:
  *    post:
- *      description: Restarts a task that was previously canceled or that had failed to process
+ *      description: Restarts a task that was previously canceled, that had failed to process or that successfully completed
  *      parameters:
  *        -
  *          name: uuid
@@ -491,14 +491,31 @@ app.post('/task/remove', uuidCheck, (req, res) => {
  *          required: true
  *          schema:
  *            type: string
+ *        -
+ *          name: options
+ *          in: body
+ *          description: 'Serialized JSON string of the options to use for processing, as an array of the format: [{name: option1, value: value1}, {name: option2, value: value2}, ...]. For example, [{"name":"cmvs-maxImages","value":"500"},{"name":"time","value":true}]. For a list of all options, call /options. Overrides the previous options set for this task.'
+ *          required: false
+ *          schema:
+ *            type: string
  *      responses:
  *        200:
  *          description: Command Received
  *          schema:
  *            $ref: "#/definitions/Response"
  */
-app.post('/task/restart', uuidCheck, (req, res) => {
-    taskManager.restart(req.body.uuid, successHandler(res));
+app.post('/task/restart', uuidCheck, (req, res, next) => {
+    if (req.body.options){
+        odmOptions.filterOptions(req.body.options, (err, options) => {
+            if (err) res.json({ error: err.message });
+            else {
+                req.body.options = options;
+                next();
+            }
+        });
+    } else next();
+}, (req, res) => {
+    taskManager.restart(req.body.uuid, req.body.options, successHandler(res));
 });
 
 /** @swagger

@@ -230,10 +230,11 @@ module.exports = class TaskManager{
 
 	// Restarts (puts back into QUEUED state)
 	// a task that is either in CANCELED or FAILED state.
-	restart(uuid, cb){
+	// When options is set, the task's options are overriden
+	restart(uuid, options, cb){
 		let task = this.find(uuid, cb);
 		if (task){
-			task.restart(err => {
+			task.restart(options, err => {
 				if (!err) this.processNextTask();
 				cb(err);
 			});

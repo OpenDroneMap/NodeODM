@@ -125,7 +125,7 @@ module.exports = {
 	// @param options[]
 	filterOptions: function(options, done){
 		assert(odmOptions !== null, "odmOptions is not set. Have you initialized odmOptions properly?");
-		
+
 		try{
 			if (typeof options === "string") options = JSON.parse(options);
 			if (!Array.isArray(options)) options = [];
