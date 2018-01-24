@@ -392,12 +392,13 @@ module.exports = class Task{
 
 	// Re-executes the task (by setting it's state back to QUEUED)
 	// Only tasks that have been canceled, completed or have failed can be restarted.
-	restart(cb){
+	restart(options, cb){
 		if ([statusCodes.CANCELED, statusCodes.FAILED, statusCodes.COMPLETED].indexOf(this.status.code) !== -1){
 			this.setStatus(statusCodes.QUEUED);
 			this.dateCreated = new Date().getTime();
 			this.output = [];
 			this.stopTrackingProcessingTime(true);
+			if (options !== undefined) this.options = options;
 			cb(null);
 		}else{
 			cb(new Error("Task cannot be restarted"));
