@@ -380,7 +380,11 @@ module.exports = class Task{
 				}, output => {
 					// Replace console colors
 					output = output.replace(/\x1b\[[0-9;]*m/g, "");
-					this.output.push(output);
+
+					// Split lines and trim
+					output.trim().split('\n').forEach(line => {
+						this.output.push(line.trim());
+					});
 				})
 			);
 
