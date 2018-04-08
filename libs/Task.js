@@ -382,7 +382,7 @@ module.exports = class Task{
 					output = output.replace(/\x1b\[[0-9;]*m/g, "");
 
 					// Split lines and trim
-					output.split('\n').forEach(line => {
+					output.trim().split('\n').forEach(line => {
 						this.output.push(line.trim());
 					});
 				})
