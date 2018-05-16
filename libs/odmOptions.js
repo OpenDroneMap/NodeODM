@@ -177,19 +177,21 @@ module.exports = {
 					}
 				},
 				{
-					regex: /^(float): ([\-\+\.\d]+) <= x <= ([\-\+\.\d]+)$/,
+					regex: /^(float|integer): ([\-\+\.\d]+) <= x <= ([\-\+\.\d]+)$/,
 					validate: function(matches, value){
 						let [str, type, lower, upper] = matches;
-						lower = parseFloat(lower);
-						upper = parseFloat(upper);
+						let parseFunc = type === 'float' ? parseFloat : parseInt;
+						lower = parseFunc(lower);
+						upper = parseFunc(upper);
 						return value >= lower && value <= upper;						
 					}
 				},
 				{
-					regex: /^(float) (>=|>|<|<=) ([\-\+\.\d]+)$/,
+					regex: /^(float|integer) (>=|>|<|<=) ([\-\+\.\d]+)$/,
 					validate: function(matches, value){
 						let [str, type, oper, bound] = matches;
-						bound = parseFloat(bound);
+						let parseFunc = type === 'float' ? parseFloat : parseInt;
+						bound = parseFunc(bound);
 						switch(oper){
 							case '>=':
 								return value >= bound;
