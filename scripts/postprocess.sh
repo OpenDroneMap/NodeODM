@@ -62,7 +62,8 @@ fi
 # Generate Potree point cloud (if PotreeConverter is available)
 if hash PotreeConverter 2>/dev/null; then
 	potree_input_path=""
-	for path in "odm_georeferencing/odm_georeferenced_model.las" \
+	for path in "odm_georeferencing/odm_georeferenced_model.laz" \
+				"odm_georeferencing/odm_georeferenced_model.las" \
 				"odm_georeferencing/odm_georeferenced_model.ply" \
 				"opensfm/depthmaps/merged.ply" \
 				"pmvs/recon0/models/option-0000.ply"; do
