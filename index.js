@@ -38,7 +38,7 @@ let TaskManager = require('./libs/TaskManager');
 let Task = require('./libs/Task');
 let odmOptions = require('./libs/odmOptions');
 let Directories = require('./libs/Directories');
-let unzip = require('unzip');
+let unzip = require('node-unzip-2');
 
 // zip files
 let request = require('request');
