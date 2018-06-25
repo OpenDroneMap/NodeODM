@@ -195,8 +195,10 @@ module.exports = class Task{
 					// TODO: this does NOT guarantee that
 					// the process will immediately terminate.
 					// For eaxmple in the case of the ODM process, the process will continue running for a while
-					// This might need to be fixed on ODM's end.
-					kill(proc.pid);
+                    // This might need to be fixed on ODM's end.
+                    
+                    // During testing, proc is undefined
+					if (proc) kill(proc.pid);
 				});
 				this.runningProcesses = [];
 			}
