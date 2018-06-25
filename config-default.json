@@ -15,6 +15,6 @@
 	"cleanupTasksAfter": 3,
 	"test": false,
 	"testSkipOrthophotos": false,
-    "testSkipDems": false,
-    "token": ""
+	"testSkipDems": false,
+	"token": ""
 }
