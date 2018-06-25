@@ -36,7 +36,8 @@ Options:
 	--test Enable test mode. In test mode, no commands are sent to OpenDroneMap. This can be useful during development or testing (default: false)
 	--test_skip_orthophotos	If test mode is enabled, skip orthophoto results when generating assets. (default: false) 
 	--test_skip_dems	If test mode is enabled, skip dems results when generating assets. (default: false) 
-	--powercycle	When set, the application exits immediately after powering up. Useful for testing launch and compilation issues.
+    --powercycle	When set, the application exits immediately after powering up. Useful for testing launch and compilation issues.
+    --token     <token>     Sets a token that needs to be passed for every request. This can be used to limit access to the node only to token holders. (default: none)
 Log Levels: 
 error | debug | info | verbose | debug | silly 
 `);
@@ -84,5 +85,6 @@ config.test = argv.test || fromConfigFile("test", false);
 config.testSkipOrthophotos = argv.test_skip_orthophotos || fromConfigFile("testSkipOrthophotos", false);
 config.testSkipDems = argv.test_skip_dems || fromConfigFile("testSkipDems", false);
 config.powercycle = argv.powercycle || fromConfigFile("powercycle", false);
+config.token = argv.token || fromConfigFile("token", "");
 
 module.exports = config;

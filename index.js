@@ -40,6 +40,9 @@ let odmOptions = require('./libs/odmOptions');
 let Directories = require('./libs/Directories');
 let unzip = require('node-unzip-2');
 
+let auth = require('./libs/auth/factory').fromConfig(config);
+const authCheck = auth.getMiddleware();
+
 // zip files
 let request = require('request');
 
@@ -107,16 +110,22 @@ let server;
  *          description: URL of the zip file containing the images to process, plus an optional GPC file. If included, the GPC file should have .txt extension
  *          required: false
  *          type: string
- *        - 
+ *        -
  *          name: name
  *          in: formData
  *          description: An optional name to be associated with the task
  *          required: false
  *          type: string
- *        - 
+ *        -
  *          name: options
  *          in: formData
  *          description: 'Serialized JSON string of the options to use for processing, as an array of the format: [{name: option1, value: value1}, {name: option2, value: value2}, ...]. For example, [{"name":"cmvs-maxImages","value":"500"},{"name":"time","value":true}]. For a list of all options, call /options'
+ *          required: false
+ *          type: string
+ *        -
+ *          name: token
+ *          in: query
+ *          description: 'Token required for authentication (when authentication is required).'
  *          required: false
  *          type: string
  *      responses:
@@ -134,7 +143,7 @@ let server;
  *          schema:
  *            $ref: '#/definitions/Error'
  */
-app.post('/task/new', addRequestId, upload.array('images'), (req, res) => {
+app.post('/task/new', authCheck, addRequestId, upload.array('images'), (req, res) => {
 
     if ((!req.files || req.files.length === 0) && !req.body.zipurl) res.json({ error: "Need at least 1 file or a zip file url." });
 
@@ -270,6 +279,18 @@ let getTaskFromUuid = (req, res, next) => {
  *           description: UUID of the task
  *           required: true
  *           type: string
+ *        -
+ *          name: options
+ *          in: formData
+ *          description: 'Serialized JSON string of the options to use for processing, as an array of the format: [{name: option1, value: value1}, {name: option2, value: value2}, ...]. For example, [{"name":"cmvs-maxImages","value":"500"},{"name":"time","value":true}]. For a list of all options, call /options'
+ *          required: false
+ *          type: string
+ *        -
+ *          name: token
+ *          in: query
+ *          description: 'Token required for authentication (when authentication is required).'
+ *          required: false
+ *          type: string
  *       responses:
  *        200:
  *         description: Task Information
@@ -315,7 +336,7 @@ let getTaskFromUuid = (req, res, next) => {
  *          schema:
  *            $ref: '#/definitions/Error'
  */
-app.get('/task/:uuid/info', getTaskFromUuid, (req, res) => {
+app.get('/task/:uuid/info', authCheck, getTaskFromUuid, (req, res) => {
     res.json(req.task.getInfo());
 });
 
@@ -338,6 +359,12 @@ app.get('/task/:uuid/info', getTaskFromUuid, (req, res) => {
  *         default: 0
  *         required: false
  *         type: integer
+ *        -
+ *          name: token
+ *          in: query
+ *          description: 'Token required for authentication (when authentication is required).'
+ *          required: false
+ *          type: string
  *       responses:
  *        200:
  *         description: Console Output
@@ -348,7 +375,7 @@ app.get('/task/:uuid/info', getTaskFromUuid, (req, res) => {
  *          schema:
  *            $ref: '#/definitions/Error'
  */
-app.get('/task/:uuid/output', getTaskFromUuid, (req, res) => {
+app.get('/task/:uuid/output', authCheck, getTaskFromUuid, (req, res) => {
     res.json(req.task.getOutput(req.query.line));
 });
 
@@ -372,6 +399,12 @@ app.get('/task/:uuid/output', getTaskFromUuid, (req, res) => {
  *          enum:
  *            - all.zip
  *            - orthophoto.tif
+ *        -
+ *          name: token
+ *          in: query
+ *          description: 'Token required for authentication (when authentication is required).'
+ *          required: false
+ *          type: string
  *      responses:
  *        200:
  *          description: Asset File
@@ -382,7 +415,7 @@ app.get('/task/:uuid/output', getTaskFromUuid, (req, res) => {
  *          schema:
  *            $ref: '#/definitions/Error'
  */
-app.get('/task/:uuid/download/:asset', getTaskFromUuid, (req, res) => {
+app.get('/task/:uuid/download/:asset', authCheck, getTaskFromUuid, (req, res) => {
     let asset = req.params.asset !== undefined ? req.params.asset : "all.zip";
     let filePath = req.task.getAssetsArchivePath(asset);
     if (filePath) {
@@ -447,13 +480,19 @@ let successHandler = res => {
  *          required: true
  *          schema:
  *            type: string
+ *        -
+ *          name: token
+ *          in: query
+ *          description: 'Token required for authentication (when authentication is required).'
+ *          required: false
+ *          type: string
  *      responses:
  *        200:
  *          description: Command Received
  *          schema:
  *            $ref: "#/definitions/Response"
  */
-app.post('/task/cancel', uuidCheck, (req, res) => {
+app.post('/task/cancel', authCheck, uuidCheck, (req, res) => {
     taskManager.cancel(req.body.uuid, successHandler(res));
 });
 
@@ -469,13 +508,19 @@ app.post('/task/cancel', uuidCheck, (req, res) => {
  *          required: true
  *          schema:
  *            type: string
+ *        -
+ *          name: token
+ *          in: query
+ *          description: 'Token required for authentication (when authentication is required).'
+ *          required: false
+ *          type: string
  *      responses:
  *        200:
  *          description: Command Received
  *          schema:
  *            $ref: "#/definitions/Response"
  */
-app.post('/task/remove', uuidCheck, (req, res) => {
+app.post('/task/remove', authCheck, uuidCheck, (req, res) => {
     taskManager.remove(req.body.uuid, successHandler(res));
 });
 
@@ -498,13 +543,19 @@ app.post('/task/remove', uuidCheck, (req, res) => {
  *          required: false
  *          schema:
  *            type: string
+ *        -
+ *          name: token
+ *          in: query
+ *          description: 'Token required for authentication (when authentication is required).'
+ *          required: false
+ *          type: string
  *      responses:
  *        200:
  *          description: Command Received
  *          schema:
  *            $ref: "#/definitions/Response"
  */
-app.post('/task/restart', uuidCheck, (req, res, next) => {
+app.post('/task/restart', authCheck, uuidCheck, (req, res, next) => {
     if (req.body.options){
         odmOptions.filterOptions(req.body.options, (err, options) => {
             if (err) res.json({ error: err.message });
@@ -590,6 +641,7 @@ app.get('/info', (req, res) => {
 let gracefulShutdown = done => {
     async.series([
         cb => taskManager.dumpTaskList(cb),
+        cb => auth.cleanup(cb),
         cb => {
             logger.info("Closing server");
             server.close();
@@ -610,6 +662,7 @@ if (config.test) logger.info("Running in test mode");
 
 let commands = [
     cb => odmOptions.initialize(cb),
+    cb => auth.initialize(cb),
     cb => { taskManager = new TaskManager(cb); },
     cb => {
         server = app.listen(config.port, err => {

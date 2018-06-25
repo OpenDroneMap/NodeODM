@@ -8,7 +8,7 @@ REST API to access OpenDroneMap
 
 === Version information
 [%hardbreaks]
-_Version_ : 1.0.4
+_Version_ : 1.1.0
 
 
 === Contact information
@@ -127,6 +127,8 @@ Cancels a task (stops its execution, or prevents it from being executed)
 [options="header", cols=".^2,.^3,.^9,.^4,.^2"]
 |===
 |Type|Name|Description|Schema|Default
+|*Query*|*token* +
+_optional_|Token required for authentication (when authentication is required).|string|
 |*Body*|*uuid* +
 _required_|UUID of the task|string|
 |===
@@ -153,6 +155,8 @@ Creates a new task and places it at the end of the processing queue
 [options="header", cols=".^2,.^3,.^9,.^4,.^2"]
 |===
 |Type|Name|Description|Schema|Default
+|*Query*|*token* +
+_optional_|Token required for authentication (when authentication is required).|string|
 |*FormData*|*images* +
 _optional_|Images to process, plus an optional GPC file. If included, the GPC file should have .txt extension|file|
 |*FormData*|*name* +
@@ -206,6 +210,8 @@ Removes a task and deletes all of its assets
 [options="header", cols=".^2,.^3,.^9,.^4,.^2"]
 |===
 |Type|Name|Description|Schema|Default
+|*Query*|*token* +
+_optional_|Token required for authentication (when authentication is required).|string|
 |*Body*|*uuid* +
 _required_|UUID of the task|string|
 |===
@@ -232,6 +238,8 @@ Restarts a task that was previously canceled, that had failed to process or that
 [options="header", cols=".^2,.^3,.^9,.^4,.^2"]
 |===
 |Type|Name|Description|Schema|Default
+|*Query*|*token* +
+_optional_|Token required for authentication (when authentication is required).|string|
 |*Body*|*options* +
 _optional_|Serialized JSON string of the options to use for processing, as an array of the format: [{name: option1, value: value1}, {name: option2, value: value2}, …]. For example, [{"name":"cmvs-maxImages","value":"500"},{"name":"time","value":true}]. For a list of all options, call /options. Overrides the previous options set for this task.|string|
 |*Body*|*uuid* +
@@ -264,6 +272,8 @@ Retrieves an asset (the output of OpenDroneMap's processing) associated with a t
 _required_|Type of asset to download. Use "all.zip" for zip file containing all assets.|enum (all.zip, orthophoto.tif)|
 |*Path*|*uuid* +
 _required_|UUID of the task|string|
+|*Query*|*token* +
+_optional_|Token required for authentication (when authentication is required).|string|
 |===
 
 
@@ -301,6 +311,10 @@ Gets information about this task, such as name, creation date, processing time, 
 |Type|Name|Description|Schema|Default
 |*Path*|*uuid* +
 _required_|UUID of the task|string|
+|*Query*|*token* +
+_optional_|Token required for authentication (when authentication is required).|string|
+|*FormData*|*options* +
+_optional_|Serialized JSON string of the options to use for processing, as an array of the format: [{name: option1, value: value1}, {name: option2, value: value2}, …]. For example, [{"name":"cmvs-maxImages","value":"500"},{"name":"time","value":true}]. For a list of all options, call /options|string|
 |===
 
 
@@ -369,6 +383,8 @@ Retrieves the console output of the OpenDroneMap's process. Useful for monitorin
 _required_|UUID of the task|string|
 |*Query*|*line* +
 _optional_|Optional line number that the console output should be truncated from. For example, passing a value of 100 will retrieve the console output starting from line 100. Defaults to 0 (retrieve all console output).|integer|`"0"`
+|*Query*|*token* +
+_optional_|Token required for authentication (when authentication is required).|string|
 |===
 
 
