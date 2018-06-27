@@ -8,7 +8,7 @@ REST API to access OpenDroneMap
 
 === Version information
 [%hardbreaks]
-_Version_ : 1.1.0
+_Version_ : 1.1.1
 
 
 === Contact information
@@ -64,8 +64,14 @@ Retrieves information about this node
 [options="header", cols=".^3,.^11,.^4"]
 |===
 |Name|Description|Schema
+|*availableMemory* +
+_optional_|Amount of RAM available in bytes|integer
+|*cpuCores* +
+_optional_|Number of CPU cores (virtual)|integer
 |*taskQueueCount* +
 _required_|Number of tasks currently being processed or waiting to be processed|integer
+|*totalMemory* +
+_optional_|Amount of total RAM in the system in bytes|integer
 |*version* +
 _required_|Current version|string
 |===

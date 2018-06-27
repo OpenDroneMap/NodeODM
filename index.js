@@ -39,6 +39,7 @@ let Task = require('./libs/Task');
 let odmOptions = require('./libs/odmOptions');
 let Directories = require('./libs/Directories');
 let unzip = require('node-unzip-2');
+let si = require('systeminformation');
 
 let auth = require('./libs/auth/factory').fromConfig(config);
 const authCheck = auth.getMiddleware();
@@ -630,11 +631,30 @@ app.get('/options', (req, res) => {
  *             taskQueueCount:
  *               type: integer
  *               description: Number of tasks currently being processed or waiting to be processed
+ *             availableMemory:
+ *               type: integer
+ *               description: Amount of RAM available in bytes
+ *             totalMemory:
+ *               type: integer
+ *               description: Amount of total RAM in the system in bytes
+ *             cpuCores:
+ *               type: integer
+ *               description: Number of CPU cores (virtual) 
  */
 app.get('/info', (req, res) => {
-    res.json({
-        version: packageJson.version,
-        taskQueueCount: taskManager.getQueueCount()
+    async.parallel({
+        cpu: cb => si.cpu(data => cb(null, data)),
+        mem: cb => si.mem(data => cb(null, data)),
+    }, (_, data) => {
+        const { cpu, mem } = data;
+
+        res.json({
+            version: packageJson.version,
+            taskQueueCount: taskManager.getQueueCount(),
+            totalMemory: mem.total, 
+            availableMemory: mem.available,
+            cpuCores: cpu.cores
+        });
     });
 });
 

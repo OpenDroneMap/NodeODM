@@ -28,7 +28,6 @@ let rmdir = require('rimraf');
 let odmRunner = require('./odmRunner');
 let processRunner = require('./processRunner');
 let archiver = require('archiver');
-let os = require('os');
 let Directories = require('./Directories');
 let kill = require('tree-kill');
 
@@ -356,7 +355,6 @@ module.exports = class Task{
 			}, {});
 
 			runnerOptions["project-path"] = fs.realpathSync(Directories.data);
-			runnerOptions["pmvs-num-cores"] = os.cpus().length;
 
 			if (this.gpcFiles.length > 0){
 				runnerOptions.gcp = fs.realpathSync(path.join(this.getGpcFolderPath(), this.gpcFiles[0]));
