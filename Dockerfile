@@ -15,15 +15,13 @@ RUN git clone https://github.com/pierotofy/LAStools /staging/LAStools && \
 	mkdir build && \
 	cd build && \
 	cmake -DCMAKE_BUILD_TYPE=Release .. && \
-	make && \
-	make install && \
-	ldconfig
+	make
 
 RUN git clone https://github.com/pierotofy/PotreeConverter /staging/PotreeConverter
 RUN cd /staging/PotreeConverter && \
 	mkdir build && \
 	cd build && \
-	cmake -DCMAKE_BUILD_TYPE=Release -DLASZIP_INCLUDE_DIRS=/staging/LAStools/LASzip/dll -DLASZIP_LIBRARY=/staging/LAStools/LASzip/build/src/liblaszip.so .. && \
+	cmake -DCMAKE_BUILD_TYPE=Release -DLASZIP_INCLUDE_DIRS=/staging/LAStools/LASzip/dll -DLASZIP_LIBRARY=/staging/LAStools/LASzip/build/src/liblaszip.a .. && \
 	make && \
 	make install
 
