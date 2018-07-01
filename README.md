@@ -49,15 +49,14 @@ cd LAStools/LASzip
 mkdir build
 cd build
 cmake -DCMAKE_BUILD_TYPE=Release ..
-sudo make && sudo make install
-sudo ldconfig
+make
 
 git clone https://github.com/pierotofy/PotreeConverter /staging/PotreeConverter
 cd /staging/PotreeConverter
 mkdir build
 cd build
-cmake -DCMAKE_BUILD_TYPE=Release -DLASZIP_INCLUDE_DIRS=/staging/LAStools/LASzip/dll -DLASZIP_LIBRARY=/staging/LAStools/LASzip/build/src/liblaszip.so ..
-sudo make && sudo make install
+cmake -DCMAKE_BUILD_TYPE=Release -DLASZIP_INCLUDE_DIRS=/staging/LAStools/LASzip/dll -DLASZIP_LIBRARY=/staging/LAStools/LASzip/build/src/liblaszip.a ..
+make && sudo make install
 ```
 2) Install gdal2tiles.py script, node.js and npm dependencies
 
