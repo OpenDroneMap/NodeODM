@@ -4,7 +4,7 @@
 
 node-OpenDroneMap is a Node.js App and REST API to access [OpenDroneMap](https://github.com/OpenDroneMap/OpenDroneMap). It exposes an API which is used by [WebODM](https://github.com/OpenDroneMap/WebODM).
 
-![Alt text](/screenshots/main.png?raw=true "Node-OpenDroneMap")
+![Alt text](https://user-images.githubusercontent.com/1951843/42736063-41bc130e-882d-11e8-987b-15fd8d4ecd97.png "Node-OpenDroneMap")
 
 ## Getting Started
 
