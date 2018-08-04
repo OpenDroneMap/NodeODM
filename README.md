@@ -32,7 +32,7 @@ If the computer running node-opendronemap is using an old or 32bit CPU, you need
 
 ## API Docs
 
-See the [API documentation page](https://github.com/OpenDroneMap/node-OpenDroneMap/blob/master/docs/index.adoc).]
+See the [API documentation page](https://github.com/OpenDroneMap/node-OpenDroneMap/blob/master/docs/index.adoc).
 
 ## Using an External Hard Drive
 
