@@ -32,7 +32,17 @@ If the computer running node-opendronemap is using an old or 32bit CPU, you need
 
 ## API Docs
 
-See the [API documentation page](https://github.com/OpenDroneMap/node-OpenDroneMap/blob/master/docs/index.adoc).
+See the [API documentation page](https://github.com/OpenDroneMap/node-OpenDroneMap/blob/master/docs/index.adoc).]
+
+## Using an External Hard Drive
+
+If you want to store results on a separate drive, map the `/var/www/data` folder to the location of your drive:
+
+```bash
+docker run -p 3000:3000 -v /mnt/external_hd:/var/www/data opendronemap/node-opendronemap
+```
+
+This can be also used to access the computation results directly from the file system.
 
 ### Run it Natively
 
