@@ -40,6 +40,7 @@ let odmOptions = require('./libs/odmOptions');
 let Directories = require('./libs/Directories');
 let unzip = require('node-unzip-2');
 let si = require('systeminformation');
+let mv = require('mv');
 
 let auth = require('./libs/auth/factory').fromConfig(config);
 const authCheck = auth.getMiddleware();
@@ -197,7 +198,7 @@ app.post('/task/new', authCheck, addRequestId, upload.array('images'), (req, res
 
             cb => fs.mkdir(destPath, undefined, cb),
             cb => fs.mkdir(destGpcPath, undefined, cb),
-            cb => fs.rename(srcPath, destImagesPath, cb),
+            cb => mv(srcPath, destImagesPath, cb),
             
 
             cb => {
@@ -233,7 +234,7 @@ app.post('/task/new', authCheck, addRequestId, upload.array('images'), (req, res
                     else {
                         async.eachSeries(entries, (entry, cb) => {
                             if (/\.txt$/gi.test(entry)) {
-                                fs.rename(path.join(destImagesPath, entry), path.join(destGpcPath, entry), cb);
+                                mv(path.join(destImagesPath, entry), path.join(destGpcPath, entry), cb);
                             }else if (/\.zip$/gi.test(entry)){
                                 fs.unlink(path.join(destImagesPath, entry), cb);
                             } else cb();
