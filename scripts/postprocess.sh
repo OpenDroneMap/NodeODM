@@ -81,6 +81,7 @@ if hash PotreeConverter 2>/dev/null; then
 				"odm_georeferencing/odm_georeferenced_model.las" \
 				"odm_georeferencing/odm_georeferenced_model.ply" \
 				"opensfm/depthmaps/merged.ply" \
+				"smvs/smvs_dense_point_cloud.ply" \
 				"pmvs/recon0/models/option-0000.ply"; do
 		if [ -e $path ]; then
 			echo "Found suitable point cloud for PotreeConverter: $path"
