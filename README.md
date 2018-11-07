@@ -4,7 +4,7 @@
 
 NodeODM is a Node.js App and REST API to access [ODM](https://github.com/OpenDroneMap/ODM). It exposes an API which is used by [WebODM](https://github.com/OpenDroneMap/WebODM).
 
-![Alt text](https://user-images.githubusercontent.com/1951843/42737899-ab31bddc-8848-11e8-97e7-4f7e938c7a76.png "Node-OpenDroneMap")
+![Alt text](https://user-images.githubusercontent.com/1951843/42737899-ab31bddc-8848-11e8-97e7-4f7e938c7a76.png "NodeODM")
 
 ## Getting Started
 
@@ -28,11 +28,11 @@ Linux users can connect to 127.0.0.1.
 * Press "Start Task"
 * Go for a walk :)
 
-If the computer running node-opendronemap is using an old or 32bit CPU, you need to compile OpenDroneMap from sources and setup node-opendronemap natively. You cannot use docker. Docker images work with CPUs with 64-bit extensions, MMX, SSE, SSE2, SSE3 and SSSE3 instruction set support or higher. Seeing a `Illegal instruction` error while processing images is an indication that your CPU is too old. 
+If the computer running NodeODM is using an old or 32bit CPU, you need to compile OpenDroneMap from sources and setup NodeODM natively. You cannot use docker. Docker images work with CPUs with 64-bit extensions, MMX, SSE, SSE2, SSE3 and SSSE3 instruction set support or higher. Seeing a `Illegal instruction` error while processing images is an indication that your CPU is too old. 
 
 ## API Docs
 
-See the [API documentation page](https://github.com/OpenDroneMap/node-OpenDroneMap/blob/master/docs/index.adoc).
+See the [API documentation page](https://github.com/OpenDroneMap/NodeODM/blob/master/docs/index.adoc).
 
 ## Using an External Hard Drive
 
@@ -73,8 +73,8 @@ make && sudo make install
 ```bash
 sudo curl --silent --location https://deb.nodesource.com/setup_6.x | sudo bash -
 sudo apt-get install -y nodejs python-gdal
-git clone https://github.com/pierotofy/node-OpenDroneMap
-cd node-OpenDroneMap
+git clone https://github.com/OpenDroneMap/NodeODM
+cd NodeODM
 npm install
 ```
 
@@ -148,7 +148,7 @@ You can find some test drone images [here](https://github.com/dakotabenjamin/odm
 
 ## What if I need more functionality?
 
-node-OpenDroneMap is meant to be a lightweight API. If you are looking for a more comprehensive solution to drone mapping, check out [WebODM](https://github.com/OpenDroneMap/WebODM), which uses node-OpenDroneMap for processing.
+NodeODM is meant to be a lightweight API. If you are looking for a more comprehensive solution to drone mapping, check out [WebODM](https://github.com/OpenDroneMap/WebODM), which uses NodeODM for processing.
 
 ## Contributing
 
