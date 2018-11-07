@@ -1,14 +1,14 @@
-# Node-OpenDroneMap
+# NodeODM
 
 [![Build Status](https://travis-ci.org/OpenDroneMap/node-OpenDroneMap.svg?branch=master)](https://travis-ci.org/OpenDroneMap/node-OpenDroneMap)
 
-node-OpenDroneMap is a Node.js App and REST API to access [OpenDroneMap](https://github.com/OpenDroneMap/OpenDroneMap). It exposes an API which is used by [WebODM](https://github.com/OpenDroneMap/WebODM).
+NodeODM is a Node.js App and REST API to access [ODM](https://github.com/OpenDroneMap/ODM). It exposes an API which is used by [WebODM](https://github.com/OpenDroneMap/WebODM).
 
 ![Alt text](https://user-images.githubusercontent.com/1951843/42737899-ab31bddc-8848-11e8-97e7-4f7e938c7a76.png "Node-OpenDroneMap")
 
 ## Getting Started
 
-We recommend that you setup node-OpenDroneMap using [Docker](https://www.docker.com/).
+We recommend that you setup NodeODM using [Docker](https://www.docker.com/).
 
 * From the Docker Quickstart Terminal (Windows / OSX) or from the command line (Linux) type:
 ```
@@ -24,7 +24,7 @@ docker-machine ip
 Linux users can connect to 127.0.0.1.
 
 * Open a Web Browser to `http://<yourDockerMachineIp>:3000`
-* Load [some images](https://github.com/OpenDroneMap/OpenDroneMap/tree/master/tests/test_data/images)
+* Load [some images](https://github.com/OpenDroneMap/ODM/tree/master/tests/test_data/images)
 * Press "Start Task"
 * Go for a walk :)
 
@@ -46,7 +46,7 @@ This can be also used to access the computation results directly from the file s
 
 ### Run it Natively
 
-If you are already running [OpenDroneMap](https://github.com/OpenDroneMap/OpenDroneMap) on Ubuntu natively you can follow these steps:
+If you are already running [ODM](https://github.com/OpenDroneMap/ODM) on Ubuntu natively you can follow these steps:
 
 1) Install PotreeConverter and LASzip dependency
  
@@ -78,7 +78,7 @@ cd node-OpenDroneMap
 npm install
 ```
 
-3) Start node-OpenDroneMap
+3) Start NodeODM
 
 ```bash
 node index.js
