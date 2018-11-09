@@ -17,14 +17,28 @@ along with this program.  If not, see <http://www.gnu.org/licenses/>.
 */
 "use strict";
 let odmRunner = require('./odmRunner');
+let async = require('async');
 let assert = require('assert');
 let logger = require('./logger');
 
 let odmOptions = null;
+let odmVersion = null;
 
 module.exports = {
 	initialize: function(done){
-		this.getOptions(done);
+		async.parallel([
+			this.getOptions,
+			this.getVersion
+		], done);
+	},
+	
+	getVersion: function(done){
+		if (odmVersion){
+			done(null, odmVersion);
+			return;
+		}
+
+		odmRunner.getVersion(done);
 	},
 
 	getOptions: function(done){

@@ -36,7 +36,7 @@ let morgan = require('morgan');
 
 let TaskManager = require('./libs/TaskManager');
 let Task = require('./libs/Task');
-let odmOptions = require('./libs/odmOptions');
+let odmInfo = require('./libs/odmInfo');
 let Directories = require('./libs/Directories');
 let unzip = require('node-unzip-2');
 let si = require('systeminformation');
@@ -148,6 +148,7 @@ let server;
 app.post('/task/new', authCheck, addRequestId, upload.array('images'), (req, res) => {
 
     if ((!req.files || req.files.length === 0) && !req.body.zipurl) res.json({ error: "Need at least 1 file or a zip file url." });
+    if (config.maxImages > 0 && req.files && req.files.length > config.maxImages) res.json({error: `${req.files.length} images uploaded, but this node can only process up to ${config.maxImages}.`})
 
     else {
         let srcPath = path.join("tmp", req.id);
@@ -157,7 +158,7 @@ app.post('/task/new', authCheck, addRequestId, upload.array('images'), (req, res
 
         async.series([
             cb => {
-                odmOptions.filterOptions(req.body.options, (err, options) => {
+                odmInfo.filterOptions(req.body.options, (err, options) => {
                     if (err) cb(err);
                     else {
                         req.body.options = options;
@@ -208,18 +209,22 @@ app.post('/task/new', authCheck, addRequestId, upload.array('images'), (req, res
                     else {
                         async.eachSeries(entries, (entry, cb) => {
                             if (/\.zip$/gi.test(entry)) {
+                                let filesCount = 0;
                                 fs.createReadStream(path.join(destImagesPath, entry)).pipe(unzip.Parse())
                                         .on('entry', function(entry) {
                                             if (entry.type === 'File') {
+                                                filesCount++;
                                                 entry.pipe(fs.createWriteStream(path.join(destImagesPath, path.basename(entry.path))));
                                             } else {
                                                 entry.autodrain();
                                             }
                                         })
-                                        .on('close', cb)
+                                        .on('close', () => {
+                                            // Verify max images limit
+                                            if (config.maxImages > 0 && filesCount > config.maxImages) cb(`${filesCount} images uploaded, but this node can only process up to ${config.maxImages}.`);
+                                            else cb();
+                                        })
                                         .on('error', cb);
-
-                               
                             } else cb();
                         }, cb);
                     }
@@ -559,7 +564,7 @@ app.post('/task/remove', authCheck, uuidCheck, (req, res) => {
  */
 app.post('/task/restart', authCheck, uuidCheck, (req, res, next) => {
     if (req.body.options){
-        odmOptions.filterOptions(req.body.options, (err, options) => {
+        odmInfo.filterOptions(req.body.options, (err, options) => {
             if (err) res.json({ error: err.message });
             else {
                 req.body.options = options;
@@ -608,7 +613,7 @@ app.post('/task/restart', authCheck, uuidCheck, (req, res, next) => {
  *                 description: Description of what this option does
  */
 app.get('/options', (req, res) => {
-    odmOptions.getOptions((err, options) => {
+    odmInfo.getOptions((err, options) => {
         if (err) res.json({ error: err.message });
         else res.json(options);
     });
@@ -628,7 +633,7 @@ app.get('/options', (req, res) => {
  *           properties:
  *             version:
  *               type: string
- *               description: Current version
+ *               description: Current API version
  *             taskQueueCount:
  *               type: integer
  *               description: Number of tasks currently being processed or waiting to be processed
@@ -640,21 +645,30 @@ app.get('/options', (req, res) => {
  *               description: Amount of total RAM in the system in bytes
  *             cpuCores:
  *               type: integer
- *               description: Number of CPU cores (virtual) 
+ *               description: Number of CPU cores (virtual)
+ *             maxImages:
+ *               type: integer
+ *               description: Maximum number of images allowed for new tasks
+ *             odmVersion:
+ *               type: string
+ *               description: Current version of ODM
  */
 app.get('/info', (req, res) => {
     async.parallel({
         cpu: cb => si.cpu(data => cb(null, data)),
         mem: cb => si.mem(data => cb(null, data)),
+        odmVersion: odmInfo.getVersion
     }, (_, data) => {
-        const { cpu, mem } = data;
+        const { cpu, mem, odmVersion } = data;
 
         res.json({
             version: packageJson.version,
             taskQueueCount: taskManager.getQueueCount(),
             totalMemory: mem.total, 
             availableMemory: mem.available,
-            cpuCores: cpu.cores
+            cpuCores: cpu.cores,
+            maxImages: config.maxImages,
+            odmVersion: odmVersion
         });
     });
 });
@@ -682,7 +696,7 @@ process.on('SIGINT', gracefulShutdown);
 if (config.test) logger.info("Running in test mode");
 
 let commands = [
-    cb => odmOptions.initialize(cb),
+    cb => odmInfo.initialize(cb),
     cb => auth.initialize(cb),
     cb => { taskManager = new TaskManager(cb); },
     cb => {
