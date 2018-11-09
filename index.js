@@ -649,6 +649,9 @@ app.get('/options', (req, res) => {
  *             maxImages:
  *               type: integer
  *               description: Maximum number of images allowed for new tasks
+ *             maxParallelTasks:
+ *               type: integer
+ *               description: Maximum number of tasks that can be processed simultaneously
  *             odmVersion:
  *               type: string
  *               description: Current version of ODM
@@ -668,6 +671,7 @@ app.get('/info', (req, res) => {
             availableMemory: mem.available,
             cpuCores: cpu.cores,
             maxImages: config.maxImages,
+            maxParallelTasks: config.parallelQueueProcessing,
             odmVersion: odmVersion
         });
     });

@@ -70,6 +70,8 @@ _optional_|Amount of RAM available in bytes|integer
 _optional_|Number of CPU cores (virtual)|integer
 |*maxImages* +
 _optional_|Maximum number of images allowed for new tasks|integer
+|*maxParallelTasks* +
+_optional_|Maximum number of tasks that can be processed simultaneously|integer
 |*odmVersion* +
 _optional_|Current version of ODM|string
 |*taskQueueCount* +
