@@ -25,6 +25,7 @@ let logger = require('./libs/logger');
 let path = require('path');
 let async = require('async');
 let mime = require('mime');
+let rmdir = require('rimraf');
 
 let express = require('express');
 let app = express();
@@ -146,12 +147,22 @@ let server;
  *            $ref: '#/definitions/Error'
  */
 app.post('/task/new', authCheck, addRequestId, upload.array('images'), (req, res) => {
+    let srcPath = path.join("tmp", req.id);
 
-    if ((!req.files || req.files.length === 0) && !req.body.zipurl) res.json({ error: "Need at least 1 file or a zip file url." });
-    if (config.maxImages > 0 && req.files && req.files.length > config.maxImages) res.json({error: `${req.files.length} images uploaded, but this node can only process up to ${config.maxImages}.`})
+    // Print error message and cleanup
+    const die = (error) => {
+        res.json({error});
+
+        // Check if tmp/ directory needs to be cleaned
+        if (fs.stat(srcPath, (err, stats) => {
+            if (!err && stats.isDirectory()) rmdir(srcPath, () => {}); // ignore errors, don't wait
+        }));
+    };
+
+    if ((!req.files || req.files.length === 0) && !req.body.zipurl) die("Need at least 1 file or a zip file url.");
+    if (config.maxImages > 0 && req.files && req.files.length > config.maxImages) die(`${req.files.length} images uploaded, but this node can only process up to ${config.maxImages}.`);
 
     else {
-        let srcPath = path.join("tmp", req.id);
         let destPath = path.join(Directories.data, req.id);
         let destImagesPath = path.join(destPath, "images");
         let destGpcPath = path.join(destPath, "gpc");
@@ -260,7 +271,7 @@ app.post('/task/new', authCheck, addRequestId, upload.array('images'), (req, res
                 }, req.body.options, req.body.webhook);
             }
         ], err => {
-            if (err) res.json({ error: err.message });
+            if (err) die(err.message);
         });
     }
 
