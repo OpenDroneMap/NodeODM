@@ -623,7 +623,7 @@ app.post('/task/restart', authCheck, uuidCheck, (req, res, next) => {
  *                 type: string
  *                 description: Description of what this option does
  */
-app.get('/options', (req, res) => {
+app.get('/options', authCheck, (req, res) => {
     odmInfo.getOptions((err, options) => {
         if (err) res.json({ error: err.message });
         else res.json(options);
@@ -667,7 +667,7 @@ app.get('/options', (req, res) => {
  *               type: string
  *               description: Current version of ODM
  */
-app.get('/info', (req, res) => {
+app.get('/info', authCheck, (req, res) => {
     async.parallel({
         cpu: cb => si.cpu(data => cb(null, data)),
         mem: cb => si.mem(data => cb(null, data)),
