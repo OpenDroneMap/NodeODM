@@ -178,7 +178,7 @@ $(function() {
                     self.info({ error: url + " is unreachable." });
                 });
         }
-        this.fetchOutputInterval = setInterval(fetchOutput, 2000);
+        this.fetchOutputInterval = setInterval(fetchOutput, 5000);
         fetchOutput();
 
         this.viewingOutput(true);
@@ -193,7 +193,7 @@ $(function() {
         this.refreshInfo();
         this.refreshInterval = setInterval(function() {
             self.refreshInfo();
-        }, 500); // TODO: change to larger value
+        }, 2000);
     };
     Task.prototype.stopRefreshingInfo = function() {
         if (this.refreshInterval) {
@@ -359,6 +359,14 @@ $(function() {
         this.value(undefined);
     };
 
+    function query(key) {
+        key = key.replace(/[*+?^$.\[\]{}()|\\\/]/g, "\\$&"); // escape RegEx meta chars
+        var match = location.search.match(new RegExp("[?&]"+key+"=([^&]+)(&|$)"));
+        return match && decodeURIComponent(match[1].replace(/\+/g, " "));
+    }
+
+    var token = query('token') || "";
+
     function OptionsModel() {
         var self = this;
 
@@ -371,7 +379,7 @@ $(function() {
         this.showOptions = ko.observable(false);
         this.error = ko.observable();
 
-        $.get("/options")
+        $.get("/options?token=" + token)
             .done(function(json) {
                 if (json.error) self.error(json.error);
                 else {
