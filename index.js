@@ -160,7 +160,7 @@ app.post('/task/new', authCheck, addRequestId, upload.array('images'), (req, res
     };
 
     if ((!req.files || req.files.length === 0) && !req.body.zipurl) die("Need at least 1 file or a zip file url.");
-    if (config.maxImages > 0 && req.files && req.files.length > config.maxImages) die(`${req.files.length} images uploaded, but this node can only process up to ${config.maxImages}.`);
+    else if (config.maxImages > 0 && req.files && req.files.length > config.maxImages) die(`${req.files.length} images uploaded, but this node can only process up to ${config.maxImages}.`);
 
     else {
         let destPath = path.join(Directories.data, req.id);

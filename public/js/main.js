@@ -16,6 +16,14 @@ You should have received a copy of the GNU General Public License
 along with this program.  If not, see <http://www.gnu.org/licenses/>.
 */
 $(function() {
+    function query(key) {
+        key = key.replace(/[*+?^$.\[\]{}()|\\\/]/g, "\\$&"); // escape RegEx meta chars
+        var match = location.search.match(new RegExp("[?&]"+key+"=([^&]+)(&|$)"));
+        return match && decodeURIComponent(match[1].replace(/\+/g, " "));
+    }
+
+    var token = query('token') || "";
+
     function hoursMinutesSecs(t) {
         var ch = 60 * 60 * 1000,
             cm = 60 * 1000,
@@ -134,7 +142,7 @@ $(function() {
     }
     Task.prototype.refreshInfo = function() {
         var self = this;
-        var url = "/task/" + this.uuid + "/info";
+        var url = "/task/" + this.uuid + "/info?token=" + token;
         $.get(url)
             .done(function(json) {
                 // Track time
@@ -160,7 +168,7 @@ $(function() {
         var self = this;
 
         function fetchOutput() {
-            var url = "/task/" + self.uuid + "/output";
+            var url = "/task/" + self.uuid + "/output?token=" + token;
             $.get(url, { line: self.viewOutputLine })
                 .done(function(output) {
                     for (var i in output) {
@@ -269,7 +277,7 @@ $(function() {
 
     // Handle uploads
     $("#images").fileinput({
-        uploadUrl: '/task/new',
+        uploadUrl: '/task/new?token=' + token,
         showPreview: false,
         allowedFileExtensions: ['jpg', 'jpeg', 'txt', 'zip'],
         elErrorContainer: '#errorBlock',
@@ -299,18 +307,11 @@ $(function() {
                 return;
             }
         
-
             // Start upload
-            $("#images").fileinput('upload');
-
-
-        
+            $("#images").fileinput('upload'); 
     });
 
     $('#resetWebhook').on('click', function(){
-
-
-
         $("#webhook").val('');
     });
 
@@ -334,6 +335,7 @@ $(function() {
         $('#btnShowUpload').addClass('hidden');
         $('#zipurl').val('');
     });
+    
 
     var btnUploadLabel = $("#btnUpload").val();
     $("#images")
@@ -358,14 +360,6 @@ $(function() {
     Option.prototype.resetToDefault = function() {
         this.value(undefined);
     };
-
-    function query(key) {
-        key = key.replace(/[*+?^$.\[\]{}()|\\\/]/g, "\\$&"); // escape RegEx meta chars
-        var match = location.search.match(new RegExp("[?&]"+key+"=([^&]+)(&|$)"));
-        return match && decodeURIComponent(match[1].replace(/\+/g, " "));
-    }
-
-    var token = query('token') || "";
 
     function OptionsModel() {
         var self = this;
