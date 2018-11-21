@@ -266,10 +266,10 @@ $(function() {
         task.resetOutput();
     });
     Task.prototype.download = function() {
-        location.href = "/task/" + this.uuid + "/download/all.zip";
+        location.href = "/task/" + this.uuid + "/download/all.zip?token=" + token;
     };
     Task.prototype.downloadOrthophoto = function() {
-        location.href = "/task/" + this.uuid + "/download/orthophoto.tif";
+        location.href = "/task/" + this.uuid + "/download/orthophoto.tif?token=" + token;
     };
 
     var taskList = new TaskList();
