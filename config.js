@@ -39,6 +39,10 @@ Options:
 	--powercycle	When set, the application exits immediately after powering up. Useful for testing launch and compilation issues.
 	--token <token>	Sets a token that needs to be passed for every request. This can be used to limit access to the node only to token holders. (default: none)
 	--max_images <number>	Specify the maximum number of images that this processing node supports. (default: unlimited)
+	--callback <url>	Specify a callback URL to be invoked when a task completes processing (default: none)
+	--s3_endpoint <url>	Specify a S3 endpoint (for example, nyc3.digitaloceanspaces.com) to upload completed task results to. (default: do not upload to S3)
+	--s3_access_key <key>	S3 access key, required if --s3_endpoint is set. (default: none)
+	--s3_secret_key <secret>	S3 secret key, required if --s3_endpoint is set. (default: none) 
 Log Levels: 
 error | debug | info | verbose | debug | silly 
 `);
@@ -88,6 +92,9 @@ config.testSkipDems = argv.test_skip_dems || fromConfigFile("testSkipDems", fals
 config.powercycle = argv.powercycle || fromConfigFile("powercycle", false);
 config.token = argv.token || fromConfigFile("token", "");
 config.maxImages = argv.max_images || fromConfigFile("maxImages", "");
-
+config.callback = argv.callback || fromConfigFile("callback", "");
+config.s3Endpoint = argv.s3_endpoint || fromConfigFile("s3Endpoint", "")
+config.s3AccessKey = argv.s3_access_key || fromConfigFile("s3AccessKey", process.env.AWS_ACCESS_KEY_ID || "")
+config.s3SecretKey = argv.s3_secret_key || fromConfigFile("s3SecretKey", process.env.AWS_SECRET_ACCESS_KEY || "")
 
 module.exports = config;

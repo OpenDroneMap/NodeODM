@@ -22,6 +22,7 @@
   "dependencies": {
     "archiver": "^1.0.0",
     "async": "^2.0.0-rc.6",
+    "aws-sdk": "^2.360.0",
     "body-parser": "^1.18.3",
     "express": "^4.16.3",
     "glob": "^7.1.1",
