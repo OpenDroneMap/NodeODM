@@ -32,14 +32,14 @@ Options:
 	--log_level <logLevel>	Set log level verbosity (default: info)
 	-d, --deamonize 	Set process to run as a deamon
 	--parallel_queue_processing <number> Number of simultaneous processing tasks (default: 2)
-	--cleanup_tasks_after <number> Number of days that elapse before deleting finished and canceled tasks (default: 3) 
+	--cleanup_tasks_after <number> Number of minutes that elapse before deleting finished and canceled tasks (default: 2880) 
 	--test Enable test mode. In test mode, no commands are sent to OpenDroneMap. This can be useful during development or testing (default: false)
 	--test_skip_orthophotos	If test mode is enabled, skip orthophoto results when generating assets. (default: false) 
 	--test_skip_dems	If test mode is enabled, skip dems results when generating assets. (default: false) 
 	--powercycle	When set, the application exits immediately after powering up. Useful for testing launch and compilation issues.
 	--token <token>	Sets a token that needs to be passed for every request. This can be used to limit access to the node only to token holders. (default: none)
 	--max_images <number>	Specify the maximum number of images that this processing node supports. (default: unlimited)
-	--callback <url>	Specify a callback URL to be invoked when a task completes processing (default: none)
+	--webhook <url>	Specify a POST URL endpoint to be invoked when a task completes processing (default: none)
 	--s3_endpoint <url>	Specify a S3 endpoint (for example, nyc3.digitaloceanspaces.com) to upload completed task results to. (default: do not upload to S3)
 	--s3_bucket <bucket>	Specify a S3 bucket name where to upload completed task results to. (default: none)
 	--s3_access_key <key>	S3 access key, required if --s3_endpoint is set. (default: none)
@@ -87,14 +87,14 @@ config.logger.logDirectory = fromConfigFile("logger.logDirectory", ''); // Set t
 config.port = parseInt(argv.port || argv.p || fromConfigFile("port", process.env.PORT || 3000));
 config.deamon = argv.deamonize || argv.d || fromConfigFile("daemon", false);
 config.parallelQueueProcessing = argv.parallel_queue_processing || fromConfigFile("parallelQueueProcessing", 2);
-config.cleanupTasksAfter = argv.cleanup_tasks_after || fromConfigFile("cleanupTasksAfter", 3);
+config.cleanupTasksAfter = parseInt(argv.cleanup_tasks_after || fromConfigFile("cleanupTasksAfter", 60 * 24 * 2));
 config.test = argv.test || fromConfigFile("test", false);
 config.testSkipOrthophotos = argv.test_skip_orthophotos || fromConfigFile("testSkipOrthophotos", false);
 config.testSkipDems = argv.test_skip_dems || fromConfigFile("testSkipDems", false);
 config.powercycle = argv.powercycle || fromConfigFile("powercycle", false);
 config.token = argv.token || fromConfigFile("token", "");
 config.maxImages = parseInt(argv.max_images || fromConfigFile("maxImages", "")) || null;
-config.callback = argv.callback || fromConfigFile("callback", "");
+config.webhook = argv.webhook || fromConfigFile("webhook", "");
 config.s3Endpoint = argv.s3_endpoint || fromConfigFile("s3Endpoint", "");
 config.s3Bucket = argv.s3_bucket || fromConfigFile("s3Bucket", "");
 config.s3AccessKey = argv.s3_access_key || fromConfigFile("s3AccessKey", process.env.AWS_ACCESS_KEY_ID || "")

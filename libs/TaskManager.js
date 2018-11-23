@@ -29,11 +29,8 @@ let schedule = require('node-schedule');
 let Directories = require('./Directories');
 let request = require('request');
 
-
-
-
 const TASKS_DUMP_FILE = path.join(Directories.data, "tasks.json");
-const CLEANUP_TASKS_IF_OLDER_THAN = 1000 * 60 * 60 * 24 * config.cleanupTasksAfter; // days
+const CLEANUP_TASKS_IF_OLDER_THAN = 1000 * 60 * config.cleanupTasksAfter; // minutes
 
 module.exports = class TaskManager{
 	constructor(done){
@@ -153,16 +150,34 @@ module.exports = class TaskManager{
 			if (task){
 				this.addToRunningQueue(task);
 				task.start(() => {
-					if(task.webhook && task.webhook.length > 3){
-						request({
-							uri: task.webhook,
-							method: 'POST',
-							json: task.getInfo()
-						}, 
-						function (error, response, body) {
-							if (error || response.statusCode != 200) logger.warn(`Call to webhook failed: ${task.webhook}`);
-						});
-					}
+					// Hooks can be passed via command line 
+					// or for each individual task
+					const hooks = [task.webhook, config.webhook];
+
+					hooks.forEach(hook => {
+						if (hook && hook.length > 3){
+							const notifyCallback = (attempt) => {
+								if (attempt > 5){
+									logger.warn(`Callback failed, will not retry: ${hook}`);
+									return;
+								}
+								request.post(hook, {
+										json: task.getInfo()
+									},
+									(error, response) => {
+										if (error || response.statusCode != 200){
+											logger.warn(`Callback failed, will retry in a bit: ${hook}`);
+											setTimeout(() => {
+												notifyCallback(attempt + 1);
+											}, attempt * 5000);
+										}else{
+											logger.debug(`Callback invoked: ${hook}`);
+										}
+								});
+							};
+							notifyCallback(0);
+						}
+					});
 
 					this.removeFromRunningQueue(task);
 					this.processNextTask();
@@ -264,16 +279,16 @@ module.exports = class TaskManager{
 		});
 	}
 
-    getQueueCount(){
-        let count = 0;
-        for (let uuid in this.tasks){
-            let task = this.tasks[uuid];
+	getQueueCount(){
+		let count = 0;
+		for (let uuid in this.tasks){
+			let task = this.tasks[uuid];
 
-            if ([statusCodes.QUEUED,
-                statusCodes.RUNNING].indexOf(task.status.code) !== -1){
-                count++;
-            }
-        }
-        return count;
-    }
+			if ([statusCodes.QUEUED,
+				statusCodes.RUNNING].indexOf(task.status.code) !== -1){
+				count++;
+			}
+		}
+		return count;
+	}
 };

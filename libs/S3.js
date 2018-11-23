@@ -112,16 +112,20 @@ module.exports = {
 
         let cbCalled = false;
         q.drain = () => {
-            if (!cbCalled) cb();
-            cbCalled = true;
+            if (!cbCalled){
+                cbCalled = true;
+                cb();
+            }
         };
 
         if (onOutput) onOutput(`Uploading ${uploadList.length} files to S3...`);
         q.push(uploadList, err => {
             if (err){
                 q.kill();
-                if (!cbCalled) cb(err);
-                cbCalled = true;
+                if (!cbCalled){
+                    cbCalled = true;
+                    cb(err);
+                }
             }
         });
     }
