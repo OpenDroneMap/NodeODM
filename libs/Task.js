@@ -17,21 +17,22 @@ along with this program.  If not, see <http://www.gnu.org/licenses/>.
 */
 "use strict";
 
-let config = require('../config');
-let async = require('async');
-let assert = require('assert');
-let logger = require('./logger');
-let fs = require('fs');
-let glob = require("glob");
-let path = require('path');
-let rmdir = require('rimraf');
-let odmRunner = require('./odmRunner');
-let processRunner = require('./processRunner');
-let archiver = require('archiver');
-let Directories = require('./Directories');
-let kill = require('tree-kill');
+const config = require('../config');
+const async = require('async');
+const assert = require('assert');
+const logger = require('./logger');
+const fs = require('fs');
+const glob = require("glob");
+const path = require('path');
+const rmdir = require('rimraf');
+const odmRunner = require('./odmRunner');
+const processRunner = require('./processRunner');
+const archiver = require('archiver');
+const Directories = require('./Directories');
+const kill = require('tree-kill');
+const S3 = require('./S3');
 
-let statusCodes = require('./statusCodes');
+const statusCodes = require('./statusCodes');
 
 module.exports = class Task{
 	constructor(uuid, name, done, options = [], webhook = null){
@@ -215,7 +216,11 @@ module.exports = class Task{
 		const finished = err => {
 			this.stopTrackingProcessingTime();
 			done(err);
-		};
+        };
+        
+        const sourcePath = !config.test ? 
+                            this.getProjectFolderPath() : 
+                            path.join("tests", "processing_results");
 		
 		const postProcess = () => {
 			const createZipArchive = (outputFilename, files) => {
@@ -240,9 +245,6 @@ module.exports = class Task{
 
 					// Process files and directories first
 					files.forEach(file => {
-						let sourcePath = !config.test ? 
-										this.getProjectFolderPath() : 
-										path.join("tests", "processing_results");
 						let filePath = path.join(sourcePath, file);
 						
 						// Skip non-existing items
@@ -329,12 +331,25 @@ module.exports = class Task{
 						allPaths.splice(allPaths.indexOf(p), 1);
 					});
 				}
-			}
-
-			async.series([
+            }
+            
+            let tasks = [
                 runPostProcessingScript(),
                 createZipArchive('all.zip', allPaths)
-			], (err) => {
+            ];
+            
+            // Upload to S3 all paths + all.zip file (if config says so)
+            if (S3.enabled()){
+                tasks.push((done) => {
+                    S3.uploadPaths(sourcePath, config.s3Bucket, this.uuid, ['all.zip'].concat(allPaths), 
+                        err => {
+                            if (!err) this.output.push("Done uploading to S3!");
+                            done(err);
+                        }, output => this.output.push(output));
+                });
+            }
+
+			async.series(tasks, (err) => {
 				if (!err){
 					this.setStatus(statusCodes.COMPLETED);
 					finished();

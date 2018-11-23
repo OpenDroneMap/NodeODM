@@ -21,7 +21,7 @@
   "homepage": "https://github.com/pierotofy/node-OpenDroneMap#readme",
   "dependencies": {
     "archiver": "^1.0.0",
-    "async": "^2.0.0-rc.6",
+    "async": "^2.6.1",
     "aws-sdk": "^2.360.0",
     "body-parser": "^1.18.3",
     "express": "^4.16.3",

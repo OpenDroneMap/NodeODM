@@ -42,6 +42,7 @@ let Directories = require('./libs/Directories');
 let unzip = require('node-unzip-2');
 let si = require('systeminformation');
 let mv = require('mv');
+let S3 = require('./libs/S3');
 
 let auth = require('./libs/auth/factory').fromConfig(config);
 const authCheck = auth.getMiddleware();
@@ -61,7 +62,8 @@ let download = function(uri, filename, callback) {
 
 let winstonStream = {
     write: function(message, encoding) {
-        logger.debug(message.slice(0, -1));
+        // Uncomment to get express requests debug output
+        // logger.debug(message.slice(0, -1));
     }
 };
 app.use(morgan('combined', { stream: winstonStream }));
@@ -713,6 +715,7 @@ if (config.test) logger.info("Running in test mode");
 let commands = [
     cb => odmInfo.initialize(cb),
     cb => auth.initialize(cb),
+    cb => S3.initialize(cb),
     cb => { taskManager = new TaskManager(cb); },
     cb => {
         server = app.listen(config.port, err => {

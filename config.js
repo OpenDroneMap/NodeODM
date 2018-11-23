@@ -41,8 +41,10 @@ Options:
 	--max_images <number>	Specify the maximum number of images that this processing node supports. (default: unlimited)
 	--callback <url>	Specify a callback URL to be invoked when a task completes processing (default: none)
 	--s3_endpoint <url>	Specify a S3 endpoint (for example, nyc3.digitaloceanspaces.com) to upload completed task results to. (default: do not upload to S3)
+	--s3_bucket <bucket>	Specify a S3 bucket name where to upload completed task results to. (default: none)
 	--s3_access_key <key>	S3 access key, required if --s3_endpoint is set. (default: none)
 	--s3_secret_key <secret>	S3 secret key, required if --s3_endpoint is set. (default: none) 
+	--s3_signature_version <version>	S3 signature version. (default: 4)
 Log Levels: 
 error | debug | info | verbose | debug | silly 
 `);
@@ -93,8 +95,9 @@ config.powercycle = argv.powercycle || fromConfigFile("powercycle", false);
 config.token = argv.token || fromConfigFile("token", "");
 config.maxImages = parseInt(argv.max_images || fromConfigFile("maxImages", "")) || null;
 config.callback = argv.callback || fromConfigFile("callback", "");
-config.s3Endpoint = argv.s3_endpoint || fromConfigFile("s3Endpoint", "")
+config.s3Endpoint = argv.s3_endpoint || fromConfigFile("s3Endpoint", "");
+config.s3Bucket = argv.s3_bucket || fromConfigFile("s3Bucket", "");
 config.s3AccessKey = argv.s3_access_key || fromConfigFile("s3AccessKey", process.env.AWS_ACCESS_KEY_ID || "")
 config.s3SecretKey = argv.s3_secret_key || fromConfigFile("s3SecretKey", process.env.AWS_SECRET_ACCESS_KEY || "")
-
+config.s3SignatureVersion = argv.s3_signature_version || fromConfigFile("s3SignatureVersion", "4")
 module.exports = config;
