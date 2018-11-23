@@ -17,5 +17,5 @@
 	"testSkipOrthophotos": false,
 	"testSkipDems": false,
 	"token": "",
-	"maxImages": -1
+	"maxImages": ""
 }

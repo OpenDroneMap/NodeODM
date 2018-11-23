@@ -160,7 +160,7 @@ app.post('/task/new', authCheck, addRequestId, upload.array('images'), (req, res
     };
 
     if ((!req.files || req.files.length === 0) && !req.body.zipurl) die("Need at least 1 file or a zip file url.");
-    else if (config.maxImages > 0 && req.files && req.files.length > config.maxImages) die(`${req.files.length} images uploaded, but this node can only process up to ${config.maxImages}.`);
+    else if (config.maxImages && req.files && req.files.length > config.maxImages) die(`${req.files.length} images uploaded, but this node can only process up to ${config.maxImages}.`);
 
     else {
         let destPath = path.join(Directories.data, req.id);
@@ -232,7 +232,7 @@ app.post('/task/new', authCheck, addRequestId, upload.array('images'), (req, res
                                         })
                                         .on('close', () => {
                                             // Verify max images limit
-                                            if (config.maxImages > 0 && filesCount > config.maxImages) cb(`${filesCount} images uploaded, but this node can only process up to ${config.maxImages}.`);
+                                            if (config.maxImages && filesCount > config.maxImages) cb(`${filesCount} images uploaded, but this node can only process up to ${config.maxImages}.`);
                                             else cb();
                                         })
                                         .on('error', cb);
@@ -659,7 +659,7 @@ app.get('/options', authCheck, (req, res) => {
  *               description: Number of CPU cores (virtual)
  *             maxImages:
  *               type: integer
- *               description: Maximum number of images allowed for new tasks
+ *               description: Maximum number of images allowed for new tasks or null if there's no limit.
  *             maxParallelTasks:
  *               type: integer
  *               description: Maximum number of tasks that can be processed simultaneously
