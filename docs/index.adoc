@@ -3,7 +3,7 @@
 
 [[_overview]]
 == Overview
-REST API to access OpenDroneMap
+REST API to access ODM
 
 
 === Version information
@@ -281,7 +281,7 @@ Retrieves an asset (the output of OpenDroneMap's processing) associated with a t
 |===
 |Type|Name|Description|Schema|Default
 |*Path*|*asset* +
-_required_|Type of asset to download. Use "all.zip" for zip file containing all assets.|enum (all.zip, orthophoto.tif, images.json)|
+_required_|Type of asset to download. Use "all.zip" for zip file containing all assets.|enum (all.zip, orthophoto.tif)|
 |*Path*|*uuid* +
 _required_|UUID of the task|string|
 |*Query*|*token* +

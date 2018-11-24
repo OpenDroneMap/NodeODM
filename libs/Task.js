@@ -31,6 +31,7 @@ const archiver = require('archiver');
 const Directories = require('./Directories');
 const kill = require('tree-kill');
 const S3 = require('./S3');
+const request = require('request');
 
 const statusCodes = require('./statusCodes');
 
@@ -131,12 +132,6 @@ module.exports = class Task{
 				else filename = path.join('..', '..', 'processing_results', 'odm_orthophoto', `odm_${filename}`);
 			}else{
 				filename = path.join('odm_orthophoto', `odm_${filename}`);
-            }
-        }else if (filename == 'images.json'){
-			if (config.test){
-				filename = path.join('..', '..', 'processing_results', 'images.json');
-			}else{
-				// OK, do nothing
             }
         }else{
 			return false; // Invalid
@@ -447,7 +442,66 @@ module.exports = class Task{
 	// Optionally starting from a certain line number
 	getOutput(startFromLine = 0){
 		return this.output.slice(startFromLine, this.output.length);
-	}
+    }
+    
+    // Reads the contents of the tasks's 
+    // images.json and returns its JSON representation
+    readImagesDatabase(callback){
+        const imagesDbPath = !config.test ? 
+                             path.join(this.getProjectFolderPath(), 'images.json') :
+                             path.join('tests', 'processing_results', 'images.json');
+    
+        fs.readFile(imagesDbPath, 'utf8', (err, data) => {
+            if (err) callback(err);
+            else{
+                try{
+                    const json = JSON.parse(data);
+                    callback(null, json);
+                }catch(e){
+                    callback(e);
+                }
+            }
+        });
+    }
+
+    callWebhooks(){
+        // Hooks can be passed via command line 
+        // or for each individual task
+        const hooks = [this.webhook, config.webhook];
+
+        this.readImagesDatabase((err, images) => {
+            if (err) logger.warn(err); // Continue with callback
+            if (!images) images = [];
+
+            hooks.forEach(hook => {
+                if (hook && hook.length > 3){
+                    const notifyCallback = (attempt) => {
+                        if (attempt > 5){
+                            logger.warn(`Webhook invokation failed, will not retry: ${hook}`);
+                            return;
+                        }
+                        request.post(hook, {
+                                json: {
+                                    task: this.getInfo(),
+                                    images: images
+                                }
+                            },
+                            (error, response) => {
+                                if (error || response.statusCode != 200){
+                                    logger.warn(`Webhook invokation failed, will retry in a bit: ${hook}`);
+                                    setTimeout(() => {
+                                        notifyCallback(attempt + 1);
+                                    }, attempt * 5000);
+                                }else{
+                                    logger.debug(`Webhook invoked: ${hook}`);
+                                }
+                        });
+                    };
+                    notifyCallback(0);
+                }
+            });
+        });
+    }
 
 	// Returns the data necessary to serialize this
 	// task to restore it later.
