@@ -311,7 +311,7 @@ module.exports = class Task{
 			// All paths are relative to the project directory (./data/<uuid>/)
 			let allPaths = ['odm_orthophoto', 'odm_georeferencing', 'odm_texturing', 
 							  'odm_dem/dsm.tif', 'odm_dem/dtm.tif', 'dsm_tiles', 'dtm_tiles',
-							  'odm_meshing', 'orthophoto_tiles', 'potree_pointcloud'];
+							  'odm_meshing', 'orthophoto_tiles', 'potree_pointcloud', 'images.json'];
 			
 			if (config.test){
 				if (config.testSkipOrthophotos){

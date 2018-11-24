@@ -1,0 +1,17 @@
+[
+  {
+    "altitude": 198.609,
+    "camera_make": "DJI",
+    "camera_model": "FC300S",
+    "ccd_width": 6.16,
+    "filename": "DJI_0028.JPG",
+    "focal_length": 3.61,
+    "focal_length_px": 2344.155844155844,
+    "height": 2250,
+    "latitude": 46.842521250000004,
+    "longitude": -91.99420961111112,
+    "make_model": "dji fc300s",
+    "path_file": "/datasets/brighton/images/DJI_0028.JPG",
+    "width": 4000
+  }
+]
