@@ -473,6 +473,9 @@ module.exports = class Task{
             if (err) logger.warn(err); // Continue with callback
             if (!images) images = [];
 
+            let json = this.getInfo();
+            json.images = images;
+
             hooks.forEach(hook => {
                 if (hook && hook.length > 3){
                     const notifyCallback = (attempt) => {
@@ -480,12 +483,7 @@ module.exports = class Task{
                             logger.warn(`Webhook invokation failed, will not retry: ${hook}`);
                             return;
                         }
-                        request.post(hook, {
-                                json: {
-                                    task: this.getInfo(),
-                                    images: images
-                                }
-                            },
+                        request.post(hook, { json },
                             (error, response) => {
                                 if (error || response.statusCode != 200){
                                     logger.warn(`Webhook invokation failed, will retry in a bit: ${hook}`);
