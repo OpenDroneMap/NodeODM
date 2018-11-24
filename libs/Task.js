@@ -131,8 +131,14 @@ module.exports = class Task{
 				else filename = path.join('..', '..', 'processing_results', 'odm_orthophoto', `odm_${filename}`);
 			}else{
 				filename = path.join('odm_orthophoto', `odm_${filename}`);
-			}
-		}else{
+            }
+        }else if (filename == 'images.json'){
+			if (config.test){
+				filename = path.join('..', '..', 'processing_results', 'images.json');
+			}else{
+				// OK, do nothing
+            }
+        }else{
 			return false; // Invalid
 		}
 		

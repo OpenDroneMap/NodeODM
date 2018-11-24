@@ -8,7 +8,7 @@ REST API to access OpenDroneMap
 
 === Version information
 [%hardbreaks]
-_Version_ : 1.2.0
+_Version_ : 1.2.1
 
 
 === Contact information
@@ -281,7 +281,7 @@ Retrieves an asset (the output of OpenDroneMap's processing) associated with a t
 |===
 |Type|Name|Description|Schema|Default
 |*Path*|*asset* +
-_required_|Type of asset to download. Use "all.zip" for zip file containing all assets.|enum (all.zip, orthophoto.tif)|
+_required_|Type of asset to download. Use "all.zip" for zip file containing all assets.|enum (all.zip, orthophoto.tif, images.json)|
 |*Path*|*uuid* +
 _required_|UUID of the task|string|
 |*Query*|*token* +

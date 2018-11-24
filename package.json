@@ -1,14 +1,14 @@
 {
   "name": "node-opendronemap",
-  "version": "1.2.0",
-  "description": "REST API to access OpenDroneMap",
+  "version": "1.2.1",
+  "description": "REST API to access ODM",
   "main": "index.js",
   "scripts": {
     "test": "echo \"Error: no test specified\" && exit 1"
   },
   "repository": {
     "type": "git",
-    "url": "git+https://github.com/pierotofy/node-OpenDroneMap.git"
+    "url": "git+https://github.com/OpenDroneMap/NodeODM.git"
   },
   "keywords": [
     "opendronemap"
@@ -16,9 +16,9 @@
   "author": "Piero Toffanin",
   "license": "GPL-3.0",
   "bugs": {
-    "url": "https://github.com/pierotofy/node-OpenDroneMap/issues"
+    "url": "https://github.com/OpenDroneMap/NodeODM/issues"
   },
-  "homepage": "https://github.com/pierotofy/node-OpenDroneMap#readme",
+  "homepage": "https://github.com/OpenDroneMap/NodeODM#readme",
   "dependencies": {
     "archiver": "^1.0.0",
     "async": "^2.6.1",

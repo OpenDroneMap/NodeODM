@@ -419,6 +419,7 @@ app.get('/task/:uuid/output', authCheck, getTaskFromUuid, (req, res) => {
  *          enum:
  *            - all.zip
  *            - orthophoto.tif
+ *            - images.json
  *        -
  *          name: token
  *          in: query
