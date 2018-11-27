@@ -211,7 +211,7 @@ $(function() {
     };
     Task.prototype.remove = function() {
         var self = this;
-        var url = "/task/remove";
+        var url = "/task/remove?token=" + token;
 
         function doRemove() {
             $.post(url, {

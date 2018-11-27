@@ -218,10 +218,6 @@ module.exports = class Task{
 			this.stopTrackingProcessingTime();
 			done(err);
         };
-        
-        const sourcePath = !config.test ? 
-                            this.getProjectFolderPath() : 
-                            path.join("tests", "processing_results");
 		
 		const postProcess = () => {
 			const createZipArchive = (outputFilename, files) => {
@@ -242,7 +238,11 @@ module.exports = class Task{
 					});
 
 					archive.pipe(output);
-					let globs = [];
+                    let globs = [];
+                    
+                    const sourcePath = !config.test ? 
+                                        this.getProjectFolderPath() : 
+                                        path.join("tests", "processing_results");
 
 					// Process files and directories first
 					files.forEach(file => {
@@ -342,7 +342,11 @@ module.exports = class Task{
             // Upload to S3 all paths + all.zip file (if config says so)
             if (S3.enabled()){
                 tasks.push((done) => {
-                    S3.uploadPaths(sourcePath, config.s3Bucket, this.uuid, ['all.zip'].concat(allPaths), 
+                    const s3Paths = !config.test ? 
+                                    ['all.zip'].concat(allPaths) : 
+                                    ['all.zip']; // During testing only upload all.zip
+
+                    S3.uploadPaths(this.getProjectFolderPath(), config.s3Bucket, this.uuid, s3Paths, 
                         err => {
                             if (!err) this.output.push("Done uploading to S3!");
                             done(err);
