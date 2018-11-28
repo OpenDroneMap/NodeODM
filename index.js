@@ -680,7 +680,7 @@ app.get('/info', authCheck, (req, res) => {
         res.json({
             version: packageJson.version,
             taskQueueCount: taskManager.getQueueCount(),
-            totalMemory: mem.total, 
+            totalMemory: mem.total,
             availableMemory: mem.available,
             cpuCores: cpu.cores,
             maxImages: config.maxImages,
