@@ -3,12 +3,12 @@
 
 [[_overview]]
 == Overview
-REST API to access OpenDroneMap
+REST API to access ODM
 
 
 === Version information
 [%hardbreaks]
-_Version_ : 1.1.1
+_Version_ : 1.2.1
 
 
 === Contact information
@@ -68,12 +68,18 @@ Retrieves information about this node
 _optional_|Amount of RAM available in bytes|integer
 |*cpuCores* +
 _optional_|Number of CPU cores (virtual)|integer
+|*maxImages* +
+_optional_|Maximum number of images allowed for new tasks or null if there's no limit.|integer
+|*maxParallelTasks* +
+_optional_|Maximum number of tasks that can be processed simultaneously|integer
+|*odmVersion* +
+_optional_|Current version of ODM|string
 |*taskQueueCount* +
 _required_|Number of tasks currently being processed or waiting to be processed|integer
 |*totalMemory* +
 _optional_|Amount of total RAM in the system in bytes|integer
 |*version* +
-_required_|Current version|string
+_required_|Current API version|string
 |===
 
 

@@ -16,24 +16,20 @@ You should have received a copy of the GNU General Public License
 along with this program.  If not, see <http://www.gnu.org/licenses/>.
 */
 "use strict";
-let assert = require('assert');
-let config = require('../config');
-let rmdir = require('rimraf');
-let fs = require('fs');
-let path = require('path');
-let logger = require('./logger');
-let Task = require('./Task');
-let statusCodes = require('./statusCodes');
-let async = require('async');
-let schedule = require('node-schedule');
-let Directories = require('./Directories');
-let request = require('request');
-
-
-
+const assert = require('assert');
+const config = require('../config');
+const rmdir = require('rimraf');
+const fs = require('fs');
+const path = require('path');
+const logger = require('./logger');
+const Task = require('./Task');
+const statusCodes = require('./statusCodes');
+const async = require('async');
+const schedule = require('node-schedule');
+const Directories = require('./Directories');
 
 const TASKS_DUMP_FILE = path.join(Directories.data, "tasks.json");
-const CLEANUP_TASKS_IF_OLDER_THAN = 1000 * 60 * 60 * 24 * config.cleanupTasksAfter; // days
+const CLEANUP_TASKS_IF_OLDER_THAN = 1000 * 60 * config.cleanupTasksAfter; // minutes
 
 module.exports = class TaskManager{
 	constructor(done){
@@ -153,16 +149,8 @@ module.exports = class TaskManager{
 			if (task){
 				this.addToRunningQueue(task);
 				task.start(() => {
-					if(task.webhook && task.webhook.length > 3){
-						request({
-							uri: task.webhook,
-							method: 'POST',
-							json: task.getInfo()
-						}, 
-						function (error, response, body) {
-							if (error || response.statusCode != 200) logger.warn(`Call to webhook failed: ${task.webhook}`);
-						});
-					}
+
+					task.callWebhooks();
 
 					this.removeFromRunningQueue(task);
 					this.processNextTask();
@@ -264,16 +252,16 @@ module.exports = class TaskManager{
 		});
 	}
 
-    getQueueCount(){
-        let count = 0;
-        for (let uuid in this.tasks){
-            let task = this.tasks[uuid];
+	getQueueCount(){
+		let count = 0;
+		for (let uuid in this.tasks){
+			let task = this.tasks[uuid];
 
-            if ([statusCodes.QUEUED,
-                statusCodes.RUNNING].indexOf(task.status.code) !== -1){
-                count++;
-            }
-        }
-        return count;
-    }
+			if ([statusCodes.QUEUED,
+				statusCodes.RUNNING].indexOf(task.status.code) !== -1){
+				count++;
+			}
+		}
+		return count;
+	}
 };

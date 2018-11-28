@@ -16,15 +16,30 @@ You should have received a copy of the GNU General Public License
 along with this program.  If not, see <http://www.gnu.org/licenses/>.
 */
 "use strict";
-let odmRunner = require('./odmRunner');
-let assert = require('assert');
-let logger = require('./logger');
+const odmRunner = require('./odmRunner');
+const config = require('../config');
+const async = require('async');
+const assert = require('assert');
+const logger = require('./logger');
 
 let odmOptions = null;
+let odmVersion = null;
 
 module.exports = {
 	initialize: function(done){
-		this.getOptions(done);
+		async.parallel([
+			this.getOptions,
+			this.getVersion
+		], done);
+	},
+	
+	getVersion: function(done){
+		if (odmVersion){
+			done(null, odmVersion);
+			return;
+		}
+
+		odmRunner.getVersion(done);
 	},
 
 	getOptions: function(done){
@@ -231,7 +246,12 @@ module.exports = {
 			};
 
 			// Scan through all possible options
+			let maxConcurrencyFound = false;
+			let maxConcurrencyIsAnOption = false;
+
 			for (let odmOption of odmOptions){
+				if (odmOption.name === 'max-concurrency') maxConcurrencyIsAnOption = true;
+				
 				// Was this option selected by the user?
 				/*jshint loopfunc: true */
 				let opt = options.find(o => o.name === odmOption.name);
@@ -244,6 +264,16 @@ module.exports = {
 						if (odmOption.domain){
 							checkDomain(odmOption.domain, value);
 						}
+						
+						// Max concurrency check
+						if (maxConcurrencyIsAnOption){
+							maxConcurrencyFound = true;
+
+							// Cap
+							if (config.maxConcurrency){
+								value = Math.min(value, config.maxConcurrency);
+							}
+						}
 
 						result.push({
 							name: odmOption.name,
@@ -253,6 +283,15 @@ module.exports = {
 						addError(opt, e.message);						
 					}
 				}
+			}
+
+			// If no max concurrency was passed by the user
+			// but our configuration sets a limit, pass it.
+			if (!maxConcurrencyFound && maxConcurrencyIsAnOption && config.maxConcurrency){
+				result.push({
+					name: "max-concurrency",
+					value: config.maxConcurrency
+				});
 			}
 
 			if (errors.length > 0) done(new Error(JSON.stringify(errors)));

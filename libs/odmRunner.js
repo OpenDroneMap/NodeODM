@@ -81,6 +81,13 @@ module.exports = {
 
 		return childProcess;
 	},
+	
+	getVersion: function(done){
+		fs.readFile(path.join(config.odm_path, 'VERSION'), {encoding: 'utf8'}, (err, content) => {
+			if (err) done(null, "?");
+			else done(null, content.split("\n").map(l => l.trim())[0]);
+		});
+	},
 
 	getJsonOptions: function(done){
 		// In test mode, we don't call ODM, 
