@@ -261,8 +261,8 @@ $(function() {
                 });
         };
     }
-    Task.prototype.cancel = genApiCall("/task/cancel");
-    Task.prototype.restart = genApiCall("/task/restart", function(task) {
+    Task.prototype.cancel = genApiCall("/task/cancel?token=" + token);
+    Task.prototype.restart = genApiCall("/task/restart?token=" + token, function(task) {
         task.resetOutput();
     });
     Task.prototype.download = function() {
