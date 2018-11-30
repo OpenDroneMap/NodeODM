@@ -167,7 +167,7 @@ $(function() {
     Task.prototype.downloadOutput = function(){
         var self = this;
         var url = "/task/" + self.uuid + "/output";
-            $.get(url, { line: -10, token: token })
+            $.get(url, { token: token })
                 .done(function(output) {
                     var wnd = window.open("about:blank", "", "_blank");
                     wnd.document.write(output.join("<br/>"));
