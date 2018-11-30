@@ -164,23 +164,26 @@ $(function() {
         this.autoScrollOutput = true;
         this.output.removeAll();
     };
+    Task.prototype.downloadOutput = function(){
+        var self = this;
+        var url = "/task/" + self.uuid + "/output";
+            $.get(url, { line: -10, token: token })
+                .done(function(output) {
+                    var wnd = window.open("about:blank", "", "_blank");
+                    wnd.document.write(output.join("<br/>"));
+                })
+                .fail(function() {
+                    self.info({ error: url + " is unreachable." });
+                });
+    };
     Task.prototype.viewOutput = function() {
         var self = this;
 
         function fetchOutput() {
-            var url = "/task/" + self.uuid + "/output?token=" + token;
-            $.get(url, { line: self.viewOutputLine })
+            var url = "/task/" + self.uuid + "/output";
+            $.get(url, { line: -9, token: token })
                 .done(function(output) {
-                    for (var i in output) {
-                        self.output.push(output[i]);
-                    }
-                    if (output.length) {
-                        self.viewOutputLine += output.length;
-                        if (self.autoScrollOutput) {
-                            var $console = $("#console_" + self.uuid);
-                            $console.scrollTop($console[0].scrollHeight - $console.height());
-                        }
-                    }
+                    self.output(output);
                 })
                 .fail(function() {
                     self.info({ error: url + " is unreachable." });
@@ -261,8 +264,8 @@ $(function() {
                 });
         };
     }
-    Task.prototype.cancel = genApiCall("/task/cancel");
-    Task.prototype.restart = genApiCall("/task/restart", function(task) {
+    Task.prototype.cancel = genApiCall("/task/cancel?token=" + token);
+    Task.prototype.restart = genApiCall("/task/restart?token=" + token, function(task) {
         task.resetOutput();
     });
     Task.prototype.download = function() {
