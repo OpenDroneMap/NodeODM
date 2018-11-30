@@ -1,6 +1,6 @@
 # NodeODM
 
-[![Build Status](https://travis-ci.org/OpenDroneMap/node-OpenDroneMap.svg?branch=master)](https://travis-ci.org/OpenDroneMap/node-OpenDroneMap)
+[![Build Status](https://travis-ci.org/OpenDroneMap/NodeODM.svg?branch=master)](https://travis-ci.org/OpenDroneMap/NodeODM)
 
 NodeODM is a Node.js App and REST API to access [ODM](https://github.com/OpenDroneMap/ODM). It exposes an API which is used by [WebODM](https://github.com/OpenDroneMap/WebODM).
 
