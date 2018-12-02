@@ -17,35 +17,36 @@ along with this program.  If not, see <http://www.gnu.org/licenses/>.
 */
 "use strict";
 
-let fs = require('fs');
-let config = require('./config.js');
-let packageJson = JSON.parse(fs.readFileSync('./package.json'));
+const fs = require('fs');
+const config = require('./config.js');
+const packageJson = JSON.parse(fs.readFileSync('./package.json'));
 
-let logger = require('./libs/logger');
-let path = require('path');
-let async = require('async');
-let mime = require('mime');
-let rmdir = require('rimraf');
+const logger = require('./libs/logger');
+const path = require('path');
+const async = require('async');
+const mime = require('mime');
+const rmdir = require('rimraf');
 
-let express = require('express');
-let app = express();
+const express = require('express');
+const app = express();
 
-let addRequestId = require('./libs/expressRequestId')();
-let multer = require('multer');
-let bodyParser = require('body-parser');
-let morgan = require('morgan');
+const multer = require('multer');
+const bodyParser = require('body-parser');
+const morgan = require('morgan');
 
-let TaskManager = require('./libs/TaskManager');
-let Task = require('./libs/Task');
-let odmInfo = require('./libs/odmInfo');
-let Directories = require('./libs/Directories');
-let unzip = require('node-unzip-2');
-let si = require('systeminformation');
-let mv = require('mv');
-let S3 = require('./libs/S3');
+const TaskManager = require('./libs/TaskManager');
+const Task = require('./libs/Task');
+const odmInfo = require('./libs/odmInfo');
+const Directories = require('./libs/Directories');
+const unzip = require('node-unzip-2');
+const si = require('systeminformation');
+const mv = require('mv');
+const S3 = require('./libs/S3');
 
-let auth = require('./libs/auth/factory').fromConfig(config);
+const auth = require('./libs/auth/factory').fromConfig(config);
 const authCheck = auth.getMiddleware();
+const uuidv4 = require('uuid/v4');
+
 
 // zip files
 let request = require('request');
@@ -106,13 +107,13 @@ let server;
  *        -
  *          name: images
  *          in: formData
- *          description: Images to process, plus an optional GPC file. If included, the GPC file should have .txt extension
+ *          description: Images to process, plus an optional GCP file. If included, the GCP file should have .txt extension
  *          required: false
  *          type: file
  *        -
  *          name: zipurl
  *          in: formData
- *          description: URL of the zip file containing the images to process, plus an optional GPC file. If included, the GPC file should have .txt extension
+ *          description: URL of the zip file containing the images to process, plus an optional GCP file. If included, the GCP file should have .txt extension
  *          required: false
  *          type: string
  *        -
@@ -133,6 +134,12 @@ let server;
  *          description: 'Token required for authentication (when authentication is required).'
  *          required: false
  *          type: string
+ *        -
+ *          name: set-uuid
+ *          in: header
+ *          description: 'An optional UUID string that will be used as UUID for this task instead of generating a random one.'
+ *          required: false
+ *          type: string
  *      responses:
  *        200:
  *          description: Success
@@ -148,7 +155,24 @@ let server;
  *          schema:
  *            $ref: '#/definitions/Error'
  */
-app.post('/task/new', authCheck, addRequestId, upload.array('images'), (req, res) => {
+app.post('/task/new', authCheck, (req, res, next) => {
+    // A user can optionally suggest a UUID instead of letting
+    // nodeODM pick one.
+    if (req.get('set-uuid')){
+        const userUuid = req.get('set-uuid');
+
+        // Valid UUID and no other task with same UUID?
+        if (/^[0-9a-f]{8}-[0-9a-f]{4}-[1-5][0-9a-f]{3}-[89ab][0-9a-f]{3}-[0-9a-f]{12}$/i.test(userUuid) && !taskManager.find(userUuid)){
+            req.id = userUuid;
+            next();
+        }else{
+            res.json({error: `Invalid set-uuid: ${userUuid}`})
+        }
+    }else{
+        req.id = uuidv4();
+        next();
+    }
+}, upload.array('images'), (req, res) => {
     let srcPath = path.join("tmp", req.id);
 
     // Print error message and cleanup
