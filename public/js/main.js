@@ -286,6 +286,7 @@ $(function() {
         elErrorContainer: '#errorBlock',
         showUpload: false,
         uploadAsync: false,
+        // ajaxSettings: { headers: { 'set-uuid': '8366b2ad-a608-4cd1-bdcb-c3d84a034623' } },
         uploadExtraData: function() {
             return {
                 name: $("#taskName").val(),
