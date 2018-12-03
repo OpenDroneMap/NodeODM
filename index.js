@@ -465,7 +465,7 @@ app.get('/task/:uuid/download/:asset', authCheck, getTaskFromUuid, (req, res) =>
     if (filePath) {
         if (fs.existsSync(filePath)) {
             res.setHeader('Content-Disposition', `attachment; filename=${asset}`);
-            res.setHeader('Content-Type', mime.lookup(filePath));
+            res.setHeader('Content-Type', mime.getType(filePath));
             res.setHeader('Content-Length', fs.statSync(filePath).size);
 
             const filestream = fs.createReadStream(filePath);

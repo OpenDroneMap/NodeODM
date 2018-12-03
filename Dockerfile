@@ -4,7 +4,7 @@ MAINTAINER Piero Toffanin <pt@masseranolabs.com>
 EXPOSE 3000
 
 USER root
-RUN curl --silent --location https://deb.nodesource.com/setup_6.x | bash -
+RUN curl --silent --location https://deb.nodesource.com/setup_10.x | bash -
 RUN apt-get install -y nodejs python-gdal libboost-dev libboost-program-options-dev git cmake
 RUN npm install -g nodemon
 
