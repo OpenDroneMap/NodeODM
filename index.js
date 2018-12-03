@@ -714,6 +714,11 @@ app.get('/info', authCheck, (req, res) => {
     });
 });
 
+app.use((err, req, res, next) => {
+    logger.error(err.stack);
+    res.json({error: err.message});
+});
+
 let gracefulShutdown = done => {
     async.series([
         cb => taskManager.dumpTaskList(cb),
