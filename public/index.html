@@ -106,7 +106,7 @@
                         <p data-bind="visible: loading()">Retrieving <span data-bind="text: uuid"></span> ... <span class="glyphicon glyphicon-refresh spinning"></span></p>
                         <div data-bind="visible: !loading() && !info().error">
                             <div class="taskItem"><strong>UUID:</strong>
-                                <a data-bind="text: info().uuid, attr: {href: '/task/' + info().uuid + '/info'}"></a>
+                                <a data-bind="text: info().uuid, click: openInfo" href="#"></a>
                             </div>
                             <div class="taskItem"><strong>Name:</strong> <span data-bind="text: info().name"></span></div>
                             <div class="taskItem"><strong>Images:</strong> <span data-bind="text: info().imagesCount"></span></div>

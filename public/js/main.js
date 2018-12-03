@@ -164,6 +164,9 @@ $(function() {
         this.autoScrollOutput = true;
         this.output.removeAll();
     };
+    Task.prototype.openInfo = function(){
+        location.href='/task/' + this.uuid + '/info?token=' + token;
+    };
     Task.prototype.downloadOutput = function(){
         var self = this;
         var url = "/task/" + self.uuid + "/output";
