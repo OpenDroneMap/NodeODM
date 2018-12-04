@@ -66,7 +66,7 @@ module.exports = {
     uploadPaths: function(srcFolder, bucket, dstFolder, paths, cb, onOutput){
         if (!s3) throw new Error("S3 is not initialized");
 
-        const PARALLEL_UPLOADS = 10;
+        const PARALLEL_UPLOADS = 5;
 
         const q = async.queue((file, done) => {
             logger.debug(`Uploading ${file.src} --> ${file.dest}`);
