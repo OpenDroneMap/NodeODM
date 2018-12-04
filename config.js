@@ -45,6 +45,7 @@ Options:
 	--s3_access_key <key>	S3 access key, required if --s3_endpoint is set. (default: none)
 	--s3_secret_key <secret>	S3 secret key, required if --s3_endpoint is set. (default: none) 
 	--s3_signature_version <version>	S3 signature version. (default: 4)
+	--s3_upload_everything	Upload all task results to S3. (default: upload only .zip archive and orthophoto)
 	--max_concurrency   <number>	Place a cap on the max-concurrency option to use for each task. (default: no limit)
 Log Levels: 
 error | debug | info | verbose | debug | silly 
@@ -101,6 +102,7 @@ config.s3Bucket = argv.s3_bucket || fromConfigFile("s3Bucket", "");
 config.s3AccessKey = argv.s3_access_key || fromConfigFile("s3AccessKey", process.env.AWS_ACCESS_KEY_ID || "")
 config.s3SecretKey = argv.s3_secret_key || fromConfigFile("s3SecretKey", process.env.AWS_SECRET_ACCESS_KEY || "")
 config.s3SignatureVersion = argv.s3_signature_version || fromConfigFile("s3SignatureVersion", "4")
+config.s3UploadEverything = argv.s3_upload_everything || fromConfigFile("s3UploadEverything", false);
 config.maxConcurrency = parseInt(argv.max_concurrency || fromConfigFile("maxConcurrency", 0));
 
 module.exports = config;
