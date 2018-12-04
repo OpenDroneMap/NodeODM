@@ -32,7 +32,6 @@ const app = express();
 
 const multer = require('multer');
 const bodyParser = require('body-parser');
-const morgan = require('morgan');
 
 const TaskManager = require('./libs/TaskManager');
 const Task = require('./libs/Task');
@@ -47,7 +46,6 @@ const auth = require('./libs/auth/factory').fromConfig(config);
 const authCheck = auth.getMiddleware();
 const uuidv4 = require('uuid/v4');
 
-
 // zip files
 let request = require('request');
 
@@ -60,20 +58,11 @@ let download = function(uri, filename, callback) {
     });
 };
 
-
-let winstonStream = {
-    write: function(message, encoding) {
-        // Uncomment to get express requests debug output
-        // logger.debug(message.slice(0, -1));
-    }
-};
-app.use(morgan('combined', { stream: winstonStream }));
-app.use(bodyParser.urlencoded({ extended: true }));
 app.use(bodyParser.json());
 app.use(express.static('public'));
 app.use('/swagger.json', express.static('docs/swagger.json'));
 
-let upload = multer({
+const upload = multer({
     storage: multer.diskStorage({
         destination: (req, file, cb) => {
             let dstPath = path.join("tmp", req.id);
@@ -92,6 +81,8 @@ let upload = multer({
         }
     })
 });
+
+const urlEncodedBodyParser = bodyParser.urlencoded({extended: false});
 
 let taskManager;
 let server;
@@ -237,7 +228,6 @@ app.post('/task/new', authCheck, (req, res, next) => {
             cb => fs.mkdir(destPath, undefined, cb),
             cb => fs.mkdir(destGpcPath, undefined, cb),
             cb => mv(srcPath, destImagesPath, cb),
-            
 
             cb => {
                 // Find any *.zip file and extract
@@ -536,7 +526,7 @@ let successHandler = res => {
  *          schema:
  *            $ref: "#/definitions/Response"
  */
-app.post('/task/cancel', authCheck, uuidCheck, (req, res) => {
+app.post('/task/cancel', urlEncodedBodyParser, authCheck, uuidCheck, (req, res) => {
     taskManager.cancel(req.body.uuid, successHandler(res));
 });
 
@@ -564,7 +554,7 @@ app.post('/task/cancel', authCheck, uuidCheck, (req, res) => {
  *          schema:
  *            $ref: "#/definitions/Response"
  */
-app.post('/task/remove', authCheck, uuidCheck, (req, res) => {
+app.post('/task/remove', urlEncodedBodyParser, authCheck, uuidCheck, (req, res) => {
     taskManager.remove(req.body.uuid, successHandler(res));
 });
 
@@ -599,7 +589,7 @@ app.post('/task/remove', authCheck, uuidCheck, (req, res) => {
  *          schema:
  *            $ref: "#/definitions/Response"
  */
-app.post('/task/restart', authCheck, uuidCheck, (req, res, next) => {
+app.post('/task/restart', urlEncodedBodyParser, authCheck, uuidCheck, (req, res, next) => {
     if (req.body.options){
         odmInfo.filterOptions(req.body.options, (err, options) => {
             if (err) res.json({ error: err.message });
