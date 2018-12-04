@@ -58,7 +58,6 @@ let download = function(uri, filename, callback) {
     });
 };
 
-app.use(bodyParser.json());
 app.use(express.static('public'));
 app.use('/swagger.json', express.static('docs/swagger.json'));
 
