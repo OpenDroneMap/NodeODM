@@ -346,11 +346,11 @@ module.exports = class Task{
                     if (config.test){
                         s3Paths = ['all.zip']; // During testing only upload all.zip
                     }else if (config.s3UploadEverything){
-                        s3Paths = ['all.zip'].concat(allPaths)
+                        s3Paths = ['all.zip'].concat(allPaths);
                     }else{
                         s3Paths = ['all.zip', 'odm_orthophoto/odm_orthophoto.tif'];
                     }
-
+                    
                     S3.uploadPaths(this.getProjectFolderPath(), config.s3Bucket, this.uuid, s3Paths, 
                         err => {
                             if (!err) this.output.push("Done uploading to S3!");
