@@ -66,7 +66,8 @@ module.exports = {
     uploadPaths: function(srcFolder, bucket, dstFolder, paths, cb, onOutput){
         if (!s3) throw new Error("S3 is not initialized");
 
-        const PARALLEL_UPLOADS = 1;
+        const PARALLEL_UPLOADS = 5;
+        const MAX_RETRIES = 6;
 
         const q = async.queue((file, done) => {
             logger.debug(`Uploading ${file.src} --> ${file.dest}`);
@@ -75,15 +76,33 @@ module.exports = {
                 Key: file.dest,
                 Body: fs.createReadStream(file.src),
                 ACL: 'public-read'
-            }, err => {
+            }, {partSize: 10 * 1024 * 1024, queueSize: 1}, err => {
                 if (err){
                     logger.debug(err);
-                    const msg = "Cannot upload file to S3: " + err.code;
-                    if (onOutput) onOutput(msg)
-                    done(new Error(msg));
+                    const msg = `Cannot upload file to S3: ${err.code}, retrying... ${file.retries}`;
+                    if (onOutput) onOutput(msg);
+                    if (file.retries < MAX_RETRIES){
+                        file.retries++;
+                        setTimeout(() => {
+                            q.push(file, errHandler);
+                            done();
+                        }, (2 ** file.retries) * 1000);
+                    }else{
+                        done(new Error(msg));
+                    }
                 }else done();
             });
         }, PARALLEL_UPLOADS);
+
+        const errHandler = err => {
+            if (err){
+                q.kill();
+                if (!cbCalled){
+                    cbCalled = true;
+                    cb(err);
+                }
+            }
+        };
 
         let uploadList = [];
 
@@ -99,13 +118,15 @@ module.exports = {
                 globPaths.forEach(gp => {
                     uploadList.push({
                         src: path.join(srcFolder, gp),
-                        dest: path.join(dstFolder, gp)
+                        dest: path.join(dstFolder, gp),
+                        retries: 0
                     });
                 });
             }else{
                 uploadList.push({
                     src: fullPath,
-                    dest: path.join(dstFolder, p)
+                    dest: path.join(dstFolder, p),
+                    retries: 0
                 });
             }
         });
@@ -119,14 +140,6 @@ module.exports = {
         };
 
         if (onOutput) onOutput(`Uploading ${uploadList.length} files to S3...`);
-        q.push(uploadList, err => {
-            if (err){
-                q.kill();
-                if (!cbCalled){
-                    cbCalled = true;
-                    cb(err);
-                }
-            }
-        });
+        q.push(uploadList, errHandler);
     }
 };

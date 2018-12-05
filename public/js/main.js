@@ -150,6 +150,10 @@ $(function() {
                 if (json.processingTime && json.processingTime !== -1) {
                     self.timeElapsed(hoursMinutesSecs(json.processingTime));
                 }
+                if (json.status && json.status.code && [codes.COMPLETED, codes.FAILED, codes.CANCELED].indexOf(json.status.code) !== -1){
+                    self.stopRefreshingInfo();
+                }
+
                 self.info(json);
             })
             .fail(function() {
