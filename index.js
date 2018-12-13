@@ -163,6 +163,10 @@ app.post('/task/new', authCheck, (req, res, next) => {
         next();
     }
 }, upload.array('images'), (req, res) => {
+    // TODO: consider doing the file moving in the background
+    // and return a response more quickly instead of a long timeout.
+    req.setTimeout(1000 * 60 * 20);
+
     let srcPath = path.join("tmp", req.id);
 
     // Print error message and cleanup
