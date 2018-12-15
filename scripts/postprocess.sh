@@ -37,27 +37,23 @@ else
 fi
 
 # Generate Tiles
-if hash gdal2tiles.py 2>/dev/null; then
-	g2t_options="-z 12-21 -n -w none"
-	orthophoto_path="odm_orthophoto/odm_orthophoto.tif"
-	
-	if [ -e "$orthophoto_path" ]; then
-		gdal2tiles.py $g2t_options $orthophoto_path orthophoto_tiles
-	else
-		echo "No orthophoto found at $orthophoto_path: will skip tiling"
-	fi
+g2t_options="--processes $(nproc) -z 12-21 -n -w none"
+orthophoto_path="odm_orthophoto/odm_orthophoto.tif"
 
-	for dem_product in ${dem_products[@]}; do
-		colored_dem_path="odm_dem/""$dem_product""_colored_hillshade.tif"
-		if [ -e "$colored_dem_path" ]; then
-			gdal2tiles.py $g2t_options $colored_dem_path "$dem_product""_tiles"
-		else
-			echo "No $dem_product found at $colored_dem_path: will skip tiling"
-		fi
-	done
+if [ -e "$orthophoto_path" ]; then
+	python "$script_path/gdal2tiles.py" $g2t_options $orthophoto_path orthophoto_tiles
 else
-	echo "gdal2tiles.py is not installed, will skip tiling"
+	echo "No orthophoto found at $orthophoto_path: will skip tiling"
 fi
+
+for dem_product in ${dem_products[@]}; do
+	colored_dem_path="odm_dem/""$dem_product""_colored_hillshade.tif"
+	if [ -e "$colored_dem_path" ]; then
+		python "$script_path/gdal2tiles.py" $g2t_options $colored_dem_path "$dem_product""_tiles"
+	else
+		echo "No $dem_product found at $colored_dem_path: will skip tiling"
+	fi
+done
 
 # Generate MBTiles
 if hash gdal_translate 2>/dev/null; then
@@ -82,6 +78,7 @@ if hash PotreeConverter 2>/dev/null; then
 				"odm_georeferencing/odm_georeferenced_model.ply" \
 				"opensfm/depthmaps/merged.ply" \
 				"smvs/smvs_dense_point_cloud.ply" \
+				"mve/mve_dense_point_cloud.ply" \
 				"pmvs/recon0/models/option-0000.ply"; do
 		if [ -e $path ]; then
 			echo "Found suitable point cloud for PotreeConverter: $path"
