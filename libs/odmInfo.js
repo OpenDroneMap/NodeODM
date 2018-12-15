@@ -158,8 +158,8 @@ module.exports = {
 				'float': Number.parseFloat,
 				'int': Number.parseInt,
 				'bool': function(value){
-					if (value === 'true') return true;
-					else if (value === 'false') return false;
+					if (value === 'true' || value === '1') return true;
+					else if (value === 'false' || value === '0') return false;
 					else if (typeof value === 'boolean') return value;
 					else throw new Error(`Cannot convert ${value} to boolean`);
 				},
