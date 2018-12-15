@@ -610,6 +610,13 @@ app.post('/task/restart', urlEncodedBodyParser, authCheck, uuidCheck, (req, res,
  * /options:
  *   get:
  *     description: Retrieves the command line options that can be passed to process a task
+ *     parameters:
+ *       -
+ *         name: token
+ *         in: query
+ *         description: 'Token required for authentication (when authentication is required).'
+ *         required: false
+ *         type: string
  *     tags: [server]
  *     responses:
  *       200:
@@ -653,6 +660,13 @@ app.get('/options', authCheck, (req, res) => {
  * /info:
  *   get:
  *     description: Retrieves information about this node
+ *     parameters:
+ *       -
+ *         name: token
+ *         in: query
+ *         description: 'Token required for authentication (when authentication is required).'
+ *         required: false
+ *         type: string
  *     tags: [server]
  *     responses:
  *       200:

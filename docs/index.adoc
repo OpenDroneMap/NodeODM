@@ -50,6 +50,16 @@ _Schemes_ : HTTP
 Retrieves information about this node
 
 
+==== Parameters
+
+[options="header", cols=".^2,.^3,.^9,.^4,.^2"]
+|===
+|Type|Name|Description|Schema|Default
+|*Query*|*token* +
+_optional_|Token required for authentication (when authentication is required).|string|
+|===
+
+
 ==== Responses
 
 [options="header", cols=".^2,.^14,.^4"]
@@ -93,6 +103,16 @@ _required_|Current API version|string
 
 ==== Description
 Retrieves the command line options that can be passed to process a task
+
+
+==== Parameters
+
+[options="header", cols=".^2,.^3,.^9,.^4,.^2"]
+|===
+|Type|Name|Description|Schema|Default
+|*Query*|*token* +
+_optional_|Token required for authentication (when authentication is required).|string|
+|===
 
 
 ==== Responses
