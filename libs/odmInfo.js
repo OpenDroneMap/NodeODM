@@ -258,6 +258,7 @@ module.exports = {
 				if (opt){
 					try{
 						// Convert to proper data type
+
 						let value = typeConversion[odmOption.type](opt.value);
 
 						// Domain check
@@ -266,7 +267,7 @@ module.exports = {
 						}
 						
 						// Max concurrency check
-						if (maxConcurrencyIsAnOption){
+						if (opt.name === 'max-concurrency'){
 							maxConcurrencyFound = true;
 
 							// Cap
