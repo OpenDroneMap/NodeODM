@@ -76,7 +76,7 @@ module.exports = {
                 Key: file.dest,
                 Body: fs.createReadStream(file.src),
                 ACL: 'public-read'
-            }, {partSize: 10 * 1024 * 1024, queueSize: 1}, err => {
+            }, {partSize: 5 * 1024 * 1024, queueSize: 1}, err => {
                 if (err){
                     logger.debug(err);
                     const msg = `Cannot upload file to S3: ${err.code}, retrying... ${file.retries}`;
