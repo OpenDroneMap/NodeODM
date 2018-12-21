@@ -721,6 +721,102 @@ app.get('/info', authCheck, (req, res) => {
     });
 });
 
+/** @swagger
+ * /auth/login:
+ *   get:
+ *     description: Retrieves login information for this node.
+ *     tags: [auth]
+ *     responses:
+ *       200:
+ *         description: LoginInformation
+ *         schema:
+ *           type: object
+ *           required: [message, loginUrl, registerUrl]
+ *           properties:
+ *             instructions:
+ *               type: string
+ *               description: Message to be displayed to the user prior to login/registration. This might include instructions on how to register or login, or to communicate that authentication is not available.
+ *             loginUrl:
+ *               type: string
+ *               description: URL (absolute or relative) where to make a POST request to obtain a token, or null if login is disabled.
+ *             registerUrl:
+ *               type: string
+ *               description: URL (absolute or relative) where to make a POST request to register a user, or null if registration is disabled.
+ */
+app.get('/auth/info', (req, res) => {
+    res.json({
+        message: "Authentication not available on this node", 
+        loginUrl: null,
+        registerUrl: null
+    });
+});
+
+/** @swagger
+ * /auth/login:
+ *    post:
+ *      description: Retrieve a token from a username/password pair.
+ *      parameters:
+ *        -
+ *          name: username
+ *          in: body
+ *          description: Username
+ *          required: true
+ *          schema:
+ *            type: string
+ *        -
+ *          name: password
+ *          in: body
+ *          description: Password
+ *          required: true
+ *          type: string
+ *      responses:
+ *        200:
+ *          description: Login Succeeded
+ *          schema:
+ *            type: object
+ *            required: [token]
+ *            properties:
+ *              token:
+ *                type: string
+ *                description: Token to be passed as a query parameter to other API calls.
+ *        default:
+ *          description: Error
+ *          schema:
+ *            $ref: '#/definitions/Error'
+ */
+app.post('/auth/login', (req, res) => {
+    res.json({error: "Not available"});
+});
+
+/** @swagger
+ * /auth/register:
+ *    post:
+ *      description: Register a new username/password.
+ *      parameters:
+ *        -
+ *          name: username
+ *          in: body
+ *          description: Username
+ *          required: true
+ *          schema:
+ *            type: string
+ *        -
+ *          name: password
+ *          in: body
+ *          description: Password
+ *          required: true
+ *          type: string
+ *      responses:
+ *        200:
+ *          description: Response
+ *          schema:
+ *            $ref: "#/definitions/Response"
+ */
+app.post('/auth/register', (req, res) => {
+    res.json({error: "Not available"});
+});
+
+
 app.use((err, req, res, next) => {
     logger.error(err.stack);
     res.json({error: err.message});
