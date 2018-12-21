@@ -37,7 +37,4 @@ COPY . /var/www
 RUN npm install
 RUN mkdir tmp
 
-# Fix old version of gdal2tiles.py
-# RUN (cd / && patch -p0) <patches/gdal2tiles.patch
-
 ENTRYPOINT ["/usr/bin/nodejs", "/var/www/index.js"]
