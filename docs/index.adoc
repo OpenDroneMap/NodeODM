@@ -43,6 +43,41 @@ _Schemes_ : HTTP
 [[_paths]]
 == Paths
 
+[[_auth_info_get]]
+=== GET /auth/info
+
+==== Description
+Retrieves login information for this node.
+
+
+==== Responses
+
+[options="header", cols=".^2,.^14,.^4"]
+|===
+|HTTP Code|Description|Schema
+|*200*|LoginInformation|<<_auth_info_get_response_200,Response 200>>
+|===
+
+[[_auth_info_get_response_200]]
+*Response 200*
+
+[options="header", cols=".^3,.^11,.^4"]
+|===
+|Name|Description|Schema
+|*instructions* +
+_optional_|Message to be displayed to the user prior to login/registration. This might include instructions on how to register or login, or to communicate that authentication is not available.|string
+|*loginUrl* +
+_required_|URL (absolute or relative) where to make a POST request to obtain a token, or null if login is disabled.|string
+|*registerUrl* +
+_required_|URL (absolute or relative) where to make a POST request to register a user, or null if registration is disabled.|string
+|===
+
+
+==== Tags
+
+* auth
+
+
 [[_auth_login_post]]
 === POST /auth/login
 
@@ -80,41 +115,6 @@ _required_|Username|string|
 |*token* +
 _required_|Token to be passed as a query parameter to other API calls.|string
 |===
-
-
-[[_auth_login_get]]
-=== GET /auth/login
-
-==== Description
-Retrieves login information for this node.
-
-
-==== Responses
-
-[options="header", cols=".^2,.^14,.^4"]
-|===
-|HTTP Code|Description|Schema
-|*200*|LoginInformation|<<_auth_login_get_response_200,Response 200>>
-|===
-
-[[_auth_login_get_response_200]]
-*Response 200*
-
-[options="header", cols=".^3,.^11,.^4"]
-|===
-|Name|Description|Schema
-|*instructions* +
-_optional_|Message to be displayed to the user prior to login/registration. This might include instructions on how to register or login, or to communicate that authentication is not available.|string
-|*loginUrl* +
-_required_|URL (absolute or relative) where to make a POST request to obtain a token, or null if login is disabled.|string
-|*registerUrl* +
-_required_|URL (absolute or relative) where to make a POST request to register a user, or null if registration is disabled.|string
-|===
-
-
-==== Tags
-
-* auth
 
 
 [[_auth_register_post]]

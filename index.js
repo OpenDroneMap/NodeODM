@@ -722,7 +722,7 @@ app.get('/info', authCheck, (req, res) => {
 });
 
 /** @swagger
- * /auth/login:
+ * /auth/info:
  *   get:
  *     description: Retrieves login information for this node.
  *     tags: [auth]
