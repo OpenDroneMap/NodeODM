@@ -35,7 +35,7 @@
     "request": "^2.88.0",
     "rimraf": "^2.6.2",
     "swagger-jsdoc": "^3.2.6",
-    "systeminformation": "^3.51.3",
+    "systeminformation": "^3.42.0",
     "tree-kill": "^1.2.1",
     "uuid": "^3.3.2",
     "winston": "^2.2.0"
