@@ -225,7 +225,9 @@ module.exports = class Task{
 					this.output.push(`Compressing ${outputFilename}\n`);
 
 					let output = fs.createWriteStream(this.getAssetsArchivePath(outputFilename));
-					let archive = archiver.create('zip', {});
+					let archive = archiver.create('zip', {
+                            zlib: { level: 1 } // Sets the compression level (1 = best speed since most assets are already compressed)
+                        });
 
 					archive.on('finish', () => {
 						// TODO: is this being fired twice?
