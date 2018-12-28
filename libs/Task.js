@@ -132,8 +132,8 @@ module.exports = class Task{
 				else filename = path.join('..', '..', 'processing_results', 'odm_orthophoto', `odm_${filename}`);
 			}else{
 				filename = path.join('odm_orthophoto', `odm_${filename}`);
-            }
-        }else{
+			}
+		}else{
 			return false; // Invalid
 		}
 		
@@ -196,9 +196,9 @@ module.exports = class Task{
 					// TODO: this does NOT guarantee that
 					// the process will immediately terminate.
 					// For eaxmple in the case of the ODM process, the process will continue running for a while
-                    // This might need to be fixed on ODM's end.
-                    
-                    // During testing, proc is undefined
+					// This might need to be fixed on ODM's end.
+					
+					// During testing, proc is undefined
 					if (proc) kill(proc.pid);
 				});
 				this.runningProcesses = [];
@@ -217,7 +217,7 @@ module.exports = class Task{
 		const finished = err => {
 			this.stopTrackingProcessingTime();
 			done(err);
-        };
+		};
 		
 		const postProcess = () => {
 			const createZipArchive = (outputFilename, files) => {
@@ -226,8 +226,8 @@ module.exports = class Task{
 
 					let output = fs.createWriteStream(this.getAssetsArchivePath(outputFilename));
 					let archive = archiver.create('zip', {
-                            zlib: { level: 1 } // Sets the compression level (1 = best speed since most assets are already compressed)
-                        });
+							zlib: { level: 1 } // Sets the compression level (1 = best speed since most assets are already compressed)
+						});
 
 					archive.on('finish', () => {
 						// TODO: is this being fired twice?
@@ -240,11 +240,11 @@ module.exports = class Task{
 					});
 
 					archive.pipe(output);
-                    let globs = [];
-                    
-                    const sourcePath = !config.test ? 
-                                        this.getProjectFolderPath() : 
-                                        path.join("tests", "processing_results");
+					let globs = [];
+					
+					const sourcePath = !config.test ? 
+										this.getProjectFolderPath() : 
+										path.join("tests", "processing_results");
 
 					// Process files and directories first
 					files.forEach(file => {
@@ -334,32 +334,32 @@ module.exports = class Task{
 						allPaths.splice(allPaths.indexOf(p), 1);
 					});
 				}
-            }
-            
-            let tasks = [
-                runPostProcessingScript(),
-                createZipArchive('all.zip', allPaths)
-            ];
-            
-            // Upload to S3 all paths + all.zip file (if config says so)
-            if (S3.enabled()){
-                tasks.push((done) => {
-                    let s3Paths;
-                    if (config.test){
-                        s3Paths = ['all.zip']; // During testing only upload all.zip
-                    }else if (config.s3UploadEverything){
-                        s3Paths = ['all.zip'].concat(allPaths);
-                    }else{
-                        s3Paths = ['all.zip', 'odm_orthophoto/odm_orthophoto.tif'];
-                    }
-                    
-                    S3.uploadPaths(this.getProjectFolderPath(), config.s3Bucket, this.uuid, s3Paths, 
-                        err => {
-                            if (!err) this.output.push("Done uploading to S3!");
-                            done(err);
-                        }, output => this.output.push(output));
-                });
-            }
+			}
+			
+			let tasks = [
+				runPostProcessingScript(),
+				createZipArchive('all.zip', allPaths)
+			];
+			
+			// Upload to S3 all paths + all.zip file (if config says so)
+			if (S3.enabled()){
+				tasks.push((done) => {
+					let s3Paths;
+					if (config.test){
+						s3Paths = ['all.zip']; // During testing only upload all.zip
+					}else if (config.s3UploadEverything){
+						s3Paths = ['all.zip'].concat(allPaths);
+					}else{
+						s3Paths = ['all.zip', 'odm_orthophoto/odm_orthophoto.tif'];
+					}
+					
+					S3.uploadPaths(this.getProjectFolderPath(), config.s3Bucket, this.uuid, s3Paths, 
+						err => {
+							if (!err) this.output.push("Done uploading to S3!");
+							done(err);
+						}, output => this.output.push(output));
+				});
+			}
 
 			async.series(tasks, (err) => {
 				if (!err){
@@ -453,64 +453,64 @@ module.exports = class Task{
 	// Optionally starting from a certain line number
 	getOutput(startFromLine = 0){
 		return this.output.slice(startFromLine, this.output.length);
-    }
-    
-    // Reads the contents of the tasks's 
-    // images.json and returns its JSON representation
-    readImagesDatabase(callback){
-        const imagesDbPath = !config.test ? 
-                             path.join(this.getProjectFolderPath(), 'images.json') :
-                             path.join('tests', 'processing_results', 'images.json');
-    
-        fs.readFile(imagesDbPath, 'utf8', (err, data) => {
-            if (err) callback(err);
-            else{
-                try{
-                    const json = JSON.parse(data);
-                    callback(null, json);
-                }catch(e){
-                    callback(e);
-                }
-            }
-        });
-    }
+	}
+	
+	// Reads the contents of the tasks's 
+	// images.json and returns its JSON representation
+	readImagesDatabase(callback){
+		const imagesDbPath = !config.test ? 
+							 path.join(this.getProjectFolderPath(), 'images.json') :
+							 path.join('tests', 'processing_results', 'images.json');
+	
+		fs.readFile(imagesDbPath, 'utf8', (err, data) => {
+			if (err) callback(err);
+			else{
+				try{
+					const json = JSON.parse(data);
+					callback(null, json);
+				}catch(e){
+					callback(e);
+				}
+			}
+		});
+	}
 
-    callWebhooks(){
-        // Hooks can be passed via command line 
-        // or for each individual task
-        const hooks = [this.webhook, config.webhook];
+	callWebhooks(){
+		// Hooks can be passed via command line 
+		// or for each individual task
+		const hooks = [this.webhook, config.webhook];
 
-        this.readImagesDatabase((err, images) => {
-            if (err) logger.warn(err); // Continue with callback
-            if (!images) images = [];
+		this.readImagesDatabase((err, images) => {
+			if (err) logger.warn(err); // Continue with callback
+			if (!images) images = [];
 
-            let json = this.getInfo();
-            json.images = images;
+			let json = this.getInfo();
+			json.images = images;
 
-            hooks.forEach(hook => {
-                if (hook && hook.length > 3){
-                    const notifyCallback = (attempt) => {
-                        if (attempt > 5){
-                            logger.warn(`Webhook invokation failed, will not retry: ${hook}`);
-                            return;
-                        }
-                        request.post(hook, { json },
-                            (error, response) => {
-                                if (error || response.statusCode != 200){
-                                    logger.warn(`Webhook invokation failed, will retry in a bit: ${hook}`);
-                                    setTimeout(() => {
-                                        notifyCallback(attempt + 1);
-                                    }, attempt * 5000);
-                                }else{
-                                    logger.debug(`Webhook invoked: ${hook}`);
-                                }
-                        });
-                    };
-                    notifyCallback(0);
-                }
-            });
-        });
-    }
+			hooks.forEach(hook => {
+				if (hook && hook.length > 3){
+					const notifyCallback = (attempt) => {
+						if (attempt > 5){
+							logger.warn(`Webhook invokation failed, will not retry: ${hook}`);
+							return;
+						}
+						request.post(hook, { json },
+							(error, response) => {
+								if (error || response.statusCode != 200){
+									logger.warn(`Webhook invokation failed, will retry in a bit: ${hook}`);
+									setTimeout(() => {
+										notifyCallback(attempt + 1);
+									}, attempt * 5000);
+								}else{
+									logger.debug(`Webhook invoked: ${hook}`);
+								}
+						});
+					};
+					notifyCallback(0);
+				}
+			});
+		});
+	}
 
 	// Returns the data necessary to serialize this
 	// task to restore it later.
