@@ -119,6 +119,12 @@ let server;
  *          required: false
  *          type: string
  *        -
+ *          name: skipPostProcessing
+ *          in: formData
+ *          description: 'When set, skips generation of map tiles, derivate assets, point cloud tiles.'
+ *          required: false
+ *          type: boolean
+ *        -
  *          name: token
  *          in: query
  *          description: 'Token required for authentication (when authentication is required).'
@@ -287,7 +293,9 @@ app.post('/task/new', authCheck, (req, res, next) => {
                         res.json({ uuid: req.id });
                         cb();
                     }
-                }, req.body.options, req.body.webhook);
+                }, req.body.options, 
+                   req.body.webhook,
+                   req.body.skipPostProcessing === 'true');
             }
         ], err => {
             if (err) die(err.message);

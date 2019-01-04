@@ -44,16 +44,14 @@
                 <form enctype="multipart/form-data" onsubmit="return false;">
                     <div class="form-group form-inline">
                         <label for="taskName">Project Name:</lable> <input type="text" class="form-control" value="" id="taskName" />
-				</div>
-				<div id="imagesInput" class="form-group">
-            <label for="images">Aerial Images and GCP List (optional):</label> <input id="images" name="images" multiple accept="image/*|.txt|.zip" type="file">
-
+                    </div>
+                    <div id="imagesInput" class="form-group">
+                        <label for="images">Aerial Images and GCP List (optional):</label> <input id="images" name="images" multiple accept="image/*|.txt|.zip" type="file">
                     </div>
                     <div id="zipFileInput" class="form-group hidden">
                         <label for="zipurl">URL to zip file with Aerial Images and GCP List (optional):</label> <input id="zipurl" name="zipurl" class="form-control" type="text">
-                     
                     </div>
-                       <div id="errorBlock" class="help-block"></div>
+                    <div id="errorBlock" class="help-block"></div>
 
                     <div class="text-right"><input type="button" class="btn btn-info" value="Switch to URL" id="btnShowImport" />
                     <input type="button" class="btn btn-info hidden" value="Switch to File Upload" id="btnShowUpload" />
@@ -65,16 +63,29 @@
                             <button style="position: relative; top: -45px;" type="submit" class="btn btn-default" data-bind="visible: !error(), click: function(){ showOptions(!showOptions()); }, text: (showOptions() ? 'Hide' : 'Show') + ' Options'"></button>
 
                             <div data-bind="visible: showOptions()">
-                         
+                                <div>
+                                    <label for="doPostProcessing">generate 2D and potree point cloud tiles:</label>
+                                    <br/>
+
+                                    <div class="checkbox">
+                                        <label>
+                                            <input type="checkbox" id="doPostProcessing"> Enable
+                                        </label>
+                                    </div>
+                                    <button type="submit" class="btn glyphicon glyphicon-info-sign btn-info" data-toggle="tooltip" data-placement="top" title="Generate 2D and Potree Point Cloud Tiles" ></button>
+                                    <button id="resetDoPostProcessing" type="submit" class="btn glyphicon glyphicon glyphicon-repeat btn-default" data-toggle="tooltip" data-placement="top" title="Reset to default"  ></button>
+                                    
+                                    <br/><br/>
+                                </div>
+
                                 <div>
                                     <label for="webhook">webhook callback url (optional):</label>
                                     <br/>
                                      <input id="webhook" name="webhook" class="form-control" type="text">
-                                     <button type="submit" class="btn glyphicon glyphicon-info-sign btn-info" data-toggle="tooltip" data-placement="top" title="Optional webhook" ></button>
+                                    <button type="submit" class="btn glyphicon glyphicon-info-sign btn-info" data-toggle="tooltip" data-placement="top" title="Optional webhook" ></button>
                                     <button id="resetWebhook" type="submit" class="btn glyphicon glyphicon glyphicon-repeat btn-default" data-toggle="tooltip" data-placement="top" title="Reset to default"  ></button>
                                     <br/><br/>
                                 </div>
-                            
 
                                 <div data-bind="foreach: options">
                                     <label data-bind="text: properties.name + (properties.domain ? ' (' + properties.domain + ')' : '')"></label><br/>

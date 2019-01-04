@@ -299,6 +299,7 @@ $(function() {
                 name: $("#taskName").val(),
                 zipurl: $("#zipurl").val(),
                 webhook: $("#webhook").val(),
+                skipPostProcessing: !$("#doPostProcessing").prop('checked'),
                 options: JSON.stringify(optionsModel.getUserOptions())
             };
         }
@@ -324,6 +325,10 @@ $(function() {
 
     $('#resetWebhook').on('click', function(){
         $("#webhook").val('');
+    });
+
+    $('#resetDoPostProcessing').on('click', function(){
+        $("#doPostProcessing").prop('checked', false);
     });
 
     // zip file control

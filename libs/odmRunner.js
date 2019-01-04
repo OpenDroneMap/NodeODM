@@ -25,112 +25,112 @@ let logger = require('./logger');
 
 
 module.exports = {
-	run: function(options, projectName, done, outputReceived){
-		assert(projectName !== undefined, "projectName must be specified");
-		assert(options["project-path"] !== undefined, "project-path must be defined");
+    run: function(options, projectName, done, outputReceived){
+        assert(projectName !== undefined, "projectName must be specified");
+        assert(options["project-path"] !== undefined, "project-path must be defined");
 
-		const command = path.join(config.odm_path, "run.sh"),
-			  params = [];
+        const command = path.join(config.odm_path, "run.sh"),
+              params = [];
 
-		for (var name in options){
-			let value = options[name];
+        for (var name in options){
+            let value = options[name];
 
-			// Skip false booleans
-			if (value === false) continue;
+            // Skip false booleans
+            if (value === false) continue;
 
-			params.push("--" + name);
+            params.push("--" + name);
 
-			// We don't specify "--time true" (just "--time")
-			if (typeof value !== 'boolean'){
-				params.push(value);
-			}
-		}
+            // We don't specify "--time true" (just "--time")
+            if (typeof value !== 'boolean'){
+                params.push(value);
+            }
+        }
 
-		params.push(projectName);
+        params.push(projectName);
 
-		logger.info(`About to run: ${command} ${params.join(" ")}`);
+        logger.info(`About to run: ${command} ${params.join(" ")}`);
 
-		if (config.test){
-			logger.info("Test mode is on, command will not execute");
+        if (config.test){
+            logger.info("Test mode is on, command will not execute");
 
-			let outputTestFile = path.join("..", "tests", "odm_output.txt");
-			fs.readFile(path.resolve(__dirname, outputTestFile), 'utf8', (err, text) => {
-				if (!err){
-					let lines = text.split("\n");
-					lines.forEach(line => outputReceived(line));
-					
-					done(null, 0, null);
-				}else{
-					logger.warn(`Error: ${err.message}`);
-					done(err);
-				}
-			});
+            let outputTestFile = path.join("..", "tests", "odm_output.txt");
+            fs.readFile(path.resolve(__dirname, outputTestFile), 'utf8', (err, text) => {
+                if (!err){
+                    let lines = text.split("\n");
+                    lines.forEach(line => outputReceived(line));
+                    
+                    done(null, 0, null);
+                }else{
+                    logger.warn(`Error: ${err.message}`);
+                    done(err);
+                }
+            });
 
-			return; // Skip rest
-		}
+            return; // Skip rest
+        }
 
-		// Launch
-		let childProcess = spawn(command, params, {cwd: config.odm_path});
+        // Launch
+        let childProcess = spawn(command, params, {cwd: config.odm_path});
 
-		childProcess
-			.on('exit', (code, signal) => done(null, code, signal))
-			.on('error', done);
+        childProcess
+            .on('exit', (code, signal) => done(null, code, signal))
+            .on('error', done);
 
-		childProcess.stdout.on('data', chunk => outputReceived(chunk.toString()));
-		childProcess.stderr.on('data', chunk => outputReceived(chunk.toString()));
+        childProcess.stdout.on('data', chunk => outputReceived(chunk.toString()));
+        childProcess.stderr.on('data', chunk => outputReceived(chunk.toString()));
 
-		return childProcess;
-	},
-	
-	getVersion: function(done){
-		fs.readFile(path.join(config.odm_path, 'VERSION'), {encoding: 'utf8'}, (err, content) => {
-			if (err) done(null, "?");
-			else done(null, content.split("\n").map(l => l.trim())[0]);
-		});
-	},
+        return childProcess;
+    },
+    
+    getVersion: function(done){
+        fs.readFile(path.join(config.odm_path, 'VERSION'), {encoding: 'utf8'}, (err, content) => {
+            if (err) done(null, "?");
+            else done(null, content.split("\n").map(l => l.trim())[0]);
+        });
+    },
 
-	getJsonOptions: function(done){
-		// In test mode, we don't call ODM, 
-		// instead we return a mock
-		if (config.test){
-			let optionsTestFile = path.join("..", "tests", "odm_options.json");
-			fs.readFile(path.resolve(__dirname, optionsTestFile), 'utf8', (err, json) => {
-				if (!err){
-					try{
-						let options = JSON.parse(json);
-						done(null, options);
-					}catch(e){
-						logger.warn(`Invalid test options ${optionsTestFile}: ${err.message}`);
-						done(e);
-					}
-				}else{
-					logger.warn(`Error: ${err.message}`);
-					done(err);
-				}
-			});
+    getJsonOptions: function(done){
+        // In test mode, we don't call ODM, 
+        // instead we return a mock
+        if (config.test){
+            let optionsTestFile = path.join("..", "tests", "odm_options.json");
+            fs.readFile(path.resolve(__dirname, optionsTestFile), 'utf8', (err, json) => {
+                if (!err){
+                    try{
+                        let options = JSON.parse(json);
+                        done(null, options);
+                    }catch(e){
+                        logger.warn(`Invalid test options ${optionsTestFile}: ${err.message}`);
+                        done(e);
+                    }
+                }else{
+                    logger.warn(`Error: ${err.message}`);
+                    done(err);
+                }
+            });
 
-			return; // Skip rest
-		}
+            return; // Skip rest
+        }
 
-		// Launch
-		let childProcess = spawn("python", [path.join(__dirname, "..", "helpers", "odmOptionsToJson.py"),
-				"--project-path", config.odm_path, "bogusname"]);
-		let output = [];
+        // Launch
+        let childProcess = spawn("python", [path.join(__dirname, "..", "helpers", "odmOptionsToJson.py"),
+                "--project-path", config.odm_path, "bogusname"]);
+        let output = [];
 
-		childProcess
-			.on('exit', (code, signal) => {
-				try{
-					let json = JSON.parse(output.join(""));
-					done(null, json);
-				}catch(err){
-					done(new Error(`Could not load list of options from OpenDroneMap. Is OpenDroneMap installed in ${config.odm_path}? Make sure that OpenDroneMap is installed and that --odm_path is set properly: ${err.message}`));
-				}
-			})
-			.on('error', done);
+        childProcess
+            .on('exit', (code, signal) => {
+                try{
+                    let json = JSON.parse(output.join(""));
+                    done(null, json);
+                }catch(err){
+                    done(new Error(`Could not load list of options from OpenDroneMap. Is OpenDroneMap installed in ${config.odm_path}? Make sure that OpenDroneMap is installed and that --odm_path is set properly: ${err.message}`));
+                }
+            })
+            .on('error', done);
 
-		let processOutput = chunk => output.push(chunk.toString());
+        let processOutput = chunk => output.push(chunk.toString());
 
-		childProcess.stdout.on('data', processOutput);
-		childProcess.stderr.on('data', processOutput);
-	}
+        childProcess.stdout.on('data', processOutput);
+        childProcess.stderr.on('data', processOutput);
+    }
 };
