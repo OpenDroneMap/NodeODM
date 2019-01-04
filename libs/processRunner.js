@@ -25,56 +25,56 @@ let logger = require('./logger');
 
 
 function makeRunner(command, args, requiredOptions = [], outputTestFile = null){
-	return function(options, done, outputReceived){
-		for (let requiredOption of requiredOptions){
-			assert(options[requiredOption] !== undefined, `${requiredOption} must be defined`);
-		}
+    return function(options, done, outputReceived){
+        for (let requiredOption of requiredOptions){
+            assert(options[requiredOption] !== undefined, `${requiredOption} must be defined`);
+        }
 
-		let commandArgs = args;
-		if (typeof commandArgs === 'function') commandArgs = commandArgs(options);
+        let commandArgs = args;
+        if (typeof commandArgs === 'function') commandArgs = commandArgs(options);
 
-		logger.info(`About to run: ${command} ${commandArgs.join(" ")}`);
+        logger.info(`About to run: ${command} ${commandArgs.join(" ")}`);
 
-		if (config.test){
-			logger.info("Test mode is on, command will not execute");
+        if (config.test){
+            logger.info("Test mode is on, command will not execute");
 
-			if (outputTestFile){
-				fs.readFile(path.resolve(__dirname, outputTestFile), 'utf8', (err, text) => {
-					if (!err){
-						let lines = text.split("\n");
-						lines.forEach(line => outputReceived(line));
-						
-						done(null, 0, null);
-					}else{
-						logger.warn(`Error: ${err.message}`);
-						done(err);
-					}
-				});
-			}else{
-				done(null, 0, null);
-			}
+            if (outputTestFile){
+                fs.readFile(path.resolve(__dirname, outputTestFile), 'utf8', (err, text) => {
+                    if (!err){
+                        let lines = text.split("\n");
+                        lines.forEach(line => outputReceived(line));
+                        
+                        done(null, 0, null);
+                    }else{
+                        logger.warn(`Error: ${err.message}`);
+                        done(err);
+                    }
+                });
+            }else{
+                done(null, 0, null);
+            }
 
-			return;// Skip rest
-		}
+            return;// Skip rest
+        }
 
-		// Launch
-		let childProcess = spawn(command, commandArgs);
+        // Launch
+        let childProcess = spawn(command, commandArgs);
 
-		childProcess
-			.on('exit', (code, signal) => done(null, code, signal))
-			.on('error', done);
+        childProcess
+            .on('exit', (code, signal) => done(null, code, signal))
+            .on('error', done);
 
-		childProcess.stdout.on('data', chunk => outputReceived(chunk.toString()));
-		childProcess.stderr.on('data', chunk => outputReceived(chunk.toString()));
+        childProcess.stdout.on('data', chunk => outputReceived(chunk.toString()));
+        childProcess.stderr.on('data', chunk => outputReceived(chunk.toString()));
 
-		return childProcess;
-	};
+        return childProcess;
+    };
 }
 
 module.exports = {
-	runPostProcessingScript: makeRunner(path.join(__dirname, "..", "scripts", "postprocess.sh"),
-					 function(options){
-					 	return [options.projectFolderPath];
-					 },
-					 ["projectFolderPath"])
+    runPostProcessingScript: makeRunner(path.join(__dirname, "..", "scripts", "postprocess.sh"),
+                     function(options){
+                         return [options.projectFolderPath];
+                     },
+                     ["projectFolderPath"])
 };

@@ -25,15 +25,15 @@ let path = require('path');
 // Set up logging
 // Configure custom File transport to write plain text messages
 let logPath = ( config.logger.logDirectory ? 
-				config.logger.logDirectory : 
-				path.join(__dirname, "..") );
+                config.logger.logDirectory : 
+                path.join(__dirname, "..") );
 
 // Check that log file directory can be written to
 try {
-	fs.accessSync(logPath, fs.W_OK);
+    fs.accessSync(logPath, fs.W_OK);
 } catch (e) {
-	console.log( "Log directory '" + logPath + "' cannot be written to"  );
-	throw e;
+    console.log( "Log directory '" + logPath + "' cannot be written to"  );
+    throw e;
 }
 logPath += path.sep;
 logPath += config.instance + ".log";
@@ -44,16 +44,16 @@ let logger = new (winston.Logger)({
   ]
 });
 logger.add(winston.transports.File, {
-		filename: logPath, // Write to projectname.log
-		json: false, // Write in plain text, not JSON
-		maxsize: config.logger.maxFileSize, // Max size of each file
-		maxFiles: config.logger.maxFiles, // Max number of files
-		level: config.logger.level // Level of log messages
-	});
+        filename: logPath, // Write to projectname.log
+        json: false, // Write in plain text, not JSON
+        maxsize: config.logger.maxFileSize, // Max size of each file
+        maxFiles: config.logger.maxFiles, // Max number of files
+        level: config.logger.level // Level of log messages
+    });
 
 if (config.deamon){
-	// Console transport is no use to us when running as a daemon
-	logger.remove(winston.transports.Console);
+    // Console transport is no use to us when running as a daemon
+    logger.remove(winston.transports.Console);
 }
 
 module.exports = logger;

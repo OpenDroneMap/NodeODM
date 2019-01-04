@@ -17,9 +17,9 @@ along with this program.  If not, see <http://www.gnu.org/licenses/>.
 */
 "use strict";
 module.exports = {
-	QUEUED: 10,
-	RUNNING: 20,
-	FAILED: 30,
-	COMPLETED: 40,
-	CANCELED: 50
+    QUEUED: 10,
+    RUNNING: 20,
+    FAILED: 30,
+    COMPLETED: 40,
+    CANCELED: 50
 };
