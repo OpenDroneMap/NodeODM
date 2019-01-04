@@ -64,10 +64,10 @@ Retrieves login information for this node.
 [options="header", cols=".^3,.^11,.^4"]
 |===
 |Name|Description|Schema
-|*instructions* +
-_optional_|Message to be displayed to the user prior to login/registration. This might include instructions on how to register or login, or to communicate that authentication is not available.|string
 |*loginUrl* +
 _required_|URL (absolute or relative) where to make a POST request to obtain a token, or null if login is disabled.|string
+|*message* +
+_required_|Message to be displayed to the user prior to login/registration. This might include instructions on how to register or login, or to communicate that authentication is not available.|string
 |*registerUrl* +
 _required_|URL (absolute or relative) where to make a POST request to register a user, or null if registration is disabled.|string
 |===

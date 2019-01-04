@@ -741,7 +741,7 @@ app.get('/info', authCheck, (req, res) => {
  *           type: object
  *           required: [message, loginUrl, registerUrl]
  *           properties:
- *             instructions:
+ *             message:
  *               type: string
  *               description: Message to be displayed to the user prior to login/registration. This might include instructions on how to register or login, or to communicate that authentication is not available.
  *             loginUrl:
