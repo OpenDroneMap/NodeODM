@@ -716,6 +716,13 @@ app.get('/info', authCheck, (req, res) => {
     }, (_, data) => {
         const { cpu, mem, odmVersion } = data;
 
+        // For testing
+        if (req.query._debugUnauthorized){
+            res.writeHead(401, "unauthorized")
+            res.end();
+            return;
+        }
+
         res.json({
             version: packageJson.version,
             taskQueueCount: taskManager.getQueueCount(),
