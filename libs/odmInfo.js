@@ -123,6 +123,7 @@ module.exports = {
                         if (domain.indexOf(value) === -1) domain.unshift(value);
                     }
 
+                    help = help.replace(/^One of: \%\(choices\)s. /, "");
                     help = help.replace(/\%\(default\)s/g, value);
 
                     odmOptions.push({
