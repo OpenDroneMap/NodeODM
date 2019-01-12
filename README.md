@@ -30,13 +30,13 @@ Linux users can connect to 127.0.0.1.
 
 If the computer running NodeODM is using an old or 32bit CPU, you need to compile OpenDroneMap from sources and setup NodeODM natively. You cannot use docker. Docker images work with CPUs with 64-bit extensions, MMX, SSE, SSE2, SSE3 and SSSE3 instruction set support or higher. Seeing a `Illegal instruction` error while processing images is an indication that your CPU is too old. 
 
-## Use NodeODM from the Command Line
-
-If you don't want to use a browser, you can use [CloudODM](https://github.com/OpenDroneMap/CloudODM] to run tasks with NodeODM from the command line.
-
 ## API Docs
 
 See the [API documentation page](https://github.com/OpenDroneMap/NodeODM/blob/master/docs/index.adoc).
+
+## Run Tasks from the Command Line
+
+You can use [CloudODM](https://github.com/OpenDroneMap/CloudODM) to run tasks with NodeODM from the command line.
 
 ## Using an External Hard Drive
 
