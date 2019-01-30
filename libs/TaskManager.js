@@ -31,7 +31,9 @@ const Directories = require('./Directories');
 const TASKS_DUMP_FILE = path.join(Directories.data, "tasks.json");
 const CLEANUP_TASKS_IF_OLDER_THAN = 1000 * 60 * config.cleanupTasksAfter; // minutes
 
-module.exports = class TaskManager{
+let taskManager;
+
+class TaskManager{
     constructor(done){
         this.tasks = {};
         this.runningQueue = [];
@@ -82,6 +84,7 @@ module.exports = class TaskManager{
 
     // Removes directories that don't have a corresponding
     // task associated with it (maybe as a cause of an abrupt exit)
+    // TODO: do not delete /task/new/init directories!!!
     removeOrphanedDirectories(done){
         logger.info("Checking for orphaned directories to be removed...");
 
@@ -263,5 +266,12 @@ module.exports = class TaskManager{
             }
         }
         return count;
+    }
+}
+
+module.exports = {
+    singleton: function(){ return taskManager; },
+    initialize: function(cb){ 
+        taskManager = new TaskManager(cb);
     }
 };

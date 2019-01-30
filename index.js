@@ -30,7 +30,6 @@ const rmdir = require('rimraf');
 const express = require('express');
 const app = express();
 
-const multer = require('multer');
 const bodyParser = require('body-parser');
 
 const TaskManager = require('./libs/TaskManager');
@@ -44,7 +43,7 @@ const S3 = require('./libs/S3');
 
 const auth = require('./libs/auth/factory').fromConfig(config);
 const authCheck = auth.getMiddleware();
-const uuidv4 = require('uuid/v4');
+const taskNew = require('./libs/taskNew');
 
 // zip files
 let request = require('request');
@@ -61,30 +60,71 @@ let download = function(uri, filename, callback) {
 app.use(express.static('public'));
 app.use('/swagger.json', express.static('docs/swagger.json'));
 
-const upload = multer({
-    storage: multer.diskStorage({
-        destination: (req, file, cb) => {
-            let dstPath = path.join("tmp", req.id);
-            fs.exists(dstPath, exists => {
-                if (!exists) {
-                    fs.mkdir(dstPath, undefined, () => {
-                        cb(null, dstPath);
-                    });
-                } else {
-                    cb(null, dstPath);
-                }
-            });
-        },
-        filename: (req, file, cb) => {
-            cb(null, file.originalname);
-        }
-    })
-});
-
 const urlEncodedBodyParser = bodyParser.urlencoded({extended: false});
 
 let taskManager;
 let server;
+
+/** @swagger
+ *  /task/new/init:
+ *    post:
+ *      description: Initialize the upload of a new task. If successful, a user can start uploading files via /task/new/upload. The task will not start until /task/new/commit is called.
+ *      tags: [task]
+ *      parameters:
+ *          name: name
+ *          in: formData
+ *          description: An optional name to be associated with the task
+ *          required: false
+ *          type: string
+ *        -
+ *          name: options
+ *          in: formData
+ *          description: 'Serialized JSON string of the options to use for processing, as an array of the format: [{name: option1, value: value1}, {name: option2, value: value2}, ...]. For example, [{"name":"cmvs-maxImages","value":"500"},{"name":"time","value":true}]. For a list of all options, call /options'
+ *          required: false
+ *          type: string
+ *        -
+ *          name: skipPostProcessing
+ *          in: formData
+ *          description: 'When set, skips generation of map tiles, derivate assets, point cloud tiles.'
+ *          required: false
+ *          type: boolean
+ *        -
+ *          name: token
+ *          in: query
+ *          description: 'Token required for authentication (when authentication is required).'
+ *          required: false
+ *          type: string
+ *        -
+ *          name: set-uuid
+ *          in: header
+ *          description: 'An optional UUID string that will be used as UUID for this task instead of generating a random one.'
+ *          required: false
+ *          type: string
+ *      responses:
+ *        200:
+ *          description: Success
+ *          schema:
+ *            type: object
+ *            required: [uuid]
+ *            properties:
+ *              uuid:
+ *                type: string
+ *                description: UUID of the newly created task
+ *        default:
+ *          description: Error
+ *          schema:
+ *            $ref: '#/definitions/Error'
+ */
+app.post('/task/new/init', authCheck, taskNew.assignUUID, (req, res) => {
+    
+});
+
+app.post('/task/new/upload/:uuid', authCheck, (req, res) => {
+});
+
+app.post('/task/new/commit/:uuid', authCheck, (req, res) => {
+
+});
 
 /** @swagger
  *  /task/new:
@@ -151,24 +191,7 @@ let server;
  *          schema:
  *            $ref: '#/definitions/Error'
  */
-app.post('/task/new', authCheck, (req, res, next) => {
-    // A user can optionally suggest a UUID instead of letting
-    // nodeODM pick one.
-    if (req.get('set-uuid')){
-        const userUuid = req.get('set-uuid');
-
-        // Valid UUID and no other task with same UUID?
-        if (/^[0-9a-f]{8}-[0-9a-f]{4}-[1-5][0-9a-f]{3}-[89ab][0-9a-f]{3}-[0-9a-f]{12}$/i.test(userUuid) && !taskManager.find(userUuid)){
-            req.id = userUuid;
-            next();
-        }else{
-            res.json({error: `Invalid set-uuid: ${userUuid}`})
-        }
-    }else{
-        req.id = uuidv4();
-        next();
-    }
-}, upload.array('images'), (req, res) => {
+app.post('/task/new', authCheck, taskNew.assignUUID, taskNew.uploadImages, (req, res) => {
     // TODO: consider doing the file moving in the background
     // and return a response more quickly instead of a long timeout.
     req.setTimeout(1000 * 60 * 20);
@@ -863,7 +886,10 @@ let commands = [
     cb => odmInfo.initialize(cb),
     cb => auth.initialize(cb),
     cb => S3.initialize(cb),
-    cb => { taskManager = new TaskManager(cb); },
+    cb => { 
+        TaskManager.initialize(cb);
+        taskManager = TaskManager.singleton();
+    },
     cb => {
         server = app.listen(config.port, err => {
             if (!err) logger.info('Server has started on port ' + String(config.port));
