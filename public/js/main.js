@@ -16,6 +16,175 @@ You should have received a copy of the GNU General Public License
 along with this program.  If not, see <http://www.gnu.org/licenses/>.
 */
 $(function() {
+    function App(){
+        this.filesCount = ko.observable(0);
+        this.mode = ko.observable("file");
+        this.error = ko.observable("");
+        this.uploading = ko.observable(false);
+        this.uuid = ko.observable("");
+    }
+    App.prototype.toggleMode = function(){
+        if (this.mode() === 'file') this.mode('url');
+        else this.mode('file');
+    };
+    App.prototype.dismissError = function(){
+        this.error("");
+    };
+    App.prototype.startTask = function(){
+        var self = this;
+        this.uploading(true);
+        this.error("");
+        this.uuid("");
+
+        var die = function(err){
+            self.error(err);
+            self.uploading(false);
+        };
+
+        // validate webhook if exists
+        var webhook = $("#webhook").val();
+        var regex = new RegExp("^(http[s]?:\\/\\/(www\\.)?|ftp:\\/\\/(www\\.)?|www\\.){1}([0-9A-Za-z-\\.@:%_\+~#=]+)+((\\.[a-zA-Z]{2,3})+)(/(.)*)?(\\?(.)*)?");
+        if (webhook.length > 0 && !regex.test(webhook)){
+            die("Invalid webhook URL");
+            return;
+        }
+
+        // Start upload
+        if (this.mode() === 'file'){
+            if (this.filesCount() > 0){
+                var formData = new FormData();
+                formData.append("name", $("#taskName").val());
+                formData.append("webhook", $("#webhook").val());
+                formData.append("skipPostProcessing", !$("#doPostProcessing").prop('checked'));
+                formData.append("options", JSON.stringify(optionsModel.getUserOptions()));
+                $.ajax("/task/new/init", {
+                    type: "POST",
+                    data: formData,
+                    processData: false,
+                    contentType: false
+                }).done(function(result){
+                    if (result.uuid){
+                        self.uuid(result.uuid);
+                        console.log("Proessing");
+                        dz.processQueue();
+                    }else{
+                        die(result.error || result);
+                    }
+                }).fail(function(){
+                    die("Cannot start task. Is the server available and are you connected to the internet?");
+                });
+            }else{
+                die("No files selected");
+            }
+        } else if (this.mode() === 'url'){
+            // TODO
+            // Handle uploads
+            // $("#images").fileinput({
+            //     uploadUrl: '/task/new?token=' + token,
+            //     showPreview: false,
+            //     allowedFileExtensions: ['jpg', 'jpeg', 'txt', 'zip'],
+            //     elErrorContainer: '#errorBlock',
+            //     showUpload: false,
+            //     uploadAsync: false,
+            //     // ajaxSettings: { headers: { 'set-uuid': '8366b2ad-a608-4cd1-bdcb-c3d84a034623' } },
+            //     uploadExtraData: function() {
+            //         return {
+            //             name: $("#taskName").val(),
+            //             zipurl: $("#zipurl").val(),
+            //             webhook: $("#webhook").val(),
+            //             skipPostProcessing: !$("#doPostProcessing").prop('checked'),
+            //             options: JSON.stringify(optionsModel.getUserOptions())
+            //         };
+            //     }
+            // });
+        }
+    }
+
+    app = new App();
+    ko.applyBindings(app, document.getElementById('app'));
+
+    Dropzone.autoDiscover = false;
+
+    var dz = new Dropzone("div#images", {
+        paramName: function(){ return "images"; },
+        url : "/task/new/upload/",
+        parallelUploads: 8,
+        uploadMultiple: false,
+        acceptedFiles: "image/*,text/*",
+        autoProcessQueue: false,
+        createImageThumbnails: false,
+        previewTemplate: '<div style="display:none"></div>',
+        clickable: document.getElementById("btnSelectFiles"),
+        chunkSize: 2147483647,
+        timeout: 2147483647
+    });
+
+    dz.on("processing", function(file){
+        this.options.url = '/task/new/upload/' + app.uuid();
+    })
+    .on("error", function(file){
+        // Retry
+        console.log("Error uploading ", file, " put back in queue...");
+        file.status = Dropzone.QUEUED;
+        dz.processQueue();
+    })
+    .on("totaluploadprogress", function(progress, totalBytes, totalBytesSent){
+        // Limit updates since this gets called a lot
+        var now = (new Date()).getTime();
+
+        // Progress 100 is sent multiple times at the end
+        // this makes it so that we update the state only once.
+        if (progress === 100) now = now + 9999999999;
+
+    //   if (this.state.upload.lastUpdated + 500 < now){
+        //   this.setUploadState({
+        //     progress, totalBytes, totalBytesSent, lastUpdated: now
+        //   });
+    //   }
+    })
+    .on("addedfiles", function(files){
+        app.filesCount(app.filesCount() + files.length);
+    })
+    .on("complete", function(files){
+        // Check
+        var failedCount = 0;
+        for (var i = 0; i < files.length; i++){
+            if (files[i].status !== "success"){
+                failedCount++;
+                dz.enqueueFile(files[i]);
+            }
+        }
+
+        if (failedCount === 0){
+            
+        }else{
+            console.log(failedCount, "files failed to upload, retrying...");
+            dz.processQueue();
+        }
+    })
+    .on("queuecomplete", function(files){
+        // Commit
+        $.ajax("/task/new/commit/" + app.uuid(), {
+            type: "POST",
+        }).done(function(json){
+            if (json.uuid){
+                taskList.add(new Task(json.uuid));
+                dz.removeAllFiles(true);
+                app.filesCount(0);
+                app.uuid("");
+            }else{
+                app.error(json.error || json);
+            }
+            app.uploading(false);
+        }).fail(function(){
+            app.error("Cannot commit task. Is the server available and are you connected to the internet?");
+            app.uploading(false);
+        });
+    })
+    .on("reset", function(){
+        app.filesCount(0);
+    });
+
     function query(key) {
         key = key.replace(/[*+?^$.\[\]{}()|\\\/]/g, "\\$&"); // escape RegEx meta chars
         var match = location.search.match(new RegExp("[?&]"+key+"=([^&]+)(&|$)"));
@@ -285,44 +454,6 @@ $(function() {
     var taskList = new TaskList();
     ko.applyBindings(taskList, document.getElementById('taskList'));
 
-    // Handle uploads
-    $("#images").fileinput({
-        uploadUrl: '/task/new?token=' + token,
-        showPreview: false,
-        allowedFileExtensions: ['jpg', 'jpeg', 'txt', 'zip'],
-        elErrorContainer: '#errorBlock',
-        showUpload: false,
-        uploadAsync: false,
-        // ajaxSettings: { headers: { 'set-uuid': '8366b2ad-a608-4cd1-bdcb-c3d84a034623' } },
-        uploadExtraData: function() {
-            return {
-                name: $("#taskName").val(),
-                zipurl: $("#zipurl").val(),
-                webhook: $("#webhook").val(),
-                skipPostProcessing: !$("#doPostProcessing").prop('checked'),
-                options: JSON.stringify(optionsModel.getUserOptions())
-            };
-        }
-    });
-
-    $("#btnUpload").click(function() {
-        $("#btnUpload").attr('disabled', true)
-            .val("Uploading...");
-
-            // validate webhook if exists
-            var webhook = $("#webhook").val();
-            var regex = new RegExp("^(http[s]?:\\/\\/(www\\.)?|ftp:\\/\\/(www\\.)?|www\\.){1}([0-9A-Za-z-\\.@:%_\+~#=]+)+((\\.[a-zA-Z]{2,3})+)(/(.)*)?(\\?(.)*)?");
-
-            if(webhook.length > 0 && !regex.test(webhook)){
-                $('#errorBlock').text("Webhook url is not valid..");
-                $("#btnUpload").attr('disabled', false).val("Start Task");
-                return;
-            }
-        
-            // Start upload
-            $("#images").fileinput('upload'); 
-    });
-
     $('#resetWebhook').on('click', function(){
         $("#webhook").val('');
     });
@@ -330,43 +461,6 @@ $(function() {
     $('#resetDoPostProcessing').on('click', function(){
         $("#doPostProcessing").prop('checked', false);
     });
-
-    // zip file control
-    $('#btnShowImport').on('click', function(e){
-        e.preventDefault();
-        $('#zipFileInput').removeClass('hidden');
-        $('#btnShowUpload').removeClass('hidden');
-
-        $('#imagesInput').addClass('hidden');
-        $('#btnShowImport').addClass('hidden');
-
-    });
-
-    $('#btnShowUpload').on('click', function(e){
-        e.preventDefault();
-        $('#imagesInput').removeClass('hidden');
-        $('#btnShowImport').removeClass('hidden');
-
-        $('#zipFileInput').addClass('hidden');
-        $('#btnShowUpload').addClass('hidden');
-        $('#zipurl').val('');
-    });
-    
-
-    var btnUploadLabel = $("#btnUpload").val();
-    $("#images")
-        .on('filebatchuploadsuccess', function(e, params) {
-            $("#images").fileinput('reset');
-
-            if (params.response && params.response.uuid) {
-                taskList.add(new Task(params.response.uuid));
-            }
-        })
-        .on('filebatchuploadcomplete', function() {
-            $("#btnUpload").removeAttr('disabled')
-                .val(btnUploadLabel);
-        })
-        .on('filebatchuploaderror', console.warn);
 
     // Load options
     function Option(properties) {

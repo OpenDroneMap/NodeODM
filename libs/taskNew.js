@@ -102,6 +102,17 @@ module.exports = {
         });
     },
 
+    preUpload: (req, res, next) => {
+        // Testing stuff
+        if (!config.test) next();
+        else{
+            if (config.testDropUploads){
+                if (Math.random() < 0.5) res.sendStatus(500);
+                else next();
+            }
+        }
+    },
+
     uploadImages: upload.array("images"),
 
     handleUpload: (req, res) => {
@@ -140,13 +151,16 @@ module.exports = {
             else{
                 req.body = body;
                 req.files = files;
+
+                if (req.files.length === 0){
+                    req.error = "Need at least 1 file.";
+                }
                 next();
             }
         });
     },
 
     handleInit: (req, res) => {
-        console.log(req.body);
         req.body = req.body || {};
         
         const srcPath = path.join("tmp", req.id);

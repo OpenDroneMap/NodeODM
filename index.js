@@ -144,7 +144,7 @@ app.post('/task/new/init', authCheck, taskNew.assignUUID, formDataParser, taskNe
  *          schema:
  *            $ref: '#/definitions/Error'
  */
-app.post('/task/new/upload/:uuid', authCheck, taskNew.getUUID, taskNew.uploadImages, taskNew.handleUpload);
+app.post('/task/new/upload/:uuid', authCheck, taskNew.getUUID, taskNew.preUpload, taskNew.uploadImages, taskNew.handleUpload);
 
 /** @swagger
  *  /task/new/commit/{uuid}:
@@ -253,7 +253,6 @@ app.post('/task/new/commit/:uuid', authCheck, taskNew.getUUID, taskNew.handleCom
  *            $ref: '#/definitions/Error'
  */
 app.post('/task/new', authCheck, taskNew.assignUUID, taskNew.uploadImages, (req, res, next) => {
-    console.log(req.body);
     req.body = req.body || {};
     if ((!req.files || req.files.length === 0) && !req.body.zipurl) req.error = "Need at least 1 file or a zip file url.";
     else if (config.maxImages && req.files && req.files.length > config.maxImages) req.error = `${req.files.length} images uploaded, but this node can only process up to ${config.maxImages}.`;
@@ -813,7 +812,12 @@ process.on('SIGTERM', gracefulShutdown);
 process.on('SIGINT', gracefulShutdown);
 
 // Startup
-if (config.test) logger.info("Running in test mode");
+if (config.test) {
+    logger.info("Running in test mode");
+    if (config.testSkipOrthophotos) logger.info("Orthophotos will be skipped");
+    if (config.testSkipDems) logger.info("DEMs will be skipped");
+    if (config.testDropUploads) logger.info("Uploads will drop at random");
+}
 
 let commands = [
     cb => odmInfo.initialize(cb),
