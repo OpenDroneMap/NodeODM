@@ -22,10 +22,8 @@ const config = require('./config.js');
 const packageJson = JSON.parse(fs.readFileSync('./package.json'));
 
 const logger = require('./libs/logger');
-const path = require('path');
 const async = require('async');
 const mime = require('mime');
-const rmdir = require('rimraf');
 
 const express = require('express');
 const app = express();
@@ -33,12 +31,8 @@ const app = express();
 const bodyParser = require('body-parser');
 
 const TaskManager = require('./libs/TaskManager');
-const Task = require('./libs/Task');
 const odmInfo = require('./libs/odmInfo');
-const Directories = require('./libs/Directories');
-const unzip = require('node-unzip-2');
 const si = require('systeminformation');
-const mv = require('mv');
 const S3 = require('./libs/S3');
 
 const auth = require('./libs/auth/factory').fromConfig(config);
@@ -88,6 +82,12 @@ let server;
  *          description: 'When set, skips generation of map tiles, derivate assets, point cloud tiles.'
  *          required: false
  *          type: boolean
+ *        -
+ *          name: webhook
+ *          in: formData
+ *          description: Optional URL to call when processing has ended (either successfully or unsuccessfully).
+ *          required: false
+ *          type: string
  *        -
  *          name: token
  *          in: query
@@ -165,6 +165,12 @@ app.post('/task/new/commit/:uuid', authCheck, (req, res) => {
  *          required: false
  *          type: boolean
  *        -
+ *          name: webhook
+ *          in: formData
+ *          description: Optional URL to call when processing has ended (either successfully or unsuccessfully).
+ *          required: false
+ *          type: string
+ *        -
  *          name: token
  *          in: query
  *          description: 'Token required for authentication (when authentication is required).'
@@ -191,141 +197,11 @@ app.post('/task/new/commit/:uuid', authCheck, (req, res) => {
  *          schema:
  *            $ref: '#/definitions/Error'
  */
-app.post('/task/new', authCheck, taskNew.assignUUID, taskNew.uploadImages, (req, res) => {
-    // TODO: consider doing the file moving in the background
-    // and return a response more quickly instead of a long timeout.
-    req.setTimeout(1000 * 60 * 20);
-
-    let srcPath = path.join("tmp", req.id);
-
-    // Print error message and cleanup
-    const die = (error) => {
-        res.json({error});
-
-        // Check if tmp/ directory needs to be cleaned
-        if (fs.stat(srcPath, (err, stats) => {
-            if (!err && stats.isDirectory()) rmdir(srcPath, () => {}); // ignore errors, don't wait
-        }));
-    };
-
-    if ((!req.files || req.files.length === 0) && !req.body.zipurl) die("Need at least 1 file or a zip file url.");
-    else if (config.maxImages && req.files && req.files.length > config.maxImages) die(`${req.files.length} images uploaded, but this node can only process up to ${config.maxImages}.`);
-
-    else {
-        let destPath = path.join(Directories.data, req.id);
-        let destImagesPath = path.join(destPath, "images");
-        let destGpcPath = path.join(destPath, "gpc");
-
-        async.series([
-            cb => {
-                odmInfo.filterOptions(req.body.options, (err, options) => {
-                    if (err) cb(err);
-                    else {
-                        req.body.options = options;
-                        cb(null);
-                    }
-                });
-            },
-
-            // Move all uploads to data/<uuid>/images dir (if any)
-            cb => {
-                if (req.files && req.files.length > 0) {
-                    fs.stat(destPath, (err, stat) => {
-                        if (err && err.code === 'ENOENT') cb();
-                        else cb(new Error(`Directory exists (should not have happened: ${err.code})`));
-                    });
-                } else {
-                    cb();
-                }
-            },
-
-            // Unzips zip URL to tmp/<uuid>/ (if any)
-            cb => {
-                if (req.body.zipurl) {
-                    let archive = "zipurl.zip";
-
-                    upload.storage.getDestination(req, archive, (err, dstPath) => {
-                        if (err) cb(err);
-                        else{
-                            let archiveDestPath = path.join(dstPath, archive);
-
-                            download(req.body.zipurl, archiveDestPath, cb);
-                        }
-                    });
-                } else {
-                    cb();
-                }
-            },
-
-            cb => fs.mkdir(destPath, undefined, cb),
-            cb => fs.mkdir(destGpcPath, undefined, cb),
-            cb => mv(srcPath, destImagesPath, cb),
-
-            cb => {
-                // Find any *.zip file and extract
-                fs.readdir(destImagesPath, (err, entries) => {
-                    if (err) cb(err);
-                    else {
-                        async.eachSeries(entries, (entry, cb) => {
-                            if (/\.zip$/gi.test(entry)) {
-                                let filesCount = 0;
-                                fs.createReadStream(path.join(destImagesPath, entry)).pipe(unzip.Parse())
-                                        .on('entry', function(entry) {
-                                            if (entry.type === 'File') {
-                                                filesCount++;
-                                                entry.pipe(fs.createWriteStream(path.join(destImagesPath, path.basename(entry.path))));
-                                            } else {
-                                                entry.autodrain();
-                                            }
-                                        })
-                                        .on('close', () => {
-                                            // Verify max images limit
-                                            if (config.maxImages && filesCount > config.maxImages) cb(`${filesCount} images uploaded, but this node can only process up to ${config.maxImages}.`);
-                                            else cb();
-                                        })
-                                        .on('error', cb);
-                            } else cb();
-                        }, cb);
-                    }
-                });
-            },
-
-            cb => {
-                // Find any *.txt (GPC) file and move it to the data/<uuid>/gpc directory
-                // also remove any lingering zipurl.zip
-                fs.readdir(destImagesPath, (err, entries) => {
-                    if (err) cb(err);
-                    else {
-                        async.eachSeries(entries, (entry, cb) => {
-                            if (/\.txt$/gi.test(entry)) {
-                                mv(path.join(destImagesPath, entry), path.join(destGpcPath, entry), cb);
-                            }else if (/\.zip$/gi.test(entry)){
-                                fs.unlink(path.join(destImagesPath, entry), cb);
-                            } else cb();
-                        }, cb);
-                    }
-                });
-            },
-
-            // Create task
-            cb => {
-                new Task(req.id, req.body.name, (err, task) => {
-                    if (err) cb(err);
-                    else {
-                        taskManager.addNew(task);
-                        res.json({ uuid: req.id });
-                        cb();
-                    }
-                }, req.body.options, 
-                   req.body.webhook,
-                   req.body.skipPostProcessing === 'true');
-            }
-        ], err => {
-            if (err) die(err.message);
-        });
-    }
-
-});
+app.post('/task/new', authCheck, taskNew.assignUUID, taskNew.uploadImages, (req, res, next) => {
+    if ((!req.files || req.files.length === 0) && !req.body.zipurl) req.error = "Need at least 1 file or a zip file url.";
+    else if (config.maxImages && req.files && req.files.length > config.maxImages) req.error = `${req.files.length} images uploaded, but this node can only process up to ${config.maxImages}.`;
+    next();
+}, taskNew.handleTaskNew);
 
 let getTaskFromUuid = (req, res, next) => {
     let task = taskManager.find(req.params.uuid);

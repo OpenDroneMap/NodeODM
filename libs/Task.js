@@ -46,7 +46,7 @@ module.exports = class Task{
         this.processingTime = -1;
         this.setStatus(statusCodes.QUEUED);
         this.options = options;
-        this.gpcFiles = [];
+        this.gcpFiles = [];
         this.output = [];
         this.runningProcesses = [];
         this.webhook = webhook;
@@ -67,15 +67,15 @@ module.exports = class Task{
 
             // Find GCP (if any)
             cb => {
-                fs.readdir(this.getGpcFolderPath(), (err, files) => {
+                fs.readdir(this.getGcpFolderPath(), (err, files) => {
                     if (err) cb(err);
                     else{
                         files.forEach(file => {
                             if (/\.txt$/gi.test(file)){
-                                this.gpcFiles.push(file);
+                                this.gcpFiles.push(file);
                             }
                         });
-                        logger.debug(`Found ${this.gpcFiles.length} GPC files (${this.gpcFiles.join(" ")}) for ${this.uuid}`);
+                        logger.debug(`Found ${this.gcpFiles.length} GCP files (${this.gcpFiles.join(" ")}) for ${this.uuid}`);
                         cb(null);
                     }
                 });
@@ -110,10 +110,10 @@ module.exports = class Task{
         return path.join(this.getProjectFolderPath(), "images");
     }
 
-    // Get path where GPC file(s) are stored
+    // Get path where GCP file(s) are stored
     // (relative to nodejs process CWD)
-    getGpcFolderPath(){
-        return path.join(this.getProjectFolderPath(), "gpc");
+    getGcpFolderPath(){
+        return path.join(this.getProjectFolderPath(), "gcp");
     }
 
     // Get path of project (where all images and assets folder are contained)
@@ -385,8 +385,8 @@ module.exports = class Task{
 
             runnerOptions["project-path"] = fs.realpathSync(Directories.data);
 
-            if (this.gpcFiles.length > 0){
-                runnerOptions.gcp = fs.realpathSync(path.join(this.getGpcFolderPath(), this.gpcFiles[0]));
+            if (this.gcpFiles.length > 0){
+                runnerOptions.gcp = fs.realpathSync(path.join(this.getGcpFolderPath(), this.gcpFiles[0]));
             }
 
             this.runningProcesses.push(odmRunner.run(runnerOptions, this.uuid, (err, code, signal) => {

@@ -21,6 +21,12 @@ const fs = require('fs');
 const path = require('path');
 const TaskManager = require('./TaskManager');
 const uuidv4 = require('uuid/v4');
+const config = require('../config.js');
+const rmdir = require('rimraf');
+const Directories = require('./Directories');
+const unzip = require('node-unzip-2');
+const mv = require('mv');
+const Task = require('./Task');
 
 const upload = multer({
     storage: multer.diskStorage({
@@ -64,7 +70,14 @@ module.exports = {
 
     uploadImages: upload.array("images"),
 
-    handleTaskNew: (res, res) => {
+    setupFiles: (req, res, next) => {
+        // populate req.id (here or somehwere else)
+        // populate req.files from directory
+        // populate req.body from metadata file
+
+    },
+
+    handleTaskNew: (req, res) => {
         // TODO: consider doing the file moving in the background
         // and return a response more quickly instead of a long timeout.
         req.setTimeout(1000 * 60 * 20);
@@ -81,13 +94,12 @@ module.exports = {
             }));
         };
 
-        if ((!req.files || req.files.length === 0) && !req.body.zipurl) die("Need at least 1 file or a zip file url.");
-        else if (config.maxImages && req.files && req.files.length > config.maxImages) die(`${req.files.length} images uploaded, but this node can only process up to ${config.maxImages}.`);
-
-        else {
+        if (req.error !== undefined){
+            die(req.error);
+        }else{
             let destPath = path.join(Directories.data, req.id);
             let destImagesPath = path.join(destPath, "images");
-            let destGpcPath = path.join(destPath, "gpc");
+            let destGcpPath = path.join(destPath, "gcp");
 
             async.series([
                 cb => {
@@ -100,7 +112,7 @@ module.exports = {
                     });
                 },
 
-                // Move all uploads to data/<uuid>/images dir (if any)
+                // Check if dest directory already exists
                 cb => {
                     if (req.files && req.files.length > 0) {
                         fs.stat(destPath, (err, stat) => {
@@ -130,8 +142,9 @@ module.exports = {
                     }
                 },
 
+                // Move all uploads to data/<uuid>/images dir (if any)
                 cb => fs.mkdir(destPath, undefined, cb),
-                cb => fs.mkdir(destGpcPath, undefined, cb),
+                cb => fs.mkdir(destGcpPath, undefined, cb),
                 cb => mv(srcPath, destImagesPath, cb),
 
                 cb => {
@@ -164,14 +177,14 @@ module.exports = {
                 },
 
                 cb => {
-                    // Find any *.txt (GPC) file and move it to the data/<uuid>/gpc directory
+                    // Find any *.txt (GCP) file and move it to the data/<uuid>/gcp directory
                     // also remove any lingering zipurl.zip
                     fs.readdir(destImagesPath, (err, entries) => {
                         if (err) cb(err);
                         else {
                             async.eachSeries(entries, (entry, cb) => {
                                 if (/\.txt$/gi.test(entry)) {
-                                    mv(path.join(destImagesPath, entry), path.join(destGpcPath, entry), cb);
+                                    mv(path.join(destImagesPath, entry), path.join(destGcpPath, entry), cb);
                                 }else if (/\.zip$/gi.test(entry)){
                                     fs.unlink(path.join(destImagesPath, entry), cb);
                                 } else cb();
@@ -185,7 +198,7 @@ module.exports = {
                     new Task(req.id, req.body.name, (err, task) => {
                         if (err) cb(err);
                         else {
-                            taskManager.addNew(task);
+                            TaskManager.singleton().addNew(task);
                             res.json({ uuid: req.id });
                             cb();
                         }

@@ -156,9 +156,4 @@ Make a pull request for small contributions. For big contributions, please open 
 
 ## Roadmap
 
-- [X] Command line options for OpenDroneMap
-- [X] GPC List support
-- [ ] Video support when the [SLAM module](https://github.com/OpenDroneMap/OpenDroneMap/pull/317) becomes available
-- [ ] Continuous Integration Setup
-- [X] Documentation
-- [ ] Unit Testing
+See the [list of wanted features](https://github.com/OpenDroneMap/NodeODM/issues?q=is%3Aopen+is%3Aissue+label%3A%22new+feature%22).
