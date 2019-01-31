@@ -27,6 +27,25 @@ const Directories = require('./Directories');
 const unzip = require('node-unzip-2');
 const mv = require('mv');
 const Task = require('./Task');
+const async = require('async');
+const odmInfo = require('./odmInfo');
+const request = require('request');
+
+const download = function(uri, filename, callback) {
+    request.head(uri, function(err, res, body) {
+        if (err) callback(err);
+        else{
+            request(uri).pipe(fs.createWriteStream(filename)).on('close', callback);
+        }
+    });
+};
+
+const removeDirectory = function(dir, cb = () => {}){
+    fs.stat(dir, (err, stats) => {
+        if (!err && stats.isDirectory()) rmdir(dir, cb); // ignore errors, don't wait
+        else cb(err);
+    });
+};
 
 const upload = multer({
     storage: multer.diskStorage({
@@ -43,7 +62,9 @@ const upload = multer({
             });
         },
         filename: (req, file, cb) => {
-            cb(null, file.originalname);
+            let filename = file.originalname;
+            if (filename === "body.json") filename = "_body.json";
+            cb(null, filename);
         }
     })
 });
@@ -68,30 +89,115 @@ module.exports = {
         }
     },
 
-    uploadImages: upload.array("images"),
+    getUUID: (req, res, next) => {
+        req.id = req.params.uuid;
+        if (!req.id) res.json({error: `Invalid uuid (not set)`});
 
-    setupFiles: (req, res, next) => {
-        // populate req.id (here or somehwere else)
-        // populate req.files from directory
-        // populate req.body from metadata file
+        const srcPath = path.join("tmp", req.id);
+        const bodyFile = path.join(srcPath, "body.json");
 
+        fs.access(bodyFile, fs.F_OK, err => {
+            if (err) res.json({error: `Invalid uuid (not found)`});
+            else next();
+        });
     },
 
-    handleTaskNew: (req, res) => {
-        // TODO: consider doing the file moving in the background
-        // and return a response more quickly instead of a long timeout.
-        req.setTimeout(1000 * 60 * 20);
+    uploadImages: upload.array("images"),
 
-        let srcPath = path.join("tmp", req.id);
+    handleUpload: (req, res) => {
+        // IMPROVEMENT: check files count limits ahead of handleTaskNew
+        if (req.files && req.files.length > 0){
+            res.json({success: true});
+        }else{
+            res.json({error: "Need at least 1 file."});
+        }
+    },
+
+    handleCommit: (req, res, next) => {
+        const srcPath = path.join("tmp", req.id);
+        const bodyFile = path.join(srcPath, "body.json");
+
+        async.series([
+            cb => {
+                fs.readFile(bodyFile, 'utf8', (err, data) => {
+                    if (err) cb(err);
+                    else{
+                        try{
+                            const body = JSON.parse(data);
+                            fs.unlink(bodyFile, err => {
+                                if (err) cb(err);
+                                else cb(null, body);
+                            });
+                        }catch(e){
+                            cb("Malformed body.json");
+                        }
+                    }
+                });
+            },
+            cb => fs.readdir(srcPath, cb),
+        ], (err, [ body, files ]) => {
+            if (err) res.json({error: err.message});
+            else{
+                req.body = body;
+                req.files = files;
+                next();
+            }
+        });
+    },
+
+    handleInit: (req, res) => {
+        console.log(req.body);
+        req.body = req.body || {};
+        
+        const srcPath = path.join("tmp", req.id);
+        const bodyFile = path.join(srcPath, "body.json");
 
         // Print error message and cleanup
         const die = (error) => {
             res.json({error});
+            removeDirectory(srcPath);
+        };
 
-            // Check if tmp/ directory needs to be cleaned
-            if (fs.stat(srcPath, (err, stats) => {
-                if (!err && stats.isDirectory()) rmdir(srcPath, () => {}); // ignore errors, don't wait
-            }));
+        async.series([
+            cb => {
+                // Check for problems before file uploads
+                if (req.body && req.body.options){
+                    odmInfo.filterOptions(req.body.options, err => {
+                        if (err) cb(err);
+                        else cb();
+                    });
+                }else cb();
+            },
+            cb => {
+                fs.stat(srcPath, (err, stat) => {
+                    if (err && err.code === 'ENOENT') cb();
+                    else cb(new Error(`Directory exists (should not have happened: ${err.code})`));
+                });
+            },
+            cb => fs.mkdir(srcPath, undefined, cb),
+            cb => {
+                fs.writeFile(bodyFile, JSON.stringify(req.body), {encoding: 'utf8'}, cb);
+            },
+            cb => {
+                res.json({uuid: req.id});
+                cb();
+            }
+        ],  err => {
+            if (err) die(err.message);
+        });
+    },
+
+    createTask: (req, res) => {
+        // IMPROVEMENT: consider doing the file moving in the background
+        // and return a response more quickly instead of a long timeout.
+        req.setTimeout(1000 * 60 * 20);
+
+        const srcPath = path.join("tmp", req.id);
+
+        // Print error message and cleanup
+        const die = (error) => {
+            res.json({error});
+            removeDirectory(srcPath);
         };
 
         if (req.error !== undefined){
@@ -202,7 +308,7 @@ module.exports = {
                             res.json({ uuid: req.id });
                             cb();
                         }
-                    }, req.body.options, 
+                    }, req.body.options,
                     req.body.webhook,
                     req.body.skipPostProcessing === 'true');
                 }

@@ -29,6 +29,7 @@ const express = require('express');
 const app = express();
 
 const bodyParser = require('body-parser');
+const multer = require('multer');
 
 const TaskManager = require('./libs/TaskManager');
 const odmInfo = require('./libs/odmInfo');
@@ -39,21 +40,10 @@ const auth = require('./libs/auth/factory').fromConfig(config);
 const authCheck = auth.getMiddleware();
 const taskNew = require('./libs/taskNew');
 
-// zip files
-let request = require('request');
-
-let download = function(uri, filename, callback) {
-    request.head(uri, function(err, res, body) {
-        if (err) callback(err);
-        else{
-            request(uri).pipe(fs.createWriteStream(filename)).on('close', callback);
-        }
-    });
-};
-
 app.use(express.static('public'));
 app.use('/swagger.json', express.static('docs/swagger.json'));
 
+const formDataParser = multer().none();
 const urlEncodedBodyParser = bodyParser.urlencoded({extended: false});
 
 let taskManager;
@@ -65,6 +55,7 @@ let server;
  *      description: Initialize the upload of a new task. If successful, a user can start uploading files via /task/new/upload. The task will not start until /task/new/commit is called.
  *      tags: [task]
  *      parameters:
+ *        -
  *          name: name
  *          in: formData
  *          description: An optional name to be associated with the task
@@ -115,21 +106,85 @@ let server;
  *          schema:
  *            $ref: '#/definitions/Error'
  */
-app.post('/task/new/init', authCheck, taskNew.assignUUID, (req, res) => {
-    
-});
+app.post('/task/new/init', authCheck, taskNew.assignUUID, formDataParser, taskNew.handleInit);
 
-app.post('/task/new/upload/:uuid', authCheck, (req, res) => {
-});
+/** @swagger
+ *  /task/new/upload/{uuid}:
+ *    post:
+ *      description: Adds one or more files to the task created via /task/new/init. It does not start the task. To start the task, call /task/new/commit.
+ *      tags: [task]
+ *      consumes:
+ *        - multipart/form-data
+ *      parameters:
+ *        -
+ *           name: uuid
+ *           in: path
+ *           description: UUID of the task
+ *           required: true
+ *           type: string
+ *        -
+ *          name: images
+ *          in: formData
+ *          description: Images to process, plus an optional GCP file. If included, the GCP file should have .txt extension
+ *          required: true
+ *          type: file
+ *        -
+ *          name: token
+ *          in: query
+ *          description: 'Token required for authentication (when authentication is required).'
+ *          required: false
+ *          type: string
+ *      responses:
+ *        200:
+ *          description: File Received
+ *          schema:
+ *            $ref: "#/definitions/Response"
+ *        default:
+ *          description: Error
+ *          schema:
+ *            $ref: '#/definitions/Error'
+ */
+app.post('/task/new/upload/:uuid', authCheck, taskNew.getUUID, taskNew.uploadImages, taskNew.handleUpload);
 
-app.post('/task/new/commit/:uuid', authCheck, (req, res) => {
-
-});
+/** @swagger
+ *  /task/new/commit/{uuid}:
+ *    post:
+ *      description: Creates a new task for which images have been uploaded via /task/new/upload.
+ *      tags: [task]
+ *      parameters:
+ *        -
+ *           name: uuid
+ *           in: path
+ *           description: UUID of the task
+ *           required: true
+ *           type: string
+ *        -
+ *          name: token
+ *          in: query
+ *          description: 'Token required for authentication (when authentication is required).'
+ *          required: false
+ *          type: string
+ *      responses:
+ *        200:
+ *          description: Success
+ *          schema:
+ *            type: object
+ *            required: [uuid]
+ *            properties:
+ *              uuid:
+ *                type: string
+ *                description: UUID of the newly created task
+ *        default:
+ *          description: Error
+ *          schema:
+ *            $ref: '#/definitions/Error'
+ */
+app.post('/task/new/commit/:uuid', authCheck, taskNew.getUUID, taskNew.handleCommit, taskNew.createTask);
 
 /** @swagger
  *  /task/new:
  *    post:
- *      description: Creates a new task and places it at the end of the processing queue
+ *      description: Creates a new task and places it at the end of the processing queue. For uploading really large tasks, see /task/new/init instead.
  *      tags: [task]
  *      consumes:
  *        - multipart/form-data
@@ -198,10 +253,12 @@ app.post('/task/new/commit/:uuid', authCheck, (req, res) => {
  *            $ref: '#/definitions/Error'
  */
 app.post('/task/new', authCheck, taskNew.assignUUID, taskNew.uploadImages, (req, res, next) => {
+    console.log(req.body);
+    req.body = req.body || {};
     if ((!req.files || req.files.length === 0) && !req.body.zipurl) req.error = "Need at least 1 file or a zip file url.";
     else if (config.maxImages && req.files && req.files.length > config.maxImages) req.error = `${req.files.length} images uploaded, but this node can only process up to ${config.maxImages}.`;
     next();
-}, taskNew.handleTaskNew);
+}, taskNew.createTask);
 
 let getTaskFromUuid = (req, res, next) => {
     let task = taskManager.find(req.params.uuid);

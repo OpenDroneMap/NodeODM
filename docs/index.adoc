@@ -8,7 +8,7 @@ REST API to access ODM
 
 === Version information
 [%hardbreaks]
-_Version_ : 1.3.1
+_Version_ : 1.4.0
 
 
 === Contact information
@@ -281,7 +281,7 @@ _required_|UUID of the task|string|
 === POST /task/new
 
 ==== Description
-Creates a new task and places it at the end of the processing queue
+Creates a new task and places it at the end of the processing queue. For uploading really large tasks, see /task/new/init instead.
 
 
 ==== Parameters
@@ -301,6 +301,8 @@ _optional_|An optional name to be associated with the task|string|
 _optional_|Serialized JSON string of the options to use for processing, as an array of the format: [{name: option1, value: value1}, {name: option2, value: value2}, …]. For example, [{"name":"cmvs-maxImages","value":"500"},{"name":"time","value":true}]. For a list of all options, call /options|string|
 |*FormData*|*skipPostProcessing* +
 _optional_|When set, skips generation of map tiles, derivate assets, point cloud tiles.|boolean|
+|*FormData*|*webhook* +
+_optional_|Optional URL to call when processing has ended (either successfully or unsuccessfully).|string|
 |*FormData*|*zipurl* +
 _optional_|URL of the zip file containing the images to process, plus an optional GCP file. If included, the GCP file should have .txt extension|string|
 |===
@@ -323,6 +325,143 @@ _optional_|URL of the zip file containing the images to process, plus an optiona
 |Name|Description|Schema
 |*uuid* +
 _required_|UUID of the newly created task|string
+|===
+
+
+==== Consumes
+
+* `multipart/form-data`
+
+
+==== Tags
+
+* task
+
+
+[[_task_new_commit_uuid_post]]
+=== POST /task/new/commit/{uuid}
+
+==== Description
+Creates a new task for which images have been uploaded via /task/new/upload.
+
+
+==== Parameters
+
+[options="header", cols=".^2,.^3,.^9,.^4,.^2"]
+|===
+|Type|Name|Description|Schema|Default
+|*Path*|*uuid* +
+_required_|UUID of the task|string|
+|*Query*|*token* +
+_optional_|Token required for authentication (when authentication is required).|string|
+|===
+
+
+==== Responses
+
+[options="header", cols=".^2,.^14,.^4"]
+|===
+|HTTP Code|Description|Schema
+|*200*|Success|<<_task_new_commit_uuid_post_response_200,Response 200>>
+|*default*|Error|<<_error,Error>>
+|===
+
+[[_task_new_commit_uuid_post_response_200]]
+*Response 200*
+
+[options="header", cols=".^3,.^11,.^4"]
+|===
+|Name|Description|Schema
+|*uuid* +
+_required_|UUID of the newly created task|string
+|===
+
+
+==== Tags
+
+* task
+
+
+[[_task_new_init_post]]
+=== POST /task/new/init
+
+==== Description
+Initialize the upload of a new task. If successful, a user can start uploading files via /task/new/upload. The task will not start until /task/new/commit is called.
+
+
+==== Parameters
+
+[options="header", cols=".^2,.^3,.^9,.^4,.^2"]
+|===
+|Type|Name|Description|Schema|Default
+|*Header*|*set-uuid* +
+_optional_|An optional UUID string that will be used as UUID for this task instead of generating a random one.|string|
+|*Query*|*token* +
+_optional_|Token required for authentication (when authentication is required).|string|
+|*FormData*|*name* +
+_optional_|An optional name to be associated with the task|string|
+|*FormData*|*options* +
+_optional_|Serialized JSON string of the options to use for processing, as an array of the format: [{name: option1, value: value1}, {name: option2, value: value2}, …]. For example, [{"name":"cmvs-maxImages","value":"500"},{"name":"time","value":true}]. For a list of all options, call /options|string|
+|*FormData*|*skipPostProcessing* +
+_optional_|When set, skips generation of map tiles, derivate assets, point cloud tiles.|boolean|
+|*FormData*|*webhook* +
+_optional_|Optional URL to call when processing has ended (either successfully or unsuccessfully).|string|
+|===
+
+
+==== Responses
+
+[options="header", cols=".^2,.^14,.^4"]
+|===
+|HTTP Code|Description|Schema
+|*200*|Success|<<_task_new_init_post_response_200,Response 200>>
+|*default*|Error|<<_error,Error>>
+|===
+
+[[_task_new_init_post_response_200]]
+*Response 200*
+
+[options="header", cols=".^3,.^11,.^4"]
+|===
+|Name|Description|Schema
+|*uuid* +
+_required_|UUID of the newly created task|string
+|===
+
+
+==== Tags
+
+* task
+
+
+[[_task_new_upload_uuid_post]]
+=== POST /task/new/upload/{uuid}
+
+==== Description
+Adds one or more files to the task created via /task/new/init. It does not start the task. To start the task, call /task/new/commit.
+
+
+==== Parameters
+
+[options="header", cols=".^2,.^3,.^9,.^4,.^2"]
+|===
+|Type|Name|Description|Schema|Default
+|*Path*|*uuid* +
+_required_|UUID of the task|string|
+|*Query*|*token* +
+_optional_|Token required for authentication (when authentication is required).|string|
+|*FormData*|*images* +
+_required_|Images to process, plus an optional GCP file. If included, the GCP file should have .txt extension|file|
+|===
+
+
+==== Responses
+
+[options="header", cols=".^2,.^14,.^4"]
+|===
+|HTTP Code|Description|Schema
+|*200*|File Received|<<_response,Response>>
+|*default*|Error|<<_error,Error>>
 |===
 
 

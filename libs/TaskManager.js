@@ -30,6 +30,7 @@ const Directories = require('./Directories');
 
 const TASKS_DUMP_FILE = path.join(Directories.data, "tasks.json");
 const CLEANUP_TASKS_IF_OLDER_THAN = 1000 * 60 * config.cleanupTasksAfter; // minutes
+const CLEANUP_STALE_UPLOADS_AFTER = 1000 * 60 * config.cleanupUploadsAfter; // minutes
 
 let taskManager;
 
@@ -42,6 +43,7 @@ class TaskManager{
             cb => this.restoreTaskListFromDump(cb),
             cb => this.removeOldTasks(cb),
             cb => this.removeOrphanedDirectories(cb),
+            cb => this.removeStaleUploads(cb),
             cb => {
                 this.processNextTask();
                 cb();
@@ -51,6 +53,7 @@ class TaskManager{
                 schedule.scheduleJob('0 * * * *', () => {
                     this.removeOldTasks();
                     this.dumpTaskList();
+                    this.removeStaleUploads();
                 });
 
                 cb();
@@ -84,7 +87,6 @@ class TaskManager{
 
     // Removes directories that don't have a corresponding
     // task associated with it (maybe as a cause of an abrupt exit)
-    // TODO: do not delete /task/new/init directories!!!
     removeOrphanedDirectories(done){
         logger.info("Checking for orphaned directories to be removed...");
 
@@ -98,6 +100,30 @@ class TaskManager{
                         !this.tasks[entry]){
                         logger.info(`Found orphaned directory: ${entry}, removing...`);
                         rmdir(dirPath, cb);
+                    }else cb();
+                }, done);
+            }
+        });
+    }
+
+    removeStaleUploads(done){
+        logger.info("Checking for stale uploads...");
+        fs.readdir("tmp", (err, entries) => {
+            if (err) done(err);
+            else{
+                const now = new Date();
+                async.eachSeries(entries, (entry, cb) => {
+                    let dirPath = path.join("tmp", entry);
+                    if (entry.match(/^[\w\d]+\-[\w\d]+\-[\w\d]+\-[\w\d]+\-[\w\d]+$/)){
+                        fs.stat(dirPath, (err, stats) => {
+                            if (err) cb(err);
+                            else{
+                                if (stats.isDirectory() && stats.ctime.getTime() + CLEANUP_STALE_UPLOADS_AFTER < now.getTime()){
+                                    logger.info(`Found stale upload directory: ${entry}, removing...`);
+                                    rmdir(dirPath, cb);
+                                }else cb();
+                            }
+                        });
                     }else cb();
                 }, done);
             }
