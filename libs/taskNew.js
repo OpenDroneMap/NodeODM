@@ -30,6 +30,7 @@ const Task = require('./Task');
 const async = require('async');
 const odmInfo = require('./odmInfo');
 const request = require('request');
+const utils = require('./utils');
 
 const download = function(uri, filename, callback) {
     request.head(uri, function(err, res, body) {
@@ -62,7 +63,7 @@ const upload = multer({
             });
         },
         filename: (req, file, cb) => {
-            let filename = file.originalname;
+            let filename = utils.sanitize(file.originalname);
             if (filename === "body.json") filename = "_body.json";
             cb(null, filename);
         }
