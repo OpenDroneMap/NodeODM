@@ -54,10 +54,24 @@
                         </div>
                         <div id="imagesInput" class="form-group" data-bind="visible: mode() === 'file'">
                             <div id="images">Images and GCP File (optional):</div> <button id="btnSelectFiles" class="btn btn-default btn-sm" data-bind="attr: {disabled: uploading()}">Add Files...</button>
-                            <div data-bind="visible: filesCount()">Selected files: <span data-bind="text: filesCount()"></span></div>
+                            <div data-bind="visible: filesCount() && !uploading()">Selected files: <span data-bind="text: filesCount()"></span></div>
+                            <div data-bind="visible: uploading()" class="progress" style="margin-top: 12px;">
+                                <div class="progress-bar progress-bar-success" role="progressbar" data-bind="text: uploadedFiles() + ' / ' + filesCount() + ' files', style: {width: uploadedPercentage()}">
+                                </div>
+                            </div>
+                            <div data-bind="visible: uploading()" style="min-height: 230px;">
+                                <div data-bind="foreach: fileUploadStatus.items">
+                                    <div class="progress">
+                                        <div class="progress-bar progress-bar-info" role="progressbar" data-bind="text: key() + ': ' + parseInt(value()) + '%', style: {width: value() + '%'}"></div>
+                                    </div>
+                                </div>
+                            </div>
                         </div>
                         <div id="zipFileInput" class="form-group" data-bind="visible: mode() === 'url'">
                             <label for="zipurl">URL to zip file with Images and GCP File (optional):</label> <input id="zipurl" name="zipurl" class="form-control" type="text" data-bind="attr: {disabled: uploading()}" >
+                            <div data-bind="visible: uploading()">
+                                Uploading...
+                            </div>
                         </div>
                         <div id="errorBlock" data-bind="visible: error().length > 0, click: dismissError">⚠️ <span data-bind="text: error"></span></div>
                         <hr/>
@@ -188,6 +202,7 @@
     </script>
     <script src="js/vendor/bootstrap.min.js"></script>
     <script src="js/vendor/knockout-3.4.0.js"></script>
+    <script src="js/vendor/ko.observableDictionary.js"></script>
     <script src="js/dropzone.js" type="text/javascript"></script>
     <script src="js/main.js"></script>
 </body>

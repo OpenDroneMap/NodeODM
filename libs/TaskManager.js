@@ -107,7 +107,6 @@ class TaskManager{
     }
 
     removeStaleUploads(done){
-        logger.info("Checking for stale uploads...");
         fs.readdir("tmp", (err, entries) => {
             if (err) done(err);
             else{

@@ -109,6 +109,8 @@ module.exports = {
             if (config.testDropUploads){
                 if (Math.random() < 0.5) res.sendStatus(500);
                 else next();
+            }else{
+                next();
             }
         }
     },

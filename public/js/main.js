@@ -17,11 +17,16 @@ along with this program.  If not, see <http://www.gnu.org/licenses/>.
 */
 $(function() {
     function App(){
-        this.filesCount = ko.observable(0);
         this.mode = ko.observable("file");
+        this.filesCount = ko.observable(0);
         this.error = ko.observable("");
         this.uploading = ko.observable(false);
         this.uuid = ko.observable("");
+        this.uploadedFiles = ko.observable(0);
+        this.fileUploadStatus = new ko.observableDictionary({});
+        this.uploadedPercentage = ko.pureComputed(function(){
+            return ((this.uploadedFiles() / this.filesCount()) * 100.0) + "%";
+        }, this);
     }
     App.prototype.toggleMode = function(){
         if (this.mode() === 'file') this.mode('url');
@@ -29,6 +34,15 @@ $(function() {
     };
     App.prototype.dismissError = function(){
         this.error("");
+    };
+    App.prototype.resetUpload = function(){
+        this.filesCount(0);
+        this.error("");
+        this.uploading(false);
+        this.uuid("");
+        this.uploadedFiles(0);
+        this.fileUploadStatus.removeAll();
+        dz.removeAllFiles(true);
     };
     App.prototype.startTask = function(){
         var self = this;
@@ -50,14 +64,15 @@ $(function() {
         }
 
         // Start upload
+        var formData = new FormData();
+        formData.append("name", $("#taskName").val());
+        formData.append("webhook", $("#webhook").val());
+        formData.append("skipPostProcessing", !$("#doPostProcessing").prop('checked'));
+        formData.append("options", JSON.stringify(optionsModel.getUserOptions()));
+
         if (this.mode() === 'file'){
             if (this.filesCount() > 0){
-                var formData = new FormData();
-                formData.append("name", $("#taskName").val());
-                formData.append("webhook", $("#webhook").val());
-                formData.append("skipPostProcessing", !$("#doPostProcessing").prop('checked'));
-                formData.append("options", JSON.stringify(optionsModel.getUserOptions()));
-                $.ajax("/task/new/init", {
+                $.ajax("/task/new/init?token=" + token, {
                     type: "POST",
                     data: formData,
                     processData: false,
@@ -65,7 +80,6 @@ $(function() {
                 }).done(function(result){
                     if (result.uuid){
                         self.uuid(result.uuid);
-                        console.log("Proessing");
                         dz.processQueue();
                     }else{
                         die(result.error || result);
@@ -77,38 +91,33 @@ $(function() {
                 die("No files selected");
             }
         } else if (this.mode() === 'url'){
-            // TODO
-            // Handle uploads
-            // $("#images").fileinput({
-            //     uploadUrl: '/task/new?token=' + token,
-            //     showPreview: false,
-            //     allowedFileExtensions: ['jpg', 'jpeg', 'txt', 'zip'],
-            //     elErrorContainer: '#errorBlock',
-            //     showUpload: false,
-            //     uploadAsync: false,
-            //     // ajaxSettings: { headers: { 'set-uuid': '8366b2ad-a608-4cd1-bdcb-c3d84a034623' } },
-            //     uploadExtraData: function() {
-            //         return {
-            //             name: $("#taskName").val(),
-            //             zipurl: $("#zipurl").val(),
-            //             webhook: $("#webhook").val(),
-            //             skipPostProcessing: !$("#doPostProcessing").prop('checked'),
-            //             options: JSON.stringify(optionsModel.getUserOptions())
-            //         };
-            //     }
-            // });
+            this.uploading(true);
+            formData.append("zipurl", $("#zipurl").val());
+
+            $.ajax("/task/new?token=" + token, {
+                type: "POST",
+                data: formData,
+                processData: false,
+                contentType: false
+            }).done(function(json){
+                if (json.uuid){
+                    taskList.add(new Task(json.uuid));
+                    self.resetUpload();
+                }else{
+                    die(json.error || result);
+                }
+            }).fail(function(){
+                die("Cannot start task. Is the server available and are you connected to the internet?");
+            });
         }
     }
-
-    app = new App();
-    ko.applyBindings(app, document.getElementById('app'));
 
     Dropzone.autoDiscover = false;
 
     var dz = new Dropzone("div#images", {
         paramName: function(){ return "images"; },
         url : "/task/new/upload/",
-        parallelUploads: 8,
+        parallelUploads: 8, // http://blog.olamisan.com/max-parallel-http-connections-in-a-browser max parallel connections
         uploadMultiple: false,
         acceptedFiles: "image/*,text/*",
         autoProcessQueue: false,
@@ -120,58 +129,38 @@ $(function() {
     });
 
     dz.on("processing", function(file){
-        this.options.url = '/task/new/upload/' + app.uuid();
+        this.options.url = '/task/new/upload/' + app.uuid() + "?token=" + token;
+        app.fileUploadStatus.set(file.name, 0);
     })
     .on("error", function(file){
         // Retry
         console.log("Error uploading ", file, " put back in queue...");
+        app.error("Upload of " + file.name + " failed, retrying...");
         file.status = Dropzone.QUEUED;
+        app.fileUploadStatus.remove(file.name);
         dz.processQueue();
     })
-    .on("totaluploadprogress", function(progress, totalBytes, totalBytesSent){
-        // Limit updates since this gets called a lot
-        var now = (new Date()).getTime();
-
-        // Progress 100 is sent multiple times at the end
-        // this makes it so that we update the state only once.
-        if (progress === 100) now = now + 9999999999;
-
-    //   if (this.state.upload.lastUpdated + 500 < now){
-        //   this.setUploadState({
-        //     progress, totalBytes, totalBytesSent, lastUpdated: now
-        //   });
-    //   }
+    .on("uploadprogress", function(file, progress){
+        app.fileUploadStatus.set(file.name, progress);
     })
     .on("addedfiles", function(files){
         app.filesCount(app.filesCount() + files.length);
     })
-    .on("complete", function(files){
-        // Check
-        var failedCount = 0;
-        for (var i = 0; i < files.length; i++){
-            if (files[i].status !== "success"){
-                failedCount++;
-                dz.enqueueFile(files[i]);
-            }
+    .on("complete", function(file){
+        if (file.status === "success"){
+            app.uploadedFiles(app.uploadedFiles() + 1);
         }
-
-        if (failedCount === 0){
-            
-        }else{
-            console.log(failedCount, "files failed to upload, retrying...");
-            dz.processQueue();
-        }
+        app.fileUploadStatus.remove(file.name);
+        dz.processQueue();
     })
     .on("queuecomplete", function(files){
         // Commit
-        $.ajax("/task/new/commit/" + app.uuid(), {
+        $.ajax("/task/new/commit/" + app.uuid() + "?token=" + token, {
             type: "POST",
         }).done(function(json){
             if (json.uuid){
                 taskList.add(new Task(json.uuid));
-                dz.removeAllFiles(true);
-                app.filesCount(0);
-                app.uuid("");
+                app.resetUpload();
             }else{
                 app.error(json.error || json);
             }
@@ -184,6 +173,9 @@ $(function() {
     .on("reset", function(){
         app.filesCount(0);
     });
+
+    app = new App();
+    ko.applyBindings(app, document.getElementById('app'));
 
     function query(key) {
         key = key.replace(/[*+?^$.\[\]{}()|\\\/]/g, "\\$&"); // escape RegEx meta chars
