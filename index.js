@@ -22,74 +22,169 @@ const config = require('./config.js');
 const packageJson = JSON.parse(fs.readFileSync('./package.json'));
 
 const logger = require('./libs/logger');
-const path = require('path');
 const async = require('async');
 const mime = require('mime');
-const rmdir = require('rimraf');
 
 const express = require('express');
 const app = express();
 
-const multer = require('multer');
 const bodyParser = require('body-parser');
+const multer = require('multer');
 
 const TaskManager = require('./libs/TaskManager');
-const Task = require('./libs/Task');
 const odmInfo = require('./libs/odmInfo');
-const Directories = require('./libs/Directories');
-const unzip = require('node-unzip-2');
 const si = require('systeminformation');
-const mv = require('mv');
 const S3 = require('./libs/S3');
 
 const auth = require('./libs/auth/factory').fromConfig(config);
 const authCheck = auth.getMiddleware();
-const uuidv4 = require('uuid/v4');
-
-// zip files
-let request = require('request');
-
-let download = function(uri, filename, callback) {
-    request.head(uri, function(err, res, body) {
-        if (err) callback(err);
-        else{
-            request(uri).pipe(fs.createWriteStream(filename)).on('close', callback);
-        }
-    });
-};
+const taskNew = require('./libs/taskNew');
 
 app.use(express.static('public'));
 app.use('/swagger.json', express.static('docs/swagger.json'));
 
-const upload = multer({
-    storage: multer.diskStorage({
-        destination: (req, file, cb) => {
-            let dstPath = path.join("tmp", req.id);
-            fs.exists(dstPath, exists => {
-                if (!exists) {
-                    fs.mkdir(dstPath, undefined, () => {
-                        cb(null, dstPath);
-                    });
-                } else {
-                    cb(null, dstPath);
-                }
-            });
-        },
-        filename: (req, file, cb) => {
-            cb(null, file.originalname);
-        }
-    })
-});
-
+const formDataParser = multer().none();
 const urlEncodedBodyParser = bodyParser.urlencoded({extended: false});
 
 let taskManager;
 let server;
 
 /** @swagger
+ *  /task/new/init:
+ *    post:
+ *      description: Initialize the upload of a new task. If successful, a user can start uploading files via /task/new/upload. The task will not start until /task/new/commit is called.
+ *      tags: [task]
+ *      parameters:
+ *        -
+ *          name: name
+ *          in: formData
+ *          description: An optional name to be associated with the task
+ *          required: false
+ *          type: string
+ *        -
+ *          name: options
+ *          in: formData
+ *          description: 'Serialized JSON string of the options to use for processing, as an array of the format: [{name: option1, value: value1}, {name: option2, value: value2}, ...]. For example, [{"name":"cmvs-maxImages","value":"500"},{"name":"time","value":true}]. For a list of all options, call /options'
+ *          required: false
+ *          type: string
+ *        -
+ *          name: skipPostProcessing
+ *          in: formData
+ *          description: 'When set, skips generation of map tiles, derivate assets, point cloud tiles.'
+ *          required: false
+ *          type: boolean
+ *        -
+ *          name: webhook
+ *          in: formData
+ *          description: Optional URL to call when processing has ended (either successfully or unsuccessfully).
+ *          required: false
+ *          type: string
+ *        -
+ *          name: token
+ *          in: query
+ *          description: 'Token required for authentication (when authentication is required).'
+ *          required: false
+ *          type: string
+ *        -
+ *          name: set-uuid
+ *          in: header
+ *          description: 'An optional UUID string that will be used as UUID for this task instead of generating a random one.'
+ *          required: false
+ *          type: string
+ *      responses:
+ *        200:
+ *          description: Success
+ *          schema:
+ *            type: object
+ *            required: [uuid]
+ *            properties:
+ *              uuid:
+ *                type: string
+ *                description: UUID of the newly created task
+ *        default:
+ *          description: Error
+ *          schema:
+ *            $ref: '#/definitions/Error'
+ */
+app.post('/task/new/init', authCheck, taskNew.assignUUID, formDataParser, taskNew.handleInit);
+
+/** @swagger
+ *  /task/new/upload/{uuid}:
+ *    post:
+ *      description: Adds one or more files to the task created via /task/new/init. It does not start the task. To start the task, call /task/new/commit.
+ *      tags: [task]
+ *      consumes:
+ *        - multipart/form-data
+ *      parameters:
+ *        -
+ *           name: uuid
+ *           in: path
+ *           description: UUID of the task
+ *           required: true
+ *           type: string
+ *        -
+ *          name: images
+ *          in: formData
+ *          description: Images to process, plus an optional GCP file. If included, the GCP file should have .txt extension
+ *          required: true
+ *          type: file
+ *        -
+ *          name: token
+ *          in: query
+ *          description: 'Token required for authentication (when authentication is required).'
+ *          required: false
+ *          type: string
+ *      responses:
+ *        200:
+ *          description: File Received
+ *          schema:
+ *            $ref: "#/definitions/Response"
+ *        default:
+ *          description: Error
+ *          schema:
+ *            $ref: '#/definitions/Error'
+ */
+app.post('/task/new/upload/:uuid', authCheck, taskNew.getUUID, taskNew.preUpload, taskNew.uploadImages, taskNew.handleUpload);
+
+/** @swagger
+ *  /task/new/commit/{uuid}:
+ *    post:
+ *      description: Creates a new task for which images have been uploaded via /task/new/upload.
+ *      tags: [task]
+ *      parameters:
+ *        -
+ *           name: uuid
+ *           in: path
+ *           description: UUID of the task
+ *           required: true
+ *           type: string
+ *        -
+ *          name: token
+ *          in: query
+ *          description: 'Token required for authentication (when authentication is required).'
+ *          required: false
+ *          type: string
+ *      responses:
+ *        200:
+ *          description: Success
+ *          schema:
+ *            type: object
+ *            required: [uuid]
+ *            properties:
+ *              uuid:
+ *                type: string
+ *                description: UUID of the newly created task
+ *        default:
+ *          description: Error
+ *          schema:
+ *            $ref: '#/definitions/Error'
+ */
+app.post('/task/new/commit/:uuid', authCheck, taskNew.getUUID, taskNew.handleCommit, taskNew.createTask);
+
+/** @swagger
  *  /task/new:
  *    post:
- *      description: Creates a new task and places it at the end of the processing queue
+ *      description: Creates a new task and places it at the end of the processing queue. For uploading really large tasks, see /task/new/init instead.
  *      tags: [task]
  *      consumes:
  *        - multipart/form-data
@@ -125,6 +220,12 @@ let server;
  *          required: false
  *          type: boolean
  *        -
+ *          name: webhook
+ *          in: formData
+ *          description: Optional URL to call when processing has ended (either successfully or unsuccessfully).
+ *          required: false
+ *          type: string
+ *        -
  *          name: token
  *          in: query
  *          description: 'Token required for authentication (when authentication is required).'
@@ -151,158 +252,12 @@ let server;
  *          schema:
  *            $ref: '#/definitions/Error'
  */
-app.post('/task/new', authCheck, (req, res, next) => {
-    // A user can optionally suggest a UUID instead of letting
-    // nodeODM pick one.
-    if (req.get('set-uuid')){
-        const userUuid = req.get('set-uuid');
-
-        // Valid UUID and no other task with same UUID?
-        if (/^[0-9a-f]{8}-[0-9a-f]{4}-[1-5][0-9a-f]{3}-[89ab][0-9a-f]{3}-[0-9a-f]{12}$/i.test(userUuid) && !taskManager.find(userUuid)){
-            req.id = userUuid;
-            next();
-        }else{
-            res.json({error: `Invalid set-uuid: ${userUuid}`})
-        }
-    }else{
-        req.id = uuidv4();
-        next();
-    }
-}, upload.array('images'), (req, res) => {
-    // TODO: consider doing the file moving in the background
-    // and return a response more quickly instead of a long timeout.
-    req.setTimeout(1000 * 60 * 20);
-
-    let srcPath = path.join("tmp", req.id);
-
-    // Print error message and cleanup
-    const die = (error) => {
-        res.json({error});
-
-        // Check if tmp/ directory needs to be cleaned
-        if (fs.stat(srcPath, (err, stats) => {
-            if (!err && stats.isDirectory()) rmdir(srcPath, () => {}); // ignore errors, don't wait
-        }));
-    };
-
-    if ((!req.files || req.files.length === 0) && !req.body.zipurl) die("Need at least 1 file or a zip file url.");
-    else if (config.maxImages && req.files && req.files.length > config.maxImages) die(`${req.files.length} images uploaded, but this node can only process up to ${config.maxImages}.`);
-
-    else {
-        let destPath = path.join(Directories.data, req.id);
-        let destImagesPath = path.join(destPath, "images");
-        let destGpcPath = path.join(destPath, "gpc");
-
-        async.series([
-            cb => {
-                odmInfo.filterOptions(req.body.options, (err, options) => {
-                    if (err) cb(err);
-                    else {
-                        req.body.options = options;
-                        cb(null);
-                    }
-                });
-            },
-
-            // Move all uploads to data/<uuid>/images dir (if any)
-            cb => {
-                if (req.files && req.files.length > 0) {
-                    fs.stat(destPath, (err, stat) => {
-                        if (err && err.code === 'ENOENT') cb();
-                        else cb(new Error(`Directory exists (should not have happened: ${err.code})`));
-                    });
-                } else {
-                    cb();
-                }
-            },
-
-            // Unzips zip URL to tmp/<uuid>/ (if any)
-            cb => {
-                if (req.body.zipurl) {
-                    let archive = "zipurl.zip";
-
-                    upload.storage.getDestination(req, archive, (err, dstPath) => {
-                        if (err) cb(err);
-                        else{
-                            let archiveDestPath = path.join(dstPath, archive);
-
-                            download(req.body.zipurl, archiveDestPath, cb);
-                        }
-                    });
-                } else {
-                    cb();
-                }
-            },
-
-            cb => fs.mkdir(destPath, undefined, cb),
-            cb => fs.mkdir(destGpcPath, undefined, cb),
-            cb => mv(srcPath, destImagesPath, cb),
-
-            cb => {
-                // Find any *.zip file and extract
-                fs.readdir(destImagesPath, (err, entries) => {
-                    if (err) cb(err);
-                    else {
-                        async.eachSeries(entries, (entry, cb) => {
-                            if (/\.zip$/gi.test(entry)) {
-                                let filesCount = 0;
-                                fs.createReadStream(path.join(destImagesPath, entry)).pipe(unzip.Parse())
-                                        .on('entry', function(entry) {
-                                            if (entry.type === 'File') {
-                                                filesCount++;
-                                                entry.pipe(fs.createWriteStream(path.join(destImagesPath, path.basename(entry.path))));
-                                            } else {
-                                                entry.autodrain();
-                                            }
-                                        })
-                                        .on('close', () => {
-                                            // Verify max images limit
-                                            if (config.maxImages && filesCount > config.maxImages) cb(`${filesCount} images uploaded, but this node can only process up to ${config.maxImages}.`);
-                                            else cb();
-                                        })
-                                        .on('error', cb);
-                            } else cb();
-                        }, cb);
-                    }
-                });
-            },
-
-            cb => {
-                // Find any *.txt (GPC) file and move it to the data/<uuid>/gpc directory
-                // also remove any lingering zipurl.zip
-                fs.readdir(destImagesPath, (err, entries) => {
-                    if (err) cb(err);
-                    else {
-                        async.eachSeries(entries, (entry, cb) => {
-                            if (/\.txt$/gi.test(entry)) {
-                                mv(path.join(destImagesPath, entry), path.join(destGpcPath, entry), cb);
-                            }else if (/\.zip$/gi.test(entry)){
-                                fs.unlink(path.join(destImagesPath, entry), cb);
-                            } else cb();
-                        }, cb);
-                    }
-                });
-            },
-
-            // Create task
-            cb => {
-                new Task(req.id, req.body.name, (err, task) => {
-                    if (err) cb(err);
-                    else {
-                        taskManager.addNew(task);
-                        res.json({ uuid: req.id });
-                        cb();
-                    }
-                }, req.body.options, 
-                   req.body.webhook,
-                   req.body.skipPostProcessing === 'true');
-            }
-        ], err => {
-            if (err) die(err.message);
-        });
-    }
-
-});
+app.post('/task/new', authCheck, taskNew.assignUUID, taskNew.uploadImages, (req, res, next) => {
+    req.body = req.body || {};
+    if ((!req.files || req.files.length === 0) && !req.body.zipurl) req.error = "Need at least 1 file or a zip file url.";
+    else if (config.maxImages && req.files && req.files.length > config.maxImages) req.error = `${req.files.length} images uploaded, but this node can only process up to ${config.maxImages}.`;
+    next();
+}, taskNew.createTask);
 
 let getTaskFromUuid = (req, res, next) => {
     let task = taskManager.find(req.params.uuid);
@@ -857,13 +812,21 @@ process.on('SIGTERM', gracefulShutdown);
 process.on('SIGINT', gracefulShutdown);
 
 // Startup
-if (config.test) logger.info("Running in test mode");
+if (config.test) {
+    logger.info("Running in test mode");
+    if (config.testSkipOrthophotos) logger.info("Orthophotos will be skipped");
+    if (config.testSkipDems) logger.info("DEMs will be skipped");
+    if (config.testDropUploads) logger.info("Uploads will drop at random");
+}
 
 let commands = [
     cb => odmInfo.initialize(cb),
     cb => auth.initialize(cb),
     cb => S3.initialize(cb),
-    cb => { taskManager = new TaskManager(cb); },
+    cb => { 
+        TaskManager.initialize(cb);
+        taskManager = TaskManager.singleton();
+    },
     cb => {
         server = app.listen(config.port, err => {
             if (!err) logger.info('Server has started on port ' + String(config.port));

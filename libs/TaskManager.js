@@ -30,8 +30,11 @@ const Directories = require('./Directories');
 
 const TASKS_DUMP_FILE = path.join(Directories.data, "tasks.json");
 const CLEANUP_TASKS_IF_OLDER_THAN = 1000 * 60 * config.cleanupTasksAfter; // minutes
+const CLEANUP_STALE_UPLOADS_AFTER = 1000 * 60 * config.cleanupUploadsAfter; // minutes
 
-module.exports = class TaskManager{
+let taskManager;
+
+class TaskManager{
     constructor(done){
         this.tasks = {};
         this.runningQueue = [];
@@ -40,6 +43,7 @@ module.exports = class TaskManager{
             cb => this.restoreTaskListFromDump(cb),
             cb => this.removeOldTasks(cb),
             cb => this.removeOrphanedDirectories(cb),
+            cb => this.removeStaleUploads(cb),
             cb => {
                 this.processNextTask();
                 cb();
@@ -49,6 +53,7 @@ module.exports = class TaskManager{
                 schedule.scheduleJob('0 * * * *', () => {
                     this.removeOldTasks();
                     this.dumpTaskList();
+                    this.removeStaleUploads();
                 });
 
                 cb();
@@ -95,6 +100,29 @@ module.exports = class TaskManager{
                         !this.tasks[entry]){
                         logger.info(`Found orphaned directory: ${entry}, removing...`);
                         rmdir(dirPath, cb);
+                    }else cb();
+                }, done);
+            }
+        });
+    }
+
+    removeStaleUploads(done){
+        fs.readdir("tmp", (err, entries) => {
+            if (err) done(err);
+            else{
+                const now = new Date();
+                async.eachSeries(entries, (entry, cb) => {
+                    let dirPath = path.join("tmp", entry);
+                    if (entry.match(/^[\w\d]+\-[\w\d]+\-[\w\d]+\-[\w\d]+\-[\w\d]+$/)){
+                        fs.stat(dirPath, (err, stats) => {
+                            if (err) cb(err);
+                            else{
+                                if (stats.isDirectory() && stats.ctime.getTime() + CLEANUP_STALE_UPLOADS_AFTER < now.getTime()){
+                                    logger.info(`Found stale upload directory: ${entry}, removing...`);
+                                    rmdir(dirPath, cb);
+                                }else cb();
+                            }
+                        });
                     }else cb();
                 }, done);
             }
@@ -263,5 +291,12 @@ module.exports = class TaskManager{
             }
         }
         return count;
+    }
+}
+
+module.exports = {
+    singleton: function(){ return taskManager; },
+    initialize: function(cb){ 
+        taskManager = new TaskManager(cb);
     }
 };

@@ -33,9 +33,11 @@ Options:
 	-d, --deamonize 	Set process to run as a deamon
 	--parallel_queue_processing <number> Number of simultaneous processing tasks (default: 2)
 	--cleanup_tasks_after <number> Number of minutes that elapse before deleting finished and canceled tasks (default: 2880) 
+	--cleanup_uploads_after <number> Number of minutes that elapse before deleting unfinished uploads. Set this value to the maximum time you expect a dataset to be uploaded. (default: 2880) 
 	--test Enable test mode. In test mode, no commands are sent to OpenDroneMap. This can be useful during development or testing (default: false)
 	--test_skip_orthophotos	If test mode is enabled, skip orthophoto results when generating assets. (default: false) 
 	--test_skip_dems	If test mode is enabled, skip dems results when generating assets. (default: false) 
+	--test_drop_uploads	If test mode is enabled, drop /task/new/upload requests with 50% probability. (default: false)
 	--powercycle	When set, the application exits immediately after powering up. Useful for testing launch and compilation issues.
 	--token <token>	Sets a token that needs to be passed for every request. This can be used to limit access to the node only to token holders. (default: none)
 	--max_images <number>	Specify the maximum number of images that this processing node supports. (default: unlimited)
@@ -90,9 +92,11 @@ config.port = parseInt(argv.port || argv.p || fromConfigFile("port", process.env
 config.deamon = argv.deamonize || argv.d || fromConfigFile("daemon", false);
 config.parallelQueueProcessing = argv.parallel_queue_processing || fromConfigFile("parallelQueueProcessing", 2);
 config.cleanupTasksAfter = parseInt(argv.cleanup_tasks_after || fromConfigFile("cleanupTasksAfter", 2880));
+config.cleanupUploadsAfter = parseInt(argv.cleanup_uploads_after || fromConfigFile("cleanupUploadsAfter", 2880));
 config.test = argv.test || fromConfigFile("test", false);
 config.testSkipOrthophotos = argv.test_skip_orthophotos || fromConfigFile("testSkipOrthophotos", false);
 config.testSkipDems = argv.test_skip_dems || fromConfigFile("testSkipDems", false);
+config.testDropUploads = argv.test_drop_uploads || fromConfigFile("testDropUploads", false);
 config.powercycle = argv.powercycle || fromConfigFile("powercycle", false);
 config.token = argv.token || fromConfigFile("token", "");
 config.maxImages = parseInt(argv.max_images || fromConfigFile("maxImages", "")) || null;
