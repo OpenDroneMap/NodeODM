@@ -317,6 +317,7 @@ module.exports = class Task{
                               'odm_georeferencing', 'odm_texturing',
                               'odm_dem/dsm.tif', 'odm_dem/dtm.tif', 'dsm_tiles', 'dtm_tiles',
                               'orthophoto_tiles', 'potree_pointcloud', 'images.json'];
+            let tasks = [];
             
             if (config.test){
                 if (config.testSkipOrthophotos){
@@ -336,11 +337,14 @@ module.exports = class Task{
                         allPaths.splice(allPaths.indexOf(p), 1);
                     });
                 }
+
+                if (config.testFailTasks){
+                    logger.info("Test mode will fail the task");
+                    tasks.push(done => done(new Error("Test fail")));
+                }
             }
             
-            let tasks = [];
             if (!this.skipPostProcessing) tasks.push(runPostProcessingScript());
-            
             tasks.push(createZipArchive('all.zip', allPaths));
             
             // Upload to S3 all paths + all.zip file (if config says so)
