@@ -436,11 +436,17 @@ $(function() {
     Task.prototype.restart = genApiCall("/task/restart?token=" + token, function(task) {
         task.resetOutput();
     });
+    Task.prototype.downloadLink = function(){
+        return "/task/" + this.uuid + "/download/all.zip?token=" + token;
+    };
+    Task.prototype.downloadOrthoLink = function(){
+        return "/task/" + this.uuid + "/download/orthophoto.tif?token=" + token;
+    };
     Task.prototype.download = function() {
-        location.href = "/task/" + this.uuid + "/download/all.zip?token=" + token;
+        location.href = this.downloadLink();
     };
     Task.prototype.downloadOrthophoto = function() {
-        location.href = "/task/" + this.uuid + "/download/orthophoto.tif?token=" + token;
+        location.href = this.downloadOrthoLink();
     };
 
     var taskList = new TaskList();
