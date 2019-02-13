@@ -71,10 +71,13 @@ class TaskManager{
         for (let uuid in this.tasks){
             let task = this.tasks[uuid];
 
+            let dateFinished = task.dateCreated;
+            if (task.processingTime > 0) dateFinished += task.processingTime;
+
             if ([statusCodes.FAILED,
                 statusCodes.COMPLETED,
                 statusCodes.CANCELED].indexOf(task.status.code) !== -1 &&
-                now - task.dateCreated > CLEANUP_TASKS_IF_OLDER_THAN){
+                now - dateFinished > CLEANUP_TASKS_IF_OLDER_THAN){
                 list.push(task.uuid);
             }
         }
