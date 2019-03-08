@@ -59,7 +59,7 @@ module.exports = {
                         "--zip-results", "--pmvs-num-cores",
                         "--start-with", "--gcp", "--end-with", "--images",
                         "--rerun-all", "--rerun",
-                        "--slam-config", "--video", "--version", "--name"].indexOf(option) !== -1) continue;
+                        "--slam-config", "--video", "--version", "name"].indexOf(option) !== -1) continue;
 
                     let values = json[option];
 
