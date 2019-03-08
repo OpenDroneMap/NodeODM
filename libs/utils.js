@@ -16,6 +16,7 @@ module.exports = {
     },
 
     sanitize: function(filePath){
-        return filePath.replace(/(\/|\\)/g, "_");
+        filePath = filePath.replace(/[^\w.]/g, "_");
+        return filePath;
     }
 };
