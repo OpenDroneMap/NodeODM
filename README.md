@@ -43,7 +43,7 @@ You can use [CloudODM](https://github.com/OpenDroneMap/CloudODM) to run tasks wi
 If you want to store results on a separate drive, map the `/var/www/data` folder to the location of your drive:
 
 ```bash
-docker run -p 3000:3000 -v /mnt/external_hd:/var/www/data opendronemap/node-opendronemap
+docker run -p 3000:3000 -v /mnt/external_hd:/var/www/data opendronemap/nodeodm
 ```
 
 This can be also used to access the computation results directly from the file system.
