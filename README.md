@@ -12,7 +12,7 @@ We recommend that you setup NodeODM using [Docker](https://www.docker.com/).
 
 * From the Docker Quickstart Terminal (Windows / OSX) or from the command line (Linux) type:
 ```
-docker run -p 3000:3000 opendronemap/node-opendronemap
+docker run -p 3000:3000 opendronemap/nodeodm
 ```
 
 * If you're on Windows/OSX, find the IP of your Docker machine by running this command from your Docker Quickstart Terminal:
