@@ -1,4 +1,7 @@
 "use strict";
+
+const path = require('path');
+
 module.exports = {
     get: function(scope, prop, defaultValue){
         let parts = prop.split(".");
@@ -18,5 +21,28 @@ module.exports = {
     sanitize: function(filePath){
         filePath = filePath.replace(/[^\w.-]/g, "_");
         return filePath;
+    },
+
+    parseUnsafePathsList: function(paths){
+        // Parse a list (or a JSON encoded string representing a list)
+        // of paths and remove all traversals (., ..) and guarantee
+        // that the paths are relative
+
+        if (typeof paths === "string"){
+            try{
+                paths = JSON.parse(paths);
+            }catch(e){
+                return [];
+            }
+        }
+        
+        if (!Array.isArray(paths)){
+            return [];
+        }
+        
+        return paths.map(p => {
+            const safeSuffix = path.normalize(p).replace(/^(\.\.(\/|\\|$))+/, '');
+            return path.join('./', safeSuffix);
+        });
     }
 };

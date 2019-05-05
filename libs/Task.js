@@ -32,11 +32,12 @@ const Directories = require('./Directories');
 const kill = require('tree-kill');
 const S3 = require('./S3');
 const request = require('request');
+const utils = require('./utils');
 
 const statusCodes = require('./statusCodes');
 
 module.exports = class Task{
-    constructor(uuid, name, done, options = [], webhook = null, skipPostProcessing = false){
+    constructor(uuid, name, options = [], webhook = null, skipPostProcessing = false, outputs = [], done = () => {}){
         assert(uuid !== undefined, "uuid must be set");
         assert(done !== undefined, "ready must be set");
 
@@ -51,6 +52,7 @@ module.exports = class Task{
         this.runningProcesses = [];
         this.webhook = webhook;
         this.skipPostProcessing = skipPostProcessing;
+        this.outputs = utils.parseUnsafePathsList(outputs);
 
         async.series([
             // Read images info
@@ -86,22 +88,28 @@ module.exports = class Task{
     }
 
     static CreateFromSerialized(taskJson, done){
-        new Task(taskJson.uuid, taskJson.name, (err, task) => {
-            if (err) done(err);
-            else{
-                // Override default values with those
-                // provided in the taskJson
-                for (let k in taskJson){
-                    task[k] = taskJson[k];
+        new Task(taskJson.uuid, 
+            taskJson.name, 
+            taskJson.options, 
+            taskJson.webhook, 
+            taskJson.skipPostProcessing,
+            taskJson.outputs,
+            (err, task) => {
+                if (err) done(err);
+                else{
+                    // Override default values with those
+                    // provided in the taskJson
+                    for (let k in taskJson){
+                        task[k] = taskJson[k];
+                    }
+    
+                    // Tasks that were running should be put back to QUEUED state
+                    if (task.status.code === statusCodes.RUNNING){
+                        task.status.code = statusCodes.QUEUED;
+                    }
+                    done(null, task);
                 }
-
-                // Tasks that were running should be put back to QUEUED state
-                if (task.status.code === statusCodes.RUNNING){
-                    task.status.code = statusCodes.QUEUED;
-                }
-                done(null, task);
-            }
-        }, taskJson.options, taskJson.webhook, taskJson.skipPostProcessing);
+            });
     }
 
     // Get path where images are stored for this task
@@ -317,6 +325,12 @@ module.exports = class Task{
                               'odm_georeferencing', 'odm_texturing',
                               'odm_dem/dsm.tif', 'odm_dem/dtm.tif', 'dsm_tiles', 'dtm_tiles',
                               'orthophoto_tiles', 'potree_pointcloud', 'images.json'];
+            
+            // Did the user request different outputs than the default?
+            if (this.outputs.length > 0) allPaths = this.outputs;
+
+            console.log(allPaths);
+
             let tasks = [];
             
             if (config.test){
@@ -528,7 +542,8 @@ module.exports = class Task{
             status: this.status,
             options: this.options,
             webhook: this.webhook,
-            skipPostProcessing: !!this.skipPostProcessing
+            skipPostProcessing: !!this.skipPostProcessing,
+            outputs: this.outputs || []
         };
     }
 };

@@ -80,6 +80,12 @@ let server;
  *          required: false
  *          type: string
  *        -
+ *          name: outputs
+ *          in: formData
+ *          description: 'An optional serialized JSON string of paths relative to the project directory that should be included in the all.zip result file, overriding the default behavior.'
+ *          required: false
+ *          type: string
+ *        -
  *          name: token
  *          in: query
  *          description: 'Token required for authentication (when authentication is required).'
@@ -223,6 +229,12 @@ app.post('/task/new/commit/:uuid', authCheck, taskNew.getUUID, taskNew.handleCom
  *          name: webhook
  *          in: formData
  *          description: Optional URL to call when processing has ended (either successfully or unsuccessfully).
+ *          required: false
+ *          type: string
+ *        -
+ *          name: outputs
+ *          in: formData
+ *          description: 'An optional serialized JSON string of paths relative to the project directory that should be included in the all.zip result file, overriding the default behavior.'
  *          required: false
  *          type: string
  *        -

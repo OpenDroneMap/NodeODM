@@ -318,16 +318,18 @@ module.exports = {
 
                 // Create task
                 cb => {
-                    new Task(req.id, req.body.name, (err, task) => {
+                    new Task(req.id, req.body.name, req.body.options,
+                    req.body.webhook,
+                    req.body.skipPostProcessing === 'true',
+                    req.body.outputs,
+                    (err, task) => {
                         if (err) cb(err);
                         else {
                             TaskManager.singleton().addNew(task);
                             res.json({ uuid: req.id });
                             cb();
                         }
-                    }, req.body.options,
-                    req.body.webhook,
-                    req.body.skipPostProcessing === 'true');
+                    });
                 }
             ], err => {
                 if (err) die(err.message);
