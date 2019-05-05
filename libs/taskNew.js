@@ -269,30 +269,62 @@ module.exports = {
                 cb => fs.mkdir(destPath, undefined, cb),
                 cb => fs.mkdir(destGcpPath, undefined, cb),
                 cb => mv(srcPath, destImagesPath, cb),
-
+                
+                // Zip files handling
                 cb => {
-                    // Find any *.zip file and extract
+                    const handleSeed = (cb) => {
+                        const seedFileDst = path.join(destPath, "seed.zip");
+
+                        async.series([
+                            // Move to project root
+                            cb => mv(path.join(destImagesPath, "seed.zip"), seedFileDst, cb),
+                            
+                            // Extract
+                            cb => {
+                                fs.createReadStream(seedFileDst).pipe(unzip.Extract({ path: destPath }))
+                                    .on('close', cb)
+                                    .on('error', cb);
+                            },
+
+                            // Verify max images limit
+                            cb => {
+                                fs.readdir(destImagesPath, (err, files) => {
+                                    if (config.maxImages && files.length > config.maxImages) cb(`${files.length} images uploaded, but this node can only process up to ${config.maxImages}.`);
+                                    else cb(err);
+                                });
+                            }
+                        ], cb);
+                    }
+
+                    const handleZipUrl = (cb) => {
+                        let filesCount = 0;
+                        fs.createReadStream(path.join(destImagesPath, "zipurl.zip")).pipe(unzip.Parse())
+                            .on('entry', function(entry) {
+                                if (entry.type === 'File') {
+                                    filesCount++;
+                                    entry.pipe(fs.createWriteStream(path.join(destImagesPath, path.basename(entry.path))));
+                                } else {
+                                    entry.autodrain();
+                                }
+                            })
+                            .on('close', () => {
+                                // Verify max images limit
+                                if (config.maxImages && filesCount > config.maxImages) cb(`${filesCount} images uploaded, but this node can only process up to ${config.maxImages}.`);
+                                else cb();
+                            })
+                            .on('error', cb);
+                    }
+
+                    // Find and handle zip files and extract
                     fs.readdir(destImagesPath, (err, entries) => {
                         if (err) cb(err);
                         else {
                             async.eachSeries(entries, (entry, cb) => {
-                                if (/\.zip$/gi.test(entry)) {
-                                    let filesCount = 0;
-                                    fs.createReadStream(path.join(destImagesPath, entry)).pipe(unzip.Parse())
-                                            .on('entry', function(entry) {
-                                                if (entry.type === 'File') {
-                                                    filesCount++;
-                                                    entry.pipe(fs.createWriteStream(path.join(destImagesPath, path.basename(entry.path))));
-                                                } else {
-                                                    entry.autodrain();
-                                                }
-                                            })
-                                            .on('close', () => {
-                                                // Verify max images limit
-                                                if (config.maxImages && filesCount > config.maxImages) cb(`${filesCount} images uploaded, but this node can only process up to ${config.maxImages}.`);
-                                                else cb();
-                                            })
-                                            .on('error', cb);
+                                if (entry === "seed.zip"){
+                                    console.log("HERE");
+                                    handleSeed(cb);
+                                }else if (entry === "zipurl.zip") {
+                                    handleZipUrl(cb);
                                 } else cb();
                             }, cb);
                         }

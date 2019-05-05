@@ -329,8 +329,6 @@ module.exports = class Task{
             // Did the user request different outputs than the default?
             if (this.outputs.length > 0) allPaths = this.outputs;
 
-            console.log(allPaths);
-
             let tasks = [];
             
             if (config.test){

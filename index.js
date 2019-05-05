@@ -131,7 +131,7 @@ app.post('/task/new/init', authCheck, taskNew.assignUUID, formDataParser, taskNe
  *        -
  *          name: images
  *          in: formData
- *          description: Images to process, plus an optional GCP file. If included, the GCP file should have .txt extension
+ *          description: Images to process, plus an optional GCP file (*.txt) and/or an optional seed file (seed.zip). If included, the GCP file should have .txt extension. If included, the seed archive pre-polulates the task directory with its contents.
  *          required: true
  *          type: file
  *        -
@@ -198,7 +198,7 @@ app.post('/task/new/commit/:uuid', authCheck, taskNew.getUUID, taskNew.handleCom
  *        -
  *          name: images
  *          in: formData
- *          description: Images to process, plus an optional GCP file. If included, the GCP file should have .txt extension
+ *          description: Images to process, plus an optional GCP file (*.txt) and/or an optional seed file (seed.zip). If included, the GCP file should have .txt extension. If included, the seed archive pre-polulates the task directory with its contents.
  *          required: false
  *          type: file
  *        -
