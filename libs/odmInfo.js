@@ -58,7 +58,7 @@ module.exports = {
                     if (["-h", "--project-path", "--cmvs-maxImages", "--time",
                         "--zip-results", "--pmvs-num-cores",
                         "--start-with", "--gcp", "--images",
-                        "--rerun-all", "--rerun",
+                        "--rerun-all", "--rerun", "--end-with",
                         "--slam-config", "--video", "--version", "name"].indexOf(option) !== -1) continue;
 
                     let values = json[option];
