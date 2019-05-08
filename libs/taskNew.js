@@ -321,7 +321,6 @@ module.exports = {
                         else {
                             async.eachSeries(entries, (entry, cb) => {
                                 if (entry === "seed.zip"){
-                                    console.log("HERE");
                                     handleSeed(cb);
                                 }else if (entry === "zipurl.zip") {
                                     handleZipUrl(cb);
