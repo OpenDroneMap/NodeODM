@@ -69,6 +69,7 @@ $(function() {
         formData.append("webhook", $("#webhook").val());
         formData.append("skipPostProcessing", !$("#doPostProcessing").prop('checked'));
         formData.append("options", JSON.stringify(optionsModel.getUserOptions()));
+        // formData.append("outputs", JSON.stringify(['odm_orthophoto/odm_orthophoto.tif']));
 
         if (this.mode() === 'file'){
             if (this.filesCount() > 0){
@@ -119,7 +120,7 @@ $(function() {
         url : "/task/new/upload/",
         parallelUploads: 8, // http://blog.olamisan.com/max-parallel-http-connections-in-a-browser max parallel connections
         uploadMultiple: false,
-        acceptedFiles: "image/*,text/*",
+        acceptedFiles: "image/*,text/*,application/*",
         autoProcessQueue: false,
         createImageThumbnails: false,
         previewTemplate: '<div style="display:none"></div>',

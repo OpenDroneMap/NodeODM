@@ -57,8 +57,8 @@ module.exports = {
                     // (num cores can be set programmatically, so can gcpFile, etc.)
                     if (["-h", "--project-path", "--cmvs-maxImages", "--time",
                         "--zip-results", "--pmvs-num-cores",
-                        "--start-with", "--gcp", "--end-with", "--images",
-                        "--rerun-all", "--rerun",
+                        "--start-with", "--gcp", "--images",
+                        "--rerun-all", "--rerun", "--end-with",
                         "--slam-config", "--video", "--version", "name"].indexOf(option) !== -1) continue;
 
                     let values = json[option];

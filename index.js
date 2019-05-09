@@ -80,6 +80,12 @@ let server;
  *          required: false
  *          type: string
  *        -
+ *          name: outputs
+ *          in: formData
+ *          description: 'An optional serialized JSON string of paths relative to the project directory that should be included in the all.zip result file, overriding the default behavior.'
+ *          required: false
+ *          type: string
+ *        -
  *          name: token
  *          in: query
  *          description: 'Token required for authentication (when authentication is required).'
@@ -125,7 +131,7 @@ app.post('/task/new/init', authCheck, taskNew.assignUUID, formDataParser, taskNe
  *        -
  *          name: images
  *          in: formData
- *          description: Images to process, plus an optional GCP file. If included, the GCP file should have .txt extension
+ *          description: Images to process, plus an optional GCP file (*.txt) and/or an optional seed file (seed.zip). If included, the GCP file should have .txt extension. If included, the seed archive pre-polulates the task directory with its contents.
  *          required: true
  *          type: file
  *        -
@@ -192,7 +198,7 @@ app.post('/task/new/commit/:uuid', authCheck, taskNew.getUUID, taskNew.handleCom
  *        -
  *          name: images
  *          in: formData
- *          description: Images to process, plus an optional GCP file. If included, the GCP file should have .txt extension
+ *          description: Images to process, plus an optional GCP file (*.txt) and/or an optional seed file (seed.zip). If included, the GCP file should have .txt extension. If included, the seed archive pre-polulates the task directory with its contents.
  *          required: false
  *          type: file
  *        -
@@ -223,6 +229,12 @@ app.post('/task/new/commit/:uuid', authCheck, taskNew.getUUID, taskNew.handleCom
  *          name: webhook
  *          in: formData
  *          description: Optional URL to call when processing has ended (either successfully or unsuccessfully).
+ *          required: false
+ *          type: string
+ *        -
+ *          name: outputs
+ *          in: formData
+ *          description: 'An optional serialized JSON string of paths relative to the project directory that should be included in the all.zip result file, overriding the default behavior.'
  *          required: false
  *          type: string
  *        -
