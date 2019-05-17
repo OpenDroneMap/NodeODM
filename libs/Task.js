@@ -90,7 +90,7 @@ module.exports = class Task{
                 odmInfo.getPipelineStages((err, pstages) => {
                     if (!err) this.stages = pstages.map(ps => { return {
                                                             id: ps,
-                                                            status_code: statusCodes.QUEUED,
+                                                            status: statusCodes.QUEUED,
                                                             progress: 0
                                                         }});
                     else this.stages = [];
@@ -103,6 +103,9 @@ module.exports = class Task{
     }
 
     static CreateFromSerialized(taskJson, done){
+        // TODO: serialize progress
+        // TODO: on task start, reset progress
+        // TODO: handle on complete, on fail, on cancel progress update
         new Task(taskJson.uuid, 
             taskJson.name, 
             taskJson.options, 
@@ -179,9 +182,8 @@ module.exports = class Task{
     }
 
     updateProgress(globalProgress, stageProgress, stage){
-        return;
-        globalProgress = min(100, max(0, globalProgress));
-        stageProgress = min(100, max(0, stageProgress));
+        globalProgress = Math.min(100, Math.max(0, globalProgress));
+        stageProgress = Math.min(100, Math.max(0, stageProgress));
         
         // Progress updates are asynchronous (via UDP)
         // so things could be out of order. We ignore all progress
