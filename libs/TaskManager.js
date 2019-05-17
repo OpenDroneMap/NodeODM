@@ -67,9 +67,9 @@ class TaskManager{
 
     onProgressUpdate(uuid, globalProgress, stageProgress, stage){
         const task = this.tasks[uuid];
-        if (task){
-            
-        }
+
+        // Keep 10% for special postprocessing step
+        if (task) task.updateProgress(globalProgress * 0.9, stageProgress, stage);
     }
 
     // Removes old tasks that have either failed, are completed, or

@@ -136,14 +136,18 @@ module.exports = {
     },
 
     // Returns a list of stages that tasks go through
-    // In OpenDroneMap this is the same as the --rerun-from domain
+    // In OpenDroneMap this is the same as the --rerun-from domain,
+    // plus a special "postprocess" step
     getPipelineStages: function(done){
         this.getOptions((err, odmOptions) => {
             if (err) done(err);
             else{
                 const rerunFrom = odmOptions.find(opt => opt.name === 'rerun-from' && opt.type === 'enum');
-                if (rerunFrom) done(null, rerunFrom.domain);
-                else done(null, []);
+                if (rerunFrom){
+                    let stages = rerunFrom.domain.filter(d => d !== "");
+                    stages.push("postprocess");
+                    done(null, stages);
+                }else done(null, []);
             }
         });
     },

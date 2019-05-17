@@ -303,13 +303,20 @@ let getTaskFromUuid = (req, res, next) => {
  *          description: 'Token required for authentication (when authentication is required).'
  *          required: false
  *          type: string
+ *        -
+ *          name: with_output
+ *          in: query
+ *          description: Optionally retrieve the console output for this task. The parameter specifies the line number that the console output should be truncated from. For example, passing a value of 100 will retrieve the console output starting from line 100. By default no console output is added to the response.
+ *          default: 0
+ *          required: false
+ *          type: integer
  *       responses:
  *        200:
  *         description: Task Information
  *         schema:
  *           title: TaskInfo
  *           type: object
- *           required: [uuid, name, dateCreated, processingTime, status, options, imagesCount]
+ *           required: [uuid, name, dateCreated, processingTime, status, options, imagesCount, progress, stages]
  *           properties:
  *            uuid:
  *              type: string
@@ -324,9 +331,13 @@ let getTaskFromUuid = (req, res, next) => {
  *              type: integer
  *              description: Milliseconds that have elapsed since the task started being processed.
  *            status:
- *              type: integer
- *              description: Status code (10 = QUEUED, 20 = RUNNING, 30 = FAILED, 40 = COMPLETED, 50 = CANCELED)
- *              enum: [10, 20, 30, 40, 50]
+ *              type: object
+ *              required: [code]
+ *              properties:
+ *                code:
+ *                  type: integer
+ *                  description: Status code (10 = QUEUED, 20 = RUNNING, 30 = FAILED, 40 = COMPLETED, 50 = CANCELED)
+ *                  enum: [10, 20, 30, 40, 50]
  *            options:
  *              type: array
  *              description: List of options used to process this task
@@ -343,13 +354,37 @@ let getTaskFromUuid = (req, res, next) => {
  *            imagesCount:
  *              type: integer
  *              description: Number of images
+ *            progress:
+ *              type: float
+ *              description: Percentage progress (estimated) of the task
+ *            stages:
+ *              type: array
+ *              description: Progress information about each stage of the task
+ *              items:
+ *                type: object
+ *                required: [id, status, progress]
+ *                properties:
+ *                  id:
+ *                    type: string
+ *                    description: The stage key (same as the value used in the --rerun-from parameter)
+ *                  status:
+ *                    type: integer
+ *                    description: Status code (10 = QUEUED, 20 = RUNNING, 30 = FAILED, 40 = COMPLETED, 50 = CANCELED)
+ *                    enum: [10, 20, 30, 40, 50]
+ *            output:
+ *              type: array
+ *              description: Console output for the task (only if requested via ?output=<linenum>)
+ *              items:
+ *                type: string
  *        default:
  *          description: Error
  *          schema:
  *            $ref: '#/definitions/Error'
  */
 app.get('/task/:uuid/info', authCheck, getTaskFromUuid, (req, res) => {
-    res.json(req.task.getInfo());
+    const info = req.task.getInfo();
+    if (req.query.with_output !== undefined) info.output = req.task.getOutput(req.query.with_output);
+    res.json(info);
 });
 
 /** @swagger

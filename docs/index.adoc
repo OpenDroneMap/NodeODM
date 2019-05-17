@@ -8,7 +8,7 @@ REST API to access ODM
 
 === Version information
 [%hardbreaks]
-_Version_ : 1.5.0
+_Version_ : 1.5.1
 
 
 === Contact information
@@ -592,6 +592,8 @@ Gets information about this task, such as name, creation date, processing time, 
 |Type|Name|Description|Schema|Default
 |*Path*|*uuid* +
 _required_|UUID of the task|string|
+|*Query*|*output* +
+_optional_|Optionally retrieve the console output for this task. The parameter specifies the line number that the console output should be truncated from. For example, passing a value of 100 will retrieve the console output starting from line 100. By default no console output is added to the response.|integer|`"0"`
 |*Query*|*token* +
 _optional_|Token required for authentication (when authentication is required).|string|
 |*FormData*|*options* +
@@ -622,10 +624,14 @@ _required_|Number of images|integer
 _required_|Name|string
 |*options* +
 _required_|List of options used to process this task|< <<_task_uuid_info_get_options,options>> > array
+|*output* +
+_optional_|Console output for the task (only if requested via ?output=<linenum>)|< string > array
 |*processingTime* +
 _required_|Milliseconds that have elapsed since the task started being processed.|integer
+|*stages* +
+_required_|Progress information about each stage of the task|< <<_task_uuid_info_get_stages,stages>> > array
 |*status* +
-_required_|Status code (10 = QUEUED, 20 = RUNNING, 30 = FAILED, 40 = COMPLETED, 50 = CANCELED)|integer
+_required_||<<_task_uuid_info_get_status,status>>
 |*uuid* +
 _required_|UUID|string
 |===
@@ -640,6 +646,28 @@ _required_|UUID|string
 _required_|Option name (example: "odm_meshing-octreeDepth")|string
 |*value* +
 _required_|Value (example: 9)|string
+|===
+
+[[_task_uuid_info_get_stages]]
+*stages*
+
+[options="header", cols=".^3,.^11,.^4"]
+|===
+|Name|Description|Schema
+|*id* +
+_required_|The stage key (same as the value used in the –rerun-from parameter)|string
+|*status_code* +
+_required_|Status code (10 = QUEUED, 20 = RUNNING, 30 = FAILED, 40 = COMPLETED, 50 = CANCELED)|integer
+|===
+
+[[_task_uuid_info_get_status]]
+*status*
+
+[options="header", cols=".^3,.^11,.^4"]
+|===
+|Name|Description|Schema
+|*code* +
+_required_|Status code (10 = QUEUED, 20 = RUNNING, 30 = FAILED, 40 = COMPLETED, 50 = CANCELED)|integer
 |===
 
 

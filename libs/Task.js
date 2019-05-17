@@ -26,6 +26,7 @@ const glob = require("glob");
 const path = require('path');
 const rmdir = require('rimraf');
 const odmRunner = require('./odmRunner');
+const odmInfo = require('./odmInfo');
 const processRunner = require('./processRunner');
 const archiver = require('archiver');
 const Directories = require('./Directories');
@@ -53,8 +54,8 @@ module.exports = class Task{
         this.webhook = webhook;
         this.skipPostProcessing = skipPostProcessing;
         this.outputs = utils.parseUnsafePathsList(outputs);
-        // TODO: add stages getPipelineStages
-
+        this.progress = 0;
+        
         async.series([
             // Read images info
             cb => {
@@ -82,6 +83,19 @@ module.exports = class Task{
                         cb(null);
                     }
                 });
+            },
+
+            // Populate stage progress
+            cb => {
+                odmInfo.getPipelineStages((err, pstages) => {
+                    if (!err) this.stages = pstages.map(ps => { return {
+                                                            id: ps,
+                                                            status_code: statusCodes.QUEUED,
+                                                            progress: 0
+                                                        }});
+                    else this.stages = [];
+                    cb();
+                }); 
             }
         ], err => {
             done(err, this);
@@ -165,7 +179,48 @@ module.exports = class Task{
     }
 
     updateProgress(globalProgress, stageProgress, stage){
-        // TODO
+        return;
+        globalProgress = min(100, max(0, globalProgress));
+        stageProgress = min(100, max(0, stageProgress));
+        
+        // Progress updates are asynchronous (via UDP)
+        // so things could be out of order. We ignore all progress
+        // updates that are lower than what we might have previously received.
+        if (globalProgress >= this.progress){
+            this.progress = globalProgress;
+            
+            // Process only if we don't know what the stages are
+            if (this.stages.length){
+                let i = 0;
+                for (i = 0; i < this.stages.length; i++){
+                    let s = this.stages[i];
+                    if (s.id === stage){
+                        // Update progress
+                        s.progress = stageProgress;
+                        
+                        // If this one completed, make sure previous stages are also completed
+                        // and that the next stage (if any) is running
+                        if (stageProgress === 100){
+                            s.status = statusCodes.COMPLETED;
+                            for (let j = i; j >= 0; j--){
+                                this.stages[j].status = s.status;
+                                this.stages[j].progress = 100
+                            }
+                            if (i < this.stages.length - 1){
+                                this.stages[i + 1].status = statusCodes.RUNNING;
+                                this.stages[i + 1].progress = 0
+                            }
+                        }else{
+                            s.status = statusCodes.RUNNING;
+                        }
+                        return;
+                    }
+                }
+
+                // This should never happen
+                logger.warn(`Invalid progress update for stage: ${stage}|${globalProgress}|${stageProgress}`);
+            }
+        }
     }
 
     updateProcessingTime(resetTime){
@@ -468,7 +523,9 @@ module.exports = class Task{
             processingTime: this.processingTime,
             status: this.status,
             options: this.options,
-            imagesCount: this.images.length
+            imagesCount: this.images.length,
+            progress: this.progress,
+            stages: this.stages
         };
     }
 
