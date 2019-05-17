@@ -53,6 +53,7 @@ module.exports = class Task{
         this.webhook = webhook;
         this.skipPostProcessing = skipPostProcessing;
         this.outputs = utils.parseUnsafePathsList(outputs);
+        // TODO: add stages getPipelineStages
 
         async.series([
             // Read images info
@@ -161,6 +162,10 @@ module.exports = class Task{
         for (let k in extra){
             this.status[k] = extra[k];
         }
+    }
+
+    updateProgress(globalProgress, stageProgress, stage){
+        // TODO
     }
 
     updateProcessingTime(resetTime){
