@@ -157,6 +157,10 @@
 
                             <span data-bind="css: 'statusIcon glyphicon ' + icon()"></span>
 
+                            <div data-bind="visible: info().status && info().status.code === 20" class="progress" style="margin-top: 12px;">
+                                <div class="progress-bar progress-bar-info" role="progressbar" data-bind="text: parseInt(info().progress) + '%', style: {width: info().progress + '%'}"></div>
+                            </div>
+
                             <div class="actionButtons">
                                 <button data-bind="click: cancel, visible: showCancel()" type="button" class="btn btn-primary btn-sm">
                                     <span class="glyphicon glyphicon-remove-circle"></span> Cancel

@@ -316,7 +316,7 @@ let getTaskFromUuid = (req, res, next) => {
  *         schema:
  *           title: TaskInfo
  *           type: object
- *           required: [uuid, name, dateCreated, processingTime, status, options, imagesCount, progress, stages]
+ *           required: [uuid, name, dateCreated, processingTime, status, options, imagesCount, progress]
  *           properties:
  *            uuid:
  *              type: string
@@ -357,20 +357,6 @@ let getTaskFromUuid = (req, res, next) => {
  *            progress:
  *              type: float
  *              description: Percentage progress (estimated) of the task
- *            stages:
- *              type: array
- *              description: Progress information about each stage of the task
- *              items:
- *                type: object
- *                required: [id, status, progress]
- *                properties:
- *                  id:
- *                    type: string
- *                    description: The stage key (same as the value used in the --rerun-from parameter)
- *                  status:
- *                    type: integer
- *                    description: Status code (10 = QUEUED, 20 = RUNNING, 30 = FAILED, 40 = COMPLETED, 50 = CANCELED)
- *                    enum: [10, 20, 30, 40, 50]
  *            output:
  *              type: array
  *              description: Console output for the task (only if requested via ?output=<linenum>)

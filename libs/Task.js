@@ -83,19 +83,6 @@ module.exports = class Task{
                         cb(null);
                     }
                 });
-            },
-
-            // Populate stage progress
-            cb => {
-                odmInfo.getPipelineStages((err, pstages) => {
-                    if (!err) this.stages = pstages.map(ps => { return {
-                                                            id: ps,
-                                                            status: statusCodes.QUEUED,
-                                                            progress: 0
-                                                        }});
-                    else this.stages = [];
-                    cb();
-                }); 
             }
         ], err => {
             done(err, this);
@@ -103,9 +90,6 @@ module.exports = class Task{
     }
 
     static CreateFromSerialized(taskJson, done){
-        // TODO: serialize progress
-        // TODO: on task start, reset progress
-        // TODO: handle on complete, on fail, on cancel progress update
         new Task(taskJson.uuid, 
             taskJson.name, 
             taskJson.options, 
@@ -181,47 +165,14 @@ module.exports = class Task{
         }
     }
 
-    updateProgress(globalProgress, stageProgress, stage){
+    updateProgress(globalProgress){
         globalProgress = Math.min(100, Math.max(0, globalProgress));
-        stageProgress = Math.min(100, Math.max(0, stageProgress));
         
         // Progress updates are asynchronous (via UDP)
         // so things could be out of order. We ignore all progress
         // updates that are lower than what we might have previously received.
         if (globalProgress >= this.progress){
             this.progress = globalProgress;
-            
-            // Process only if we don't know what the stages are
-            if (this.stages.length){
-                let i = 0;
-                for (i = 0; i < this.stages.length; i++){
-                    let s = this.stages[i];
-                    if (s.id === stage){
-                        // Update progress
-                        s.progress = stageProgress;
-                        
-                        // If this one completed, make sure previous stages are also completed
-                        // and that the next stage (if any) is running
-                        if (stageProgress === 100){
-                            s.status = statusCodes.COMPLETED;
-                            for (let j = i; j >= 0; j--){
-                                this.stages[j].status = s.status;
-                                this.stages[j].progress = 100
-                            }
-                            if (i < this.stages.length - 1){
-                                this.stages[i + 1].status = statusCodes.RUNNING;
-                                this.stages[i + 1].progress = 0
-                            }
-                        }else{
-                            s.status = statusCodes.RUNNING;
-                        }
-                        return;
-                    }
-                }
-
-                // This should never happen
-                logger.warn(`Invalid progress update for stage: ${stage}|${globalProgress}|${stageProgress}`);
-            }
         }
     }
 
@@ -286,6 +237,7 @@ module.exports = class Task{
     // This will spawn a new process.
     start(done){
         const finished = err => {
+            this.updateProgress(100);
             this.stopTrackingProcessingTime();
             done(err);
         };
@@ -301,6 +253,7 @@ module.exports = class Task{
                         });
 
                     archive.on('finish', () => {
+                        this.updateProgress(97);
                         // TODO: is this being fired twice?
                         done();
                     });
@@ -372,8 +325,10 @@ module.exports = class Task{
                         }, (err, code, signal) => {
                             if (err) done(err);
                             else{
-                                if (code === 0) done();
-                                else done(new Error(`Process exited with code ${code}`));
+                                if (code === 0){
+                                    this.updateProgress(93);
+                                    done();
+                                }else done(new Error(`Process exited with code ${code}`));
                             }
                         }, output => {
                             this.output.push(output);
@@ -526,8 +481,7 @@ module.exports = class Task{
             status: this.status,
             options: this.options,
             imagesCount: this.images.length,
-            progress: this.progress,
-            stages: this.stages
+            progress: this.progress
         };
     }
 

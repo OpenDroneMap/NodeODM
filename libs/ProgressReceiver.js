@@ -31,15 +31,14 @@ module.exports = class ProgressReceiver{
 
         server.on('message', (msg) => {
             const parts = String(msg).split("/");
-            if (parts.length === 6){
+            if (parts.length === 4){
                 const cmd = parts[0];
                 if (cmd === 'PGUP'){
-                    let [_, pid, uuid, globalProgress, stageProgress, stage] = parts;
+                    let [_, pid, uuid, globalProgress] = parts;
                     globalProgress = parseFloat(globalProgress);
-                    stageProgress = parseFloat(stageProgress);
 
-                    if (!isNaN(globalProgress) && !isNaN(stageProgress)){
-                        this.callbacks.forEach(callback => callback(uuid, globalProgress, stageProgress, stage));
+                    if (!isNaN(globalProgress)){
+                        this.callbacks.forEach(callback => callback(uuid, globalProgress));
                     }
                 }
             }
