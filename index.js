@@ -669,7 +669,7 @@ app.get('/options', authCheck, (req, res) => {
  *         description: Info
  *         schema:
  *           type: object
- *           required: [version, taskQueueCount]
+ *           required: [version, taskQueueCount, maxImages, engineVersion, engine]
  *           properties:
  *             version:
  *               type: string
@@ -692,17 +692,20 @@ app.get('/options', authCheck, (req, res) => {
  *             maxParallelTasks:
  *               type: integer
  *               description: Maximum number of tasks that can be processed simultaneously
- *             odmVersion:
+ *             engineVersion:
  *               type: string
- *               description: Current version of ODM
+ *               description: Current version of processing engine
+ *             engine:
+ *               type: string
+ *               description: Lowercase identifier of processing engine
  */
 app.get('/info', authCheck, (req, res) => {
     async.parallel({
         cpu: cb => si.cpu(data => cb(null, data)),
         mem: cb => si.mem(data => cb(null, data)),
-        odmVersion: odmInfo.getVersion
+        engineVersion: odmInfo.getVersion
     }, (_, data) => {
-        const { cpu, mem, odmVersion } = data;
+        const { cpu, mem, engineVersion } = data;
 
         // For testing
         if (req.query._debugUnauthorized){
@@ -719,7 +722,8 @@ app.get('/info', authCheck, (req, res) => {
             cpuCores: cpu.cores,
             maxImages: config.maxImages,
             maxParallelTasks: config.parallelQueueProcessing,
-            odmVersion: odmVersion
+            engineVersion: engineVersion,
+            engine: 'odm'
         });
     });
 });

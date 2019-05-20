@@ -180,12 +180,14 @@ _optional_|Token required for authentication (when authentication is required).|
 _optional_|Amount of RAM available in bytes|integer
 |*cpuCores* +
 _optional_|Number of CPU cores (virtual)|integer
+|*engine* +
+_required_|Lowercase identifier of processing engine|string
+|*engineVersion* +
+_required_|Current version of processing engine|string
 |*maxImages* +
-_optional_|Maximum number of images allowed for new tasks or null if there's no limit.|integer
+_required_|Maximum number of images allowed for new tasks or null if there's no limit.|integer
 |*maxParallelTasks* +
 _optional_|Maximum number of tasks that can be processed simultaneously|integer
-|*odmVersion* +
-_optional_|Current version of ODM|string
 |*taskQueueCount* +
 _required_|Number of tasks currently being processed or waiting to be processed|integer
 |*totalMemory* +
