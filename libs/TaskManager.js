@@ -27,6 +27,7 @@ const statusCodes = require('./statusCodes');
 const async = require('async');
 const schedule = require('node-schedule');
 const Directories = require('./Directories');
+const ProgressReceiver = require('./ProgressReceiver');
 
 const TASKS_DUMP_FILE = path.join(Directories.data, "tasks.json");
 const CLEANUP_TASKS_IF_OLDER_THAN = 1000 * 60 * config.cleanupTasksAfter; // minutes
@@ -38,6 +39,9 @@ class TaskManager{
     constructor(done){
         this.tasks = {};
         this.runningQueue = [];
+        
+        const progressReceiver = new ProgressReceiver();
+        progressReceiver.addListener(this.onProgressUpdate.bind(this));
 
         async.series([
             cb => this.restoreTaskListFromDump(cb),
@@ -59,6 +63,13 @@ class TaskManager{
                 cb();
             }
         ], done);
+    }
+
+    onProgressUpdate(uuid, globalProgress){
+        const task = this.tasks[uuid];
+
+        // Keep 10% for special postprocessing step
+        if (task) task.updateProgress(globalProgress * 0.9);
     }
 
     // Removes old tasks that have either failed, are completed, or

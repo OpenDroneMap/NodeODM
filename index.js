@@ -303,13 +303,20 @@ let getTaskFromUuid = (req, res, next) => {
  *          description: 'Token required for authentication (when authentication is required).'
  *          required: false
  *          type: string
+ *        -
+ *          name: with_output
+ *          in: query
+ *          description: Optionally retrieve the console output for this task. The parameter specifies the line number that the console output should be truncated from. For example, passing a value of 100 will retrieve the console output starting from line 100. By default no console output is added to the response.
+ *          default: 0
+ *          required: false
+ *          type: integer
  *       responses:
  *        200:
  *         description: Task Information
  *         schema:
  *           title: TaskInfo
  *           type: object
- *           required: [uuid, name, dateCreated, processingTime, status, options, imagesCount]
+ *           required: [uuid, name, dateCreated, processingTime, status, options, imagesCount, progress]
  *           properties:
  *            uuid:
  *              type: string
@@ -324,9 +331,13 @@ let getTaskFromUuid = (req, res, next) => {
  *              type: integer
  *              description: Milliseconds that have elapsed since the task started being processed.
  *            status:
- *              type: integer
- *              description: Status code (10 = QUEUED, 20 = RUNNING, 30 = FAILED, 40 = COMPLETED, 50 = CANCELED)
- *              enum: [10, 20, 30, 40, 50]
+ *              type: object
+ *              required: [code]
+ *              properties:
+ *                code:
+ *                  type: integer
+ *                  description: Status code (10 = QUEUED, 20 = RUNNING, 30 = FAILED, 40 = COMPLETED, 50 = CANCELED)
+ *                  enum: [10, 20, 30, 40, 50]
  *            options:
  *              type: array
  *              description: List of options used to process this task
@@ -343,13 +354,23 @@ let getTaskFromUuid = (req, res, next) => {
  *            imagesCount:
  *              type: integer
  *              description: Number of images
+ *            progress:
+ *              type: float
+ *              description: Percentage progress (estimated) of the task
+ *            output:
+ *              type: array
+ *              description: Console output for the task (only if requested via ?output=<linenum>)
+ *              items:
+ *                type: string
  *        default:
  *          description: Error
  *          schema:
  *            $ref: '#/definitions/Error'
  */
 app.get('/task/:uuid/info', authCheck, getTaskFromUuid, (req, res) => {
-    res.json(req.task.getInfo());
+    const info = req.task.getInfo();
+    if (req.query.with_output !== undefined) info.output = req.task.getOutput(req.query.with_output);
+    res.json(info);
 });
 
 /** @swagger
@@ -648,7 +669,7 @@ app.get('/options', authCheck, (req, res) => {
  *         description: Info
  *         schema:
  *           type: object
- *           required: [version, taskQueueCount]
+ *           required: [version, taskQueueCount, maxImages, engineVersion, engine]
  *           properties:
  *             version:
  *               type: string
@@ -671,17 +692,20 @@ app.get('/options', authCheck, (req, res) => {
  *             maxParallelTasks:
  *               type: integer
  *               description: Maximum number of tasks that can be processed simultaneously
- *             odmVersion:
+ *             engineVersion:
  *               type: string
- *               description: Current version of ODM
+ *               description: Current version of processing engine
+ *             engine:
+ *               type: string
+ *               description: Lowercase identifier of processing engine
  */
 app.get('/info', authCheck, (req, res) => {
     async.parallel({
         cpu: cb => si.cpu(data => cb(null, data)),
         mem: cb => si.mem(data => cb(null, data)),
-        odmVersion: odmInfo.getVersion
+        engineVersion: odmInfo.getVersion
     }, (_, data) => {
-        const { cpu, mem, odmVersion } = data;
+        const { cpu, mem, engineVersion } = data;
 
         // For testing
         if (req.query._debugUnauthorized){
@@ -698,7 +722,8 @@ app.get('/info', authCheck, (req, res) => {
             cpuCores: cpu.cores,
             maxImages: config.maxImages,
             maxParallelTasks: config.parallelQueueProcessing,
-            odmVersion: odmVersion
+            engineVersion: engineVersion,
+            engine: 'odm'
         });
     });
 });

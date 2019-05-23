@@ -26,6 +26,7 @@ const glob = require("glob");
 const path = require('path');
 const rmdir = require('rimraf');
 const odmRunner = require('./odmRunner');
+const odmInfo = require('./odmInfo');
 const processRunner = require('./processRunner');
 const archiver = require('archiver');
 const Directories = require('./Directories');
@@ -53,7 +54,8 @@ module.exports = class Task{
         this.webhook = webhook;
         this.skipPostProcessing = skipPostProcessing;
         this.outputs = utils.parseUnsafePathsList(outputs);
-
+        this.progress = 0;
+        
         async.series([
             // Read images info
             cb => {
@@ -163,6 +165,17 @@ module.exports = class Task{
         }
     }
 
+    updateProgress(globalProgress){
+        globalProgress = Math.min(100, Math.max(0, globalProgress));
+        
+        // Progress updates are asynchronous (via UDP)
+        // so things could be out of order. We ignore all progress
+        // updates that are lower than what we might have previously received.
+        if (globalProgress >= this.progress){
+            this.progress = globalProgress;
+        }
+    }
+
     updateProcessingTime(resetTime){
         this.processingTime = resetTime ?
                                 -1		:
@@ -224,6 +237,7 @@ module.exports = class Task{
     // This will spawn a new process.
     start(done){
         const finished = err => {
+            this.updateProgress(100);
             this.stopTrackingProcessingTime();
             done(err);
         };
@@ -239,6 +253,7 @@ module.exports = class Task{
                         });
 
                     archive.on('finish', () => {
+                        this.updateProgress(97);
                         // TODO: is this being fired twice?
                         done();
                     });
@@ -310,8 +325,10 @@ module.exports = class Task{
                         }, (err, code, signal) => {
                             if (err) done(err);
                             else{
-                                if (code === 0) done();
-                                else done(new Error(`Process exited with code ${code}`));
+                                if (code === 0){
+                                    this.updateProgress(93);
+                                    done();
+                                }else done(new Error(`Process exited with code ${code}`));
                             }
                         }, output => {
                             this.output.push(output);
@@ -463,7 +480,8 @@ module.exports = class Task{
             processingTime: this.processingTime,
             status: this.status,
             options: this.options,
-            imagesCount: this.images.length
+            imagesCount: this.images.length,
+            progress: this.progress
         };
     }
 
