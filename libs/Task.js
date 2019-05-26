@@ -353,7 +353,7 @@ module.exports = class Task{
                     logger.info("Test mode will skip orthophoto generation");
 
                     // Exclude these folders from the all.zip archive
-                    ['odm_orthophoto', 'orthophoto_tiles'].forEach(dir => {
+                    ['odm_orthophoto/odm_orthophoto.tif', 'odm_orthophoto/odm_orthophoto.mbtiles', 'orthophoto_tiles'].forEach(dir => {
                         allPaths.splice(allPaths.indexOf(dir), 1);
                     });
                 }
