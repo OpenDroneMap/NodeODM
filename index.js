@@ -45,6 +45,7 @@ app.use('/swagger.json', express.static('docs/swagger.json'));
 
 const formDataParser = multer().none();
 const urlEncodedBodyParser = bodyParser.urlencoded({extended: false});
+const jsonBodyParser = bodyParser.json();
 
 let taskManager;
 let server;
@@ -525,7 +526,7 @@ let successHandler = res => {
  *          schema:
  *            $ref: "#/definitions/Response"
  */
-app.post('/task/cancel', urlEncodedBodyParser, authCheck, uuidCheck, (req, res) => {
+app.post('/task/cancel', urlEncodedBodyParser, jsonBodyParser, authCheck, uuidCheck, (req, res) => {
     taskManager.cancel(req.body.uuid, successHandler(res));
 });
 
@@ -553,7 +554,7 @@ app.post('/task/cancel', urlEncodedBodyParser, authCheck, uuidCheck, (req, res) 
  *          schema:
  *            $ref: "#/definitions/Response"
  */
-app.post('/task/remove', urlEncodedBodyParser, authCheck, uuidCheck, (req, res) => {
+app.post('/task/remove', urlEncodedBodyParser, jsonBodyParser, authCheck, uuidCheck, (req, res) => {
     taskManager.remove(req.body.uuid, successHandler(res));
 });
 
@@ -588,7 +589,7 @@ app.post('/task/remove', urlEncodedBodyParser, authCheck, uuidCheck, (req, res) 
  *          schema:
  *            $ref: "#/definitions/Response"
  */
-app.post('/task/restart', urlEncodedBodyParser, authCheck, uuidCheck, (req, res, next) => {
+app.post('/task/restart', urlEncodedBodyParser, jsonBodyParser, authCheck, uuidCheck, (req, res, next) => {
     if (req.body.options){
         odmInfo.filterOptions(req.body.options, (err, options) => {
             if (err) res.json({ error: err.message });
