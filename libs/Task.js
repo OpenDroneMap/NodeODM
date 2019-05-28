@@ -367,10 +367,16 @@ module.exports = class Task{
                     });
                 }
 
+                if (config.testSeconds){
+                    logger.info(`Test mode will sleep for ${config.testSeconds} seconds before finishing processing`);
+                    tasks.push(done => setTimeout(done, config.testSeconds * 1000));
+                }
+
                 if (config.testFailTasks){
                     logger.info("Test mode will fail the task");
                     tasks.push(done => done(new Error("Test fail")));
                 }
+
             }
             
             if (!this.skipPostProcessing) tasks.push(runPostProcessingScript());
