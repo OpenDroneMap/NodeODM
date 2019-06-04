@@ -87,6 +87,12 @@ let server;
  *          required: false
  *          type: string
  *        -
+ *          name: dateCreated
+ *          in: formData
+ *          description: 'An optional timestamp overriding the default creation date of the task.'
+ *          required: false
+ *          type: integer
+ *        -
  *          name: token
  *          in: query
  *          description: 'Token required for authentication (when authentication is required).'
@@ -238,6 +244,12 @@ app.post('/task/new/commit/:uuid', authCheck, taskNew.getUUID, taskNew.handleCom
  *          description: 'An optional serialized JSON string of paths relative to the project directory that should be included in the all.zip result file, overriding the default behavior.'
  *          required: false
  *          type: string
+ *        -
+ *          name: dateCreated
+ *          in: formData
+ *          description: 'An optional timestamp overriding the default creation date of the task.'
+ *          required: false
+ *          type: integer
  *        -
  *          name: token
  *          in: query

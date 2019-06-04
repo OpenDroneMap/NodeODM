@@ -314,6 +314,7 @@ $(function() {
                 }
                 if (json.status && json.status.code && [codes.COMPLETED, codes.FAILED, codes.CANCELED].indexOf(json.status.code) !== -1){
                     self.stopRefreshingInfo();
+                    self.copyOutput();
                 }
 
                 self.info(json);
@@ -333,12 +334,26 @@ $(function() {
     Task.prototype.openInfo = function(){
         location.href='/task/' + this.uuid + '/info?token=' + token;
     };
+    Task.prototype.copyOutput = function(){
+        var self = this;
+        var url = "/task/" + self.uuid + "/output";
+            $.get(url, { token: token })
+                .done(function(output) {
+                    localStorage.setItem(self.uuid + '_output', JSON.stringify(output));
+                })
+                .fail(function() {
+                    console.warn("Cannot copy output for " + self.uuid);
+                });
+    };
     Task.prototype.downloadOutput = function(){
         var self = this;
         var url = "/task/" + self.uuid + "/output";
             $.get(url, { token: token })
                 .done(function(output) {
                     var wnd = window.open("about:blank", "", "_blank");
+                    if (output.length === 0){
+                        output = JSON.parse(localStorage.getItem(self.uuid + '_output') || []);
+                    }
                     wnd.document.write(output.join("<br/>"));
                 })
                 .fail(function() {
@@ -352,6 +367,9 @@ $(function() {
             var url = "/task/" + self.uuid + "/output";
             $.get(url, { line: -9, token: token })
                 .done(function(output) {
+                    if (output.length === 0){
+                        output = JSON.parse(localStorage.getItem(self.uuid + '_output') || []);
+                    }
                     self.output(output);
                 })
                 .fail(function() {
@@ -386,6 +404,8 @@ $(function() {
         var url = "/task/remove?token=" + token;
 
         function doRemove() {
+            localStorage.removeItem(self.uuid + '_output');
+
             $.post(url, {
                     uuid: self.uuid
                 })
