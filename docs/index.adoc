@@ -8,7 +8,7 @@ REST API to access ODM
 
 === Version information
 [%hardbreaks]
-_Version_ : 1.5.1
+_Version_ : 1.5.2
 
 
 === Contact information
@@ -295,6 +295,8 @@ Creates a new task and places it at the end of the processing queue. For uploadi
 _optional_|An optional UUID string that will be used as UUID for this task instead of generating a random one.|string|
 |*Query*|*token* +
 _optional_|Token required for authentication (when authentication is required).|string|
+|*FormData*|*dateCreated* +
+_optional_|An optional timestamp overriding the default creation date of the task.|integer|
 |*FormData*|*images* +
 _optional_|Images to process, plus an optional GCP file (*.txt) and/or an optional seed file (seed.zip). If included, the GCP file should have .txt extension. If included, the seed archive pre-polulates the task directory with its contents.|file|
 |*FormData*|*name* +
@@ -402,6 +404,8 @@ Initialize the upload of a new task. If successful, a user can start uploading f
 _optional_|An optional UUID string that will be used as UUID for this task instead of generating a random one.|string|
 |*Query*|*token* +
 _optional_|Token required for authentication (when authentication is required).|string|
+|*FormData*|*dateCreated* +
+_optional_|An optional timestamp overriding the default creation date of the task.|integer|
 |*FormData*|*name* +
 _optional_|An optional name to be associated with the task|string|
 |*FormData*|*options* +

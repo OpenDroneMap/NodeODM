@@ -353,6 +353,7 @@ module.exports = {
                     req.body.webhook,
                     req.body.skipPostProcessing === 'true',
                     req.body.outputs,
+                    req.body.dateCreated,
                     (err, task) => {
                         if (err) cb(err);
                         else {
