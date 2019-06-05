@@ -76,9 +76,9 @@
                         <div id="errorBlock" data-bind="visible: error().length > 0, click: dismissError">⚠️ <span data-bind="text: error"></span></div>
                         <hr/>
                         <div class="text-right">
-                            <input type="button" class="btn btn-info" data-bind="visible: mode() === 'file', click: toggleMode" value="Switch to URL" />
+                            <!--<input type="button" class="btn btn-info" data-bind="visible: mode() === 'file', click: toggleMode" value="Switch to URL" />
                             <input type="button" class="btn btn-info" data-bind="visible: mode() === 'url', click: toggleMode" value="Switch to File Upload" />
-                            
+                            -->
                             <input type="submit" class="btn btn-success" data-bind="attr: {disabled: uploading()}, value: uploading() ? 'Uploading...' : 'Start Task', click: startTask" />
                         </div>
                     </div>
@@ -151,9 +151,8 @@
                             <textarea class="consoleOutput" data-bind="value: output().join('\n'), visible: viewingOutput(), event: {mouseover: consoleMouseOver, mouseout: consoleMouseOut}, attr: {id: 'console_' + uuid}"></textarea>
                             
                             <div data-bind="visible: showDownload()" style="float: left; margin-top: 6px; padding-top: 6px; border-top: 1px solid #eee;">
-                                <div class="taskItem"><strong>Download: </strong> <a data-bind="attr: {'href': downloadLink()}">All Assets</a> | <a data-bind="attr: {'href': downloadOrthoLink()}">Orthophoto</a></div>
+                                <div class="taskItem"><strong>Download: </strong> <a data-bind="attr: {'href': downloadLink()}">All Assets</a></div>
                             </div>
-                            
 
                             <span data-bind="css: 'statusIcon glyphicon ' + icon()"></span>
 
