@@ -38,13 +38,13 @@ const utils = require('./utils');
 const statusCodes = require('./statusCodes');
 
 module.exports = class Task{
-    constructor(uuid, name, options = [], webhook = null, skipPostProcessing = false, outputs = [], done = () => {}){
+    constructor(uuid, name, options = [], webhook = null, skipPostProcessing = false, outputs = [], dateCreated = new Date().getTime(), done = () => {}){
         assert(uuid !== undefined, "uuid must be set");
         assert(done !== undefined, "ready must be set");
 
         this.uuid = uuid;
         this.name = name !== "" ? name : "Task of " + (new Date()).toISOString();
-        this.dateCreated = new Date().getTime();
+        this.dateCreated = isNaN(parseInt(dateCreated)) ? new Date().getTime() : parseInt(dateCreated);
         this.processingTime = -1;
         this.setStatus(statusCodes.QUEUED);
         this.options = options;
@@ -96,6 +96,7 @@ module.exports = class Task{
             taskJson.webhook, 
             taskJson.skipPostProcessing,
             taskJson.outputs,
+            taskJson.dateCreated,
             (err, task) => {
                 if (err) done(err);
                 else{
