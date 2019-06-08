@@ -342,7 +342,7 @@ module.exports = class Task{
             let allPaths = ['odm_orthophoto/odm_orthophoto.tif', 'odm_orthophoto/odm_orthophoto.mbtiles',
                               'odm_georeferencing', 'odm_texturing',
                               'odm_dem/dsm.tif', 'odm_dem/dtm.tif', 'dsm_tiles', 'dtm_tiles',
-                              'orthophoto_tiles', 'potree_pointcloud', 'images.json'];
+                              'orthophoto_tiles', 'potree_pointcloud', 'entwine_pointcloud', 'images.json'];
             
             // Did the user request different outputs than the default?
             if (this.outputs.length > 0) allPaths = this.outputs;
