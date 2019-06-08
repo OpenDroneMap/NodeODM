@@ -70,38 +70,60 @@ else
 	echo "gdal_translate is not installed, will skip MBTiles generation"
 fi
 
-# Generate Potree point cloud (if PotreeConverter is available)
-if hash PotreeConverter 2>/dev/null; then
-	potree_input_path=""
-	for path in "odm_georeferencing/odm_georeferenced_model.laz" \
-				"odm_georeferencing/odm_georeferenced_model.las" \
-				"odm_georeferencing/odm_georeferenced_model.ply" \
-				"opensfm/depthmaps/merged.ply" \
-				"smvs/smvs_dense_point_cloud.ply" \
-				"mve/mve_dense_point_cloud.ply" \
-				"pmvs/recon0/models/option-0000.ply"; do
-		if [ -e $path ]; then
-			echo "Found suitable point cloud for PotreeConverter: $path"
-			potree_input_path=$path
-			break
-		fi
-	done
+# Generate point cloud (if entwine or potreeconverter is available)
+pointcloud_input_path=""
+for path in "odm_georeferencing/odm_georeferenced_model.laz" \
+            "odm_georeferencing/odm_georeferenced_model.las" \
+            "odm_filterpoints/point_cloud.ply" \
+            "opensfm/depthmaps/merged.ply" \
+            "smvs/smvs_dense_point_cloud.ply" \
+            "mve/mve_dense_point_cloud.ply" \
+            "pmvs/recon0/models/option-0000.ply"; do
+    if [ -e $path ]; then
+        echo "Found point cloud: $path"
+        pointcloud_input_path=$path
+        break
+    fi
+done
 
-	if [ ! -z "$potree_input_path" ]; then
-		PotreeConverter $potree_input_path -o potree_pointcloud --overwrite -a RGB CLASSIFICATION
-
-		# Copy the failsafe PLY point cloud to odm_georeferencing 
-		# if necessary, otherwise it will not get zipped
-		if [ "$potree_input_path" == "opensfm/depthmaps/merged.ply" ] || [ "$potree_input_path" == "pmvs/recon0/models/option-0000.ply" ]; then
-			echo "Copying $potree_input_path to odm_georeferencing/odm_georeferenced_model.ply, even though it's not georeferenced..."
-			cp $potree_input_path "odm_georeferencing/odm_georeferenced_model.ply"
-		fi
-	else
-		echo "Potree point cloud will not be generated (no suitable input files found)"
-	fi
-else
-	echo "PotreeConverter is not installed, will skip generation of Potree point cloud"
+# Never generate point cloud tiles with split-merge workflows
+if [ -e "submodels" ] && [ -e "entwine_pointcloud" ]; then
+    pointcloud_input_path=""
+    echo "Split-merge dataset with point cloud detected. No need to regenerate point cloud tiles."
 fi
+
+if [ ! -z "$pointcloud_input_path" ]; then
+    # Copy the failsafe PLY point cloud to odm_georeferencing 
+    # if necessary, otherwise it will not get zipped
+    if [ "$pointcloud_input_path" == "odm_filterpoints/point_cloud.ply" ] || [ "$pointcloud_input_path" == "opensfm/depthmaps/merged.ply" ] || [ "$pointcloud_input_path" == "pmvs/recon0/models/option-0000.ply" ]; then
+        echo "Copying $pointcloud_input_path to odm_georeferencing/odm_georeferenced_model.ply, even though it's not georeferenced..."
+        cp $pointcloud_input_path "odm_georeferencing/odm_georeferenced_model.ply"
+    fi
+    
+    if hash entwine 2>/dev/null; then
+        # Optionally cleanup previous results (from a restart)
+        if [ -e "entwine_pointcloud" ]; then
+            rm -fr "entwine_pointcloud"
+        fi
+        
+        entwine build --threads $(nproc) --tmp "entwine_pointcloud-tmp" -i "$pointcloud_input_path" -o entwine_pointcloud
+        
+        # Cleanup
+        if [ -e "entwine_pointcloud-tmp" ]; then
+            rm -fr "entwine_pointcloud-tmp"
+        fi
+    else
+        echo "Entwine is not installed, checking if PotreeConverter is available instead..."
+        if hash PotreeConverter 2>/dev/null; then
+            PotreeConverter "$pointcloud_input_path" -o potree_pointcloud --overwrite -a RGB CLASSIFICATION
+        else
+            echo "PotreeConverter is also not installed, will skip generation of Potree point cloud"
+        fi
+    fi
+else
+    echo "Point cloud tiles will not be generated"
+fi
+
 
 echo "Postprocessing: done (•̀ᴗ•́)و!"
 exit 0
