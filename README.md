@@ -52,27 +52,9 @@ This can be also used to access the computation results directly from the file s
 
 If you are already running [ODM](https://github.com/OpenDroneMap/ODM) on Ubuntu natively you can follow these steps:
 
-1) Install PotreeConverter and LASzip dependency
+1) Install Entwine: https://entwine.io/quickstart.html#installation
  
-```bash
-apt-get install -y libboost-dev libboost-program-options-dev
-
-mkdir /staging
-git clone https://github.com/pierotofy/LAStools /staging/LAStools
-cd LAStools/LASzip
-mkdir build
-cd build
-cmake -DCMAKE_BUILD_TYPE=Release ..
-make
-
-git clone https://github.com/pierotofy/PotreeConverter /staging/PotreeConverter
-cd /staging/PotreeConverter
-mkdir build
-cd build
-cmake -DCMAKE_BUILD_TYPE=Release -DLASZIP_INCLUDE_DIRS=/staging/LAStools/LASzip/dll -DLASZIP_LIBRARY=/staging/LAStools/LASzip/build/src/liblaszip.a ..
-make && sudo make install
-```
-2) Install gdal2tiles.py script, node.js and npm dependencies
+2) Install node.js and npm dependencies:
 
 ```bash
 sudo curl --silent --location https://deb.nodesource.com/setup_6.x | sudo bash -
