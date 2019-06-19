@@ -26,7 +26,6 @@ const glob = require("glob");
 const path = require('path');
 const rmdir = require('rimraf');
 const odmRunner = require('./odmRunner');
-const odmInfo = require('./odmInfo');
 const processRunner = require('./processRunner');
 const archiver = require('archiver');
 const Directories = require('./Directories');
@@ -470,6 +469,7 @@ module.exports = class Task{
             this.setStatus(statusCodes.QUEUED);
             this.dateCreated = new Date().getTime();
             this.output = [];
+            this.progress = 0;
             this.stopTrackingProcessingTime(true);
             if (options !== undefined) this.options = options;
             cb(null);
