@@ -223,6 +223,18 @@ module.exports = {
                     }
                 },
                 {
+                    regex: /^(json)$/,
+                    validate: function(matches, value){
+                        try{
+                            if (typeof value !== 'string') return false;
+                            JSON.parse(value);
+                            return true;
+                        }catch(e){
+                            return false;
+                        }
+                    }
+                },
+                {
                     regex: /^(string|path)$/,
                     validate: function(){
                         return true; // All strings/paths are fine
