@@ -1,4 +1,4 @@
-= node-opendronemap
+= NodeODM
 
 
 [[_overview]]
@@ -8,7 +8,7 @@ REST API to access ODM
 
 === Version information
 [%hardbreaks]
-_Version_ : 1.5.2
+_Version_ : 1.5.3
 
 
 === Contact information
