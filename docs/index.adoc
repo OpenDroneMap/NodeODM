@@ -602,8 +602,6 @@ _required_|UUID of the task|string|
 _optional_|Token required for authentication (when authentication is required).|string|
 |*Query*|*with_output* +
 _optional_|Optionally retrieve the console output for this task. The parameter specifies the line number that the console output should be truncated from. For example, passing a value of 100 will retrieve the console output starting from line 100. By default no console output is added to the response.|integer|`"0"`
-|*FormData*|*options* +
-_optional_|Serialized JSON string of the options to use for processing, as an array of the format: [{name: option1, value: value1}, {name: option2, value: value2}, …]. For example, [{"name":"cmvs-maxImages","value":"500"},{"name":"time","value":true}]. For a list of all options, call /options|string|
 |===
 
 

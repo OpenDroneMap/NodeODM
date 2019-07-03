@@ -305,12 +305,6 @@ let getTaskFromUuid = (req, res, next) => {
  *           required: true
  *           type: string
  *        -
- *          name: options
- *          in: formData
- *          description: 'Serialized JSON string of the options to use for processing, as an array of the format: [{name: option1, value: value1}, {name: option2, value: value2}, ...]. For example, [{"name":"cmvs-maxImages","value":"500"},{"name":"time","value":true}]. For a list of all options, call /options'
- *          required: false
- *          type: string
- *        -
  *          name: token
  *          in: query
  *          description: 'Token required for authentication (when authentication is required).'
