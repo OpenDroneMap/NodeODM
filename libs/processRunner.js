@@ -22,6 +22,7 @@ let assert = require('assert');
 let spawn = require('child_process').spawn;
 let config = require('../config.js');
 let logger = require('./logger');
+let utils = require('./utils');
 
 
 function makeRunner(command, args, requiredOptions = [], outputTestFile = null){
@@ -58,7 +59,9 @@ function makeRunner(command, args, requiredOptions = [], outputTestFile = null){
         }
 
         // Launch
-        let childProcess = spawn(command, commandArgs);
+        const env = utils.clone(process.env);
+        env.LD_LIBRARY_PATH = path.join(config.odm_path, "SuperBuild", "install", "lib");
+        let childProcess = spawn(command, commandArgs, { env });
 
         childProcess
             .on('exit', (code, signal) => done(null, code, signal))
