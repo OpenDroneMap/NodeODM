@@ -7,7 +7,6 @@ PIDFile=/run/nodeodm.pid
 User=odm
 Group=odm
 WorkingDirectory=/www
-Environment="HOME=/www/data"
 ExecStart=/usr/bin/node index.js
 ExecStop=/bin/kill -s QUIT $MAINPID
 Restart=on-failure

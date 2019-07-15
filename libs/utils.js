@@ -44,5 +44,9 @@ module.exports = {
             const safeSuffix = path.normalize(p).replace(/^(\.\.(\/|\\|$))+/, '');
             return path.join('./', safeSuffix);
         });
+    },
+
+    clone: function(json){
+        return JSON.parse(JSON.stringify(json));
     }
 };
