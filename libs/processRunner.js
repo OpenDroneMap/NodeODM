@@ -58,7 +58,9 @@ function makeRunner(command, args, requiredOptions = [], outputTestFile = null){
         }
 
         // Launch
-        let childProcess = spawn(command, commandArgs);
+        let childProcess = spawn(command, commandArgs, {
+            LD_LIBRARY_PATH: path.join(config.odm_path, "SuperBuild", "install", "lib")
+        });
 
         childProcess
             .on('exit', (code, signal) => done(null, code, signal))
