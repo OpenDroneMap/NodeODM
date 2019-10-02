@@ -44,6 +44,7 @@ module.exports = class Task{
         this.uuid = uuid;
         this.name = name !== "" ? name : "Task of " + (new Date()).toISOString();
         this.dateCreated = isNaN(parseInt(dateCreated)) ? new Date().getTime() : parseInt(dateCreated);
+        this.dateStarted = 0;
         this.processingTime = -1;
         this.setStatus(statusCodes.QUEUED);
         this.options = options;
@@ -205,6 +206,10 @@ module.exports = class Task{
 
     isCanceled(){
         return this.status.code === statusCodes.CANCELED;
+    }
+
+    isRunning(){
+        return this.status.code === statusCodes.RUNNING;
     }
 
     // Cancels the current task (unless it's already canceled)
@@ -418,6 +423,7 @@ module.exports = class Task{
 
         if (this.status.code === statusCodes.QUEUED){
             this.startTrackingProcessingTime();
+            this.dateStarted = new Date().getTime();
             this.setStatus(statusCodes.RUNNING);
 
             let runnerOptions = this.options.reduce((result, opt) => {
@@ -471,6 +477,7 @@ module.exports = class Task{
         if ([statusCodes.CANCELED, statusCodes.FAILED, statusCodes.COMPLETED].indexOf(this.status.code) !== -1){
             this.setStatus(statusCodes.QUEUED);
             this.dateCreated = new Date().getTime();
+            this.dateStarted = 0;
             this.output = [];
             this.progress = 0;
             this.stopTrackingProcessingTime(true);
@@ -565,6 +572,7 @@ module.exports = class Task{
             uuid: this.uuid,
             name: this.name,
             dateCreated: this.dateCreated,
+            dateStarted: this.dateStarted,
             status: this.status,
             options: this.options,
             webhook: this.webhook,

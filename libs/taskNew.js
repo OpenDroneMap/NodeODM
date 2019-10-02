@@ -295,7 +295,12 @@ module.exports = {
                             },
 
                             // Remove
-                            fs.unlink(seedFileDst, cb)
+                            cb => {
+                                fs.exists(seedFileDst, exists => {
+                                    if (exists) fs.unlink(seedFileDst, cb);
+                                    else cb();
+                                });
+                            }
                         ], cb);
                     }
 
