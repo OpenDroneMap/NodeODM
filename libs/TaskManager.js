@@ -319,8 +319,8 @@ class TaskManager{
             for (let uuid in this.tasks){
                 let task = this.tasks[uuid];
                 
-                if (task.processingTime > config.maxRuntime * 60 * 1000){
-                    task.output.push(`Task timed out after ${task.processingTime / 60 / 1000} seconds.\n`);
+                if (!task.isCanceled() && task.processingTime > config.maxRuntime * 60 * 1000){
+                    task.output.push(`Task timed out after ${Math.ceil(task.processingTime / 60 / 1000)} minutes.\n`);
                     this.cancel(uuid, () => {
                         logger.warn(`Task ${uuid} timed out`);
                     });

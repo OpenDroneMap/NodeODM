@@ -51,7 +51,7 @@ Options:
 	--s3_signature_version <version>	S3 signature version. (default: 4)
 	--s3_upload_everything	Upload all task results to S3. (default: upload only .zip archive and orthophoto)
 	--max_concurrency   <number>	Place a cap on the max-concurrency option to use for each task. (default: no limit)
-	--max_runtime	<number> Number of minutes that a task is allowed to run before being forcibly canceled (timeout). (default: no limit)
+	--max_runtime	<number> Number of minutes (approximate) that a task is allowed to run before being forcibly canceled (timeout). (default: no limit)
 Log Levels: 
 error | debug | info | verbose | debug | silly 
 `);
