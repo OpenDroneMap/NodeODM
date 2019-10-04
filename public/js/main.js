@@ -480,14 +480,23 @@ $(function() {
     $('#resetDoPostProcessing').on('click', function(){
         $("#doPostProcessing").prop('checked', false);
     });
+    $('#resetTaskName').on('click', function(){
+        $("#taskName").val('');
+    });
 
     // Load options
     function Option(properties) {
         this.properties = properties;
-        this.value = ko.observable();
+
+        this.defaultValue = undefined;
+        if (properties.type === 'bool' && properties.value === 'true'){
+            this.defaultValue = true;
+        }
+        
+        this.value = ko.observable(this.defaultValue);
     }
     Option.prototype.resetToDefault = function() {
-        this.value(undefined);
+        this.value(this.defaultValue);
     };
 
     function OptionsModel() {

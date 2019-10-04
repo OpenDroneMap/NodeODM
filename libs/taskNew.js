@@ -292,6 +292,14 @@ module.exports = {
                                     if (config.maxImages && files.length > config.maxImages) cb(`${files.length} images uploaded, but this node can only process up to ${config.maxImages}.`);
                                     else cb(err);
                                 });
+                            },
+
+                            // Remove
+                            cb => {
+                                fs.exists(seedFileDst, exists => {
+                                    if (exists) fs.unlink(seedFileDst, cb);
+                                    else cb();
+                                });
                             }
                         ], cb);
                     }

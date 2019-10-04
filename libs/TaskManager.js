@@ -59,6 +59,13 @@ class TaskManager{
                     this.dumpTaskList();
                     this.removeStaleUploads();
                 });
+                
+                if (config.maxRuntime > 0){
+                    // Every minute
+                    schedule.scheduleJob('* * * * *', () => {
+                        this.checkTimeouts();
+                    });
+                }
 
                 cb();
             }
@@ -305,6 +312,23 @@ class TaskManager{
             }
         }
         return count;
+    }
+
+    checkTimeouts(){
+        if (config.maxRuntime > 0){
+            let now = new Date().getTime();
+
+            for (let uuid in this.tasks){
+                let task = this.tasks[uuid];
+                
+                if (task.isRunning() && task.dateStarted > 0 && (now - task.dateStarted) > config.maxRuntime * 60 * 1000){
+                    task.output.push(`Task timed out after ${Math.ceil(task.processingTime / 60 / 1000)} minutes.\n`);
+                    this.cancel(uuid, () => {
+                        logger.warn(`Task ${uuid} timed out`);
+                    });
+                }
+            }
+        }
     }
 }
 
