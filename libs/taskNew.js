@@ -188,7 +188,7 @@ module.exports = {
             cb => {
                 fs.stat(srcPath, (err, stat) => {
                     if (err && err.code === 'ENOENT') cb();
-                    else cb(new Error(`Directory exists (should not have happened: ${err.code})`));
+                    else cb(new Error(`Directory exists (should not have happened)`));
                 });
             },
             cb => fs.mkdir(srcPath, undefined, cb),
