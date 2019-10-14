@@ -187,11 +187,10 @@ module.exports = {
             },
             cb => {
                 fs.stat(srcPath, (err, stat) => {
-                    if (err && err.code === 'ENOENT') cb();
-                    else cb(new Error(`Directory exists (should not have happened)`));
+                    if (err && err.code === 'ENOENT') fs.mkdir(srcPath, undefined, cb);
+                    else cb(); // Dir already exists
                 });
             },
-            cb => fs.mkdir(srcPath, undefined, cb),
             cb => {
                 fs.writeFile(bodyFile, JSON.stringify(req.body), {encoding: 'utf8'}, cb);
             },
