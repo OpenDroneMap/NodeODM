@@ -82,9 +82,13 @@ if [ ! -z "$pointcloud_input_path" ]; then
     # if necessary, otherwise it will not get zipped
     if [ "$pointcloud_input_path" == "odm_filterpoints/point_cloud.ply" ] || [ "$pointcloud_input_path" == "opensfm/depthmaps/merged.ply" ] || [ "$pointcloud_input_path" == "pmvs/recon0/models/option-0000.ply" ]; then
         echo "Converting $pointcloud_input_path to odm_georeferencing/odm_georeferenced_model.laz, even though it's not georeferenced..."
-        pdal translate -i "$pointcloud_input_path" -o "odm_georeferencing/odm_georeferenced_model.laz"
-        if [ -e "odm_georeferencing/odm_georeferenced_model.laz" ]; then
-            pointcloud_input_path="odm_georeferencing/odm_georeferenced_model.laz"
+        if hash pdal 2>/dev/null; then
+            pdal translate -i "$pointcloud_input_path" -o "odm_georeferencing/odm_georeferenced_model.laz"
+            if [ -e "odm_georeferencing/odm_georeferenced_model.laz" ]; then
+                pointcloud_input_path="odm_georeferencing/odm_georeferenced_model.laz"
+            fi
+        else
+            echo "Cannot find pdal, skipping conversion"
         fi
     fi
     
