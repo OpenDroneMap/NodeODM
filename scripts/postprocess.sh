@@ -78,11 +78,14 @@ if [ -e "submodels" ] && [ -e "entwine_pointcloud" ]; then
 fi
 
 if [ ! -z "$pointcloud_input_path" ]; then
-    # Copy the failsafe PLY point cloud to odm_georeferencing 
+    # Convert the failsafe PLY point cloud to laz in odm_georeferencing 
     # if necessary, otherwise it will not get zipped
     if [ "$pointcloud_input_path" == "odm_filterpoints/point_cloud.ply" ] || [ "$pointcloud_input_path" == "opensfm/depthmaps/merged.ply" ] || [ "$pointcloud_input_path" == "pmvs/recon0/models/option-0000.ply" ]; then
-        echo "Copying $pointcloud_input_path to odm_georeferencing/odm_georeferenced_model.ply, even though it's not georeferenced..."
-        cp $pointcloud_input_path "odm_georeferencing/odm_georeferenced_model.ply"
+        echo "Converting $pointcloud_input_path to odm_georeferencing/odm_georeferenced_model.laz, even though it's not georeferenced..."
+        pdal translate -i "$pointcloud_input_path" -o "odm_georeferencing/odm_georeferenced_model.laz"
+        if [ -e "odm_georeferencing/odm_georeferenced_model.laz" ]; then
+            pointcloud_input_path="odm_georeferencing/odm_georeferenced_model.laz"
+        fi
     fi
     
     if hash entwine 2>/dev/null; then
