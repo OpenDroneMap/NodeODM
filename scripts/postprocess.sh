@@ -71,12 +71,6 @@ for path in "odm_georeferencing/odm_georeferenced_model.laz" \
     fi
 done
 
-# Never generate point cloud tiles with split-merge workflows
-if [ -e "submodels" ] && [ -e "entwine_pointcloud" ]; then
-    pointcloud_input_path=""
-    echo "Split-merge dataset with point cloud detected. No need to regenerate point cloud tiles."
-fi
-
 if [ ! -z "$pointcloud_input_path" ]; then
     # Convert the failsafe PLY point cloud to laz in odm_georeferencing 
     # if necessary, otherwise it will not get zipped
@@ -93,12 +87,11 @@ if [ ! -z "$pointcloud_input_path" ]; then
     fi
     
     if hash entwine 2>/dev/null; then
-        # Optionally cleanup previous results (from a restart)
-        if [ -e "entwine_pointcloud" ]; then
-            rm -fr "entwine_pointcloud"
+        if [ ! -e "entwine_pointcloud" ]; then
+            entwine build --threads $(nproc) --tmp "entwine_pointcloud-tmp" -i "$pointcloud_input_path" -o entwine_pointcloud
+        else
+            echo "Entwine point cloud is already built."
         fi
-        
-        entwine build --threads $(nproc) --tmp "entwine_pointcloud-tmp" -i "$pointcloud_input_path" -o entwine_pointcloud
         
         # Cleanup
         if [ -e "entwine_pointcloud-tmp" ]; then
