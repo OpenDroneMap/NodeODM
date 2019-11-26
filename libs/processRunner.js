@@ -61,16 +61,21 @@ function makeRunner(command, args, requiredOptions = [], outputTestFile = null){
         // Launch
         const env = utils.clone(process.env);
         env.LD_LIBRARY_PATH = path.join(config.odm_path, "SuperBuild", "install", "lib");
-        let childProcess = spawn(command, commandArgs, { env });
-
-        childProcess
-            .on('exit', (code, signal) => done(null, code, signal))
-            .on('error', done);
-
-        childProcess.stdout.on('data', chunk => outputReceived(chunk.toString()));
-        childProcess.stderr.on('data', chunk => outputReceived(chunk.toString()));
-
-        return childProcess;
+        
+        try{
+            let childProcess = spawn(command, commandArgs, { env });
+            childProcess
+                .on('exit', (code, signal) => done(null, code, signal))
+                .on('error', done);
+    
+            childProcess.stdout.on('data', chunk => outputReceived(chunk.toString()));
+            childProcess.stderr.on('data', chunk => outputReceived(chunk.toString()));
+            return childProcess;
+        }catch(e){
+            // Catch errors such as ENOMEM
+            logger.warn(`Error: ${e.message}`);
+            done(e);
+        }
     };
 }
 
