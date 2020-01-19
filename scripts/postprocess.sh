@@ -42,18 +42,19 @@ orthophoto_path="odm_orthophoto/odm_orthophoto.tif"
 
 if [ -e "$orthophoto_path" ]; then
 	python "$script_path/gdal2tiles.py" $g2t_options $orthophoto_path orthophoto_tiles
+
+    # Check for DEM tiles also
+    for dem_product in ${dem_products[@]}; do
+        colored_dem_path="odm_dem/""$dem_product""_colored_hillshade.tif"
+        if [ -e "$colored_dem_path" ]; then
+            python "$script_path/gdal2tiles.py" $g2t_options $colored_dem_path "$dem_product""_tiles"
+        else
+            echo "No $dem_product found at $colored_dem_path: will skip tiling"
+        fi
+    done
 else
 	echo "No orthophoto found at $orthophoto_path: will skip tiling"
 fi
-
-for dem_product in ${dem_products[@]}; do
-	colored_dem_path="odm_dem/""$dem_product""_colored_hillshade.tif"
-	if [ -e "$colored_dem_path" ]; then
-		python "$script_path/gdal2tiles.py" $g2t_options $colored_dem_path "$dem_product""_tiles"
-	else
-		echo "No $dem_product found at $colored_dem_path: will skip tiling"
-	fi
-done
 
 # Generate point cloud (if entwine or potreeconverter is available)
 pointcloud_input_path=""
