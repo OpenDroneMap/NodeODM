@@ -25,7 +25,7 @@ let logger = require('./logger');
 let utils = require('./utils');
 
 
-function makeRunner(command, args, requiredOptions = [], outputTestFile = null){
+function makeRunner(command, args, requiredOptions = [], outputTestFile = null, skipOnTest = true){
     return function(options, done, outputReceived){
         for (let requiredOption of requiredOptions){
             assert(options[requiredOption] !== undefined, `${requiredOption} must be defined`);
@@ -36,7 +36,7 @@ function makeRunner(command, args, requiredOptions = [], outputTestFile = null){
 
         logger.info(`About to run: ${command} ${commandArgs.join(" ")}`);
 
-        if (config.test){
+        if (config.test && skipOnTest){
             logger.info("Test mode is on, command will not execute");
 
             if (outputTestFile){
@@ -61,7 +61,11 @@ function makeRunner(command, args, requiredOptions = [], outputTestFile = null){
         // Launch
         const env = utils.clone(process.env);
         env.LD_LIBRARY_PATH = path.join(config.odm_path, "SuperBuild", "install", "lib");
-        let childProcess = spawn(command, commandArgs, { env });
+        
+        let cwd = undefined;
+        if (options.cwd) cwd = options.cwd;
+
+        let childProcess = spawn(command, commandArgs, { env, cwd });
 
         childProcess
             .on('exit', (code, signal) => done(null, code, signal))
@@ -79,5 +83,12 @@ module.exports = {
                      function(options){
                          return [options.projectFolderPath];
                      },
-                     ["projectFolderPath"])
+                     ["projectFolderPath"]),
+
+    sevenZip: makeRunner("7z", function(options){
+            return ["a", "-r", "-bd", options.destination].concat(options.pathsToArchive);
+        },
+        ["destination", "pathsToArchive", "cwd"],
+        null,
+        false)
 };

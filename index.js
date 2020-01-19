@@ -863,6 +863,10 @@ if (config.test) {
     if (config.testDropUploads) logger.info("Uploads will drop at random");
 }
 
+if (!config.has7z){
+    logger.warn("The 7z program is not installed, falling back to legacy (zipping will be slower)");
+}
+
 let commands = [
     cb => odmInfo.initialize(cb),
     cb => auth.initialize(cb),
