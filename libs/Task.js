@@ -22,7 +22,6 @@ const async = require('async');
 const assert = require('assert');
 const logger = require('./logger');
 const fs = require('fs');
-const si = require("systeminformation");
 const path = require('path');
 const rmdir = require('rimraf');
 const odmRunner = require('./odmRunner');
