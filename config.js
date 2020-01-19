@@ -93,7 +93,7 @@ config.logger.logDirectory = fromConfigFile("logger.logDirectory", ''); // Set t
 
 config.port = parseInt(argv.port || argv.p || fromConfigFile("port", process.env.PORT || 3000));
 config.deamon = argv.deamonize || argv.d || fromConfigFile("daemon", false);
-config.parallelQueueProcessing = parseInt(argv.parallel_queue_processing || argv.q || fromConfigFile("parallelQueueProcessing", 2));
+config.parallelQueueProcessing = parseInt(argv.parallel_queue_processing || argv.q || fromConfigFile("parallelQueueProcessing", 1));
 config.cleanupTasksAfter = parseInt(argv.cleanup_tasks_after || fromConfigFile("cleanupTasksAfter", 2880));
 config.cleanupUploadsAfter = parseInt(argv.cleanup_uploads_after || fromConfigFile("cleanupUploadsAfter", 2880));
 config.test = argv.test || fromConfigFile("test", false);

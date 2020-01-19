@@ -11,7 +11,7 @@
 
 	"port": 3000,
 	"deamon": false,
-	"parallelQueueProcessing": 2,
+	"parallelQueueProcessing": 1,
 	"cleanupTasksAfter": 2880,
 	"test": false,
 	"testSkipOrthophotos": false,
