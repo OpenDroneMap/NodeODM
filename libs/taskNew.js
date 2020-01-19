@@ -48,6 +48,24 @@ const removeDirectory = function(dir, cb = () => {}){
     });
 };
 
+const assureUniqueFilename = (dstPath, filename, cb) => {
+    const dstFile = path.join(dstPath, filename);
+    fs.exists(dstFile, exists => {
+        if (!exists) cb(null, filename);
+        else{
+            const parts = filename.split(".");
+            if (parts.length > 1){
+                assureUniqueFilename(dstPath, 
+                    `${parts.slice(0, parts.length - 1).join(".")}_.${parts[parts.length - 1]}`, 
+                    cb);
+            }else{
+                // Filename without extension? Strange..
+                assureUniqueFilename(dstPath, filename + "_", cb);
+            }
+        }
+    });
+};
+
 const upload = multer({
     storage: multer.diskStorage({
         destination: (req, file, cb) => {
@@ -65,7 +83,9 @@ const upload = multer({
         filename: (req, file, cb) => {
             let filename = utils.sanitize(file.originalname);
             if (filename === "body.json") filename = "_body.json";
-            cb(null, filename);
+
+            let dstPath = path.join("tmp", req.id);
+            assureUniqueFilename(dstPath, filename, cb);
         }
     })
 });
