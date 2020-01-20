@@ -213,8 +213,12 @@ $(function() {
 
         $.get(url)
             .done(function(tasksJson) {
-                for (var i in tasksJson){
-                    self.tasks.push(new Task(tasksJson[i].uuid));
+                if (tasksJson.error){
+                    self.error(tasksJson.error);
+                }else{
+                    for (var i in tasksJson){
+                        self.tasks.push(new Task(tasksJson[i].uuid));
+                    }
                 }
             })
             .fail(function() {
