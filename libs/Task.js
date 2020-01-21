@@ -276,8 +276,6 @@ module.exports = class Task{
                                 done();
                             }else done(new Error(`Could not archive .zip file, 7z exited with code ${code}`));
                         }
-                    }, output => {
-                        this.output.push(output);
                     });
                 };
             };

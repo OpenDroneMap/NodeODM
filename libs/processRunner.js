@@ -42,8 +42,10 @@ function makeRunner(command, args, requiredOptions = [], outputTestFile = null, 
             if (outputTestFile){
                 fs.readFile(path.resolve(__dirname, outputTestFile), 'utf8', (err, text) => {
                     if (!err){
-                        let lines = text.split("\n");
-                        lines.forEach(line => outputReceived(line));
+                        if (outputReceived !== undefined){
+                            let lines = text.split("\n");
+                            lines.forEach(line => outputReceived(line));
+                        }
                         
                         done(null, 0, null);
                     }else{
@@ -71,8 +73,10 @@ function makeRunner(command, args, requiredOptions = [], outputTestFile = null, 
             .on('exit', (code, signal) => done(null, code, signal))
             .on('error', done);
 
-        childProcess.stdout.on('data', chunk => outputReceived(chunk.toString()));
-        childProcess.stderr.on('data', chunk => outputReceived(chunk.toString()));
+        if (outputReceived !== undefined){
+            childProcess.stdout.on('data', chunk => outputReceived(chunk.toString()));
+            childProcess.stderr.on('data', chunk => outputReceived(chunk.toString()));
+        }
 
         return childProcess;
     };
