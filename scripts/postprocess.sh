@@ -37,7 +37,7 @@ else
 fi
 
 # Generate Tiles
-g2t_options="--processes $(nproc) -z 12-21 -n -w none"
+g2t_options="--processes $(nproc) -z 5-21 -n -w none"
 orthophoto_path="odm_orthophoto/odm_orthophoto.tif"
 
 if [ -e "$orthophoto_path" ]; then
