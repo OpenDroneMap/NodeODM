@@ -205,27 +205,34 @@ $(function() {
     }
 
     function TaskList() {
-        var uuids = JSON.parse(localStorage.getItem("odmTaskList") || "[]");
-        if (Object.prototype.toString.call(uuids) !== "[object Array]") uuids = [];
+        var self = this;
+        var url = "/task/list?token=" + token;
+        this.error = ko.observable("");
+        this.loading = ko.observable(true);
+        this.tasks = ko.observableArray();
 
-        this.tasks = ko.observableArray($.map(uuids, function(uuid) {
-            return new Task(uuid);
-        }));
+        $.get(url)
+            .done(function(tasksJson) {
+                if (tasksJson.error){
+                    self.error(tasksJson.error);
+                }else{
+                    for (var i in tasksJson){
+                        self.tasks.push(new Task(tasksJson[i].uuid));
+                    }
+                }
+            })
+            .fail(function() {
+                self.error(url + " is unreachable.");
+            })
+            .always(function() { self.loading(false); });
     }
     TaskList.prototype.add = function(task) {
         this.tasks.push(task);
-        this.saveTaskListToLocalStorage();
-    };
-    TaskList.prototype.saveTaskListToLocalStorage = function() {
-        localStorage.setItem("odmTaskList", JSON.stringify($.map(this.tasks(), function(task) {
-            return task.uuid;
-        })));
     };
     TaskList.prototype.remove = function(task) {
         this.tasks.remove(function(t) {
             return t === task;
         });
-        this.saveTaskListToLocalStorage();
     };
 
     var codes = {

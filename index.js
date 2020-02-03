@@ -293,6 +293,44 @@ let getTaskFromUuid = (req, res, next) => {
 };
 
 /** @swagger
+ *  /task/list:
+ *     get:
+ *       description: Gets the list of tasks available on this node.
+ *       tags: [task]
+ *       parameters:
+ *        -
+ *          name: token
+ *          in: query
+ *          description: 'Token required for authentication (when authentication is required).'
+ *          required: false
+ *          type: string
+ *       responses:
+ *        200:
+ *          description: Task List
+ *          schema:
+ *            title: TaskList
+ *            type: array
+ *            items:
+ *              type: object
+ *              required: [uuid]
+ *              properties:
+ *                uuid:
+ *                  type: string
+ *                  description: UUID
+ *        default:
+ *          description: Error
+ *          schema:
+ *            $ref: '#/definitions/Error'
+ */
+app.get('/task/list', authCheck, (req, res) => {
+    const tasks = [];
+    for (let uuid in taskManager.tasks){
+        tasks.push({uuid});
+    }
+    res.json(tasks);
+});
+
+/** @swagger
  *  /task/{uuid}/info:
  *     get:
  *       description: Gets information about this task, such as name, creation date, processing time, status, command line options and number of images being processed. See schema definition for a full list.
@@ -861,6 +899,10 @@ if (config.test) {
     if (config.testSkipOrthophotos) logger.info("Orthophotos will be skipped");
     if (config.testSkipDems) logger.info("DEMs will be skipped");
     if (config.testDropUploads) logger.info("Uploads will drop at random");
+}
+
+if (!config.has7z){
+    logger.warn("The 7z program is not installed, falling back to legacy (zipping will be slower)");
 }
 
 let commands = [

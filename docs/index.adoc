@@ -8,7 +8,7 @@ REST API to access ODM
 
 === Version information
 [%hardbreaks]
-_Version_ : 1.5.3
+_Version_ : 1.6.0
 
 
 === Contact information
@@ -277,6 +277,48 @@ _required_|UUID of the task|string|
 |HTTP Code|Description|Schema
 |*200*|Command Received|<<_response,Response>>
 |===
+
+
+[[_task_list_get]]
+=== GET /task/list
+
+==== Description
+Gets the list of tasks available on this node.
+
+
+==== Parameters
+
+[options="header", cols=".^2,.^3,.^9,.^4,.^2"]
+|===
+|Type|Name|Description|Schema|Default
+|*Query*|*token* +
+_optional_|Token required for authentication (when authentication is required).|string|
+|===
+
+
+==== Responses
+
+[options="header", cols=".^2,.^14,.^4"]
+|===
+|HTTP Code|Description|Schema
+|*200*|Task List|< <<_task_list_get_response_200,Response 200>> > array
+|*default*|Error|<<_error,Error>>
+|===
+
+[[_task_list_get_response_200]]
+*Response 200*
+
+[options="header", cols=".^3,.^11,.^4"]
+|===
+|Name|Description|Schema
+|*uuid* +
+_required_|UUID|string
+|===
+
+
+==== Tags
+
+* task
 
 
 [[_task_new_post]]

@@ -42,18 +42,19 @@ orthophoto_path="odm_orthophoto/odm_orthophoto.tif"
 
 if [ -e "$orthophoto_path" ]; then
 	python "$script_path/gdal2tiles.py" $g2t_options $orthophoto_path orthophoto_tiles
+
+    # Check for DEM tiles also
+    for dem_product in ${dem_products[@]}; do
+        colored_dem_path="odm_dem/""$dem_product""_colored_hillshade.tif"
+        if [ -e "$colored_dem_path" ]; then
+            python "$script_path/gdal2tiles.py" $g2t_options $colored_dem_path "$dem_product""_tiles"
+        else
+            echo "No $dem_product found at $colored_dem_path: will skip tiling"
+        fi
+    done
 else
 	echo "No orthophoto found at $orthophoto_path: will skip tiling"
 fi
-
-for dem_product in ${dem_products[@]}; do
-	colored_dem_path="odm_dem/""$dem_product""_colored_hillshade.tif"
-	if [ -e "$colored_dem_path" ]; then
-		python "$script_path/gdal2tiles.py" $g2t_options $colored_dem_path "$dem_product""_tiles"
-	else
-		echo "No $dem_product found at $colored_dem_path: will skip tiling"
-	fi
-done
 
 # Generate point cloud (if entwine or potreeconverter is available)
 pointcloud_input_path=""
@@ -71,12 +72,6 @@ for path in "odm_georeferencing/odm_georeferenced_model.laz" \
     fi
 done
 
-# Never generate point cloud tiles with split-merge workflows
-if [ -e "submodels" ] && [ -e "entwine_pointcloud" ]; then
-    pointcloud_input_path=""
-    echo "Split-merge dataset with point cloud detected. No need to regenerate point cloud tiles."
-fi
-
 if [ ! -z "$pointcloud_input_path" ]; then
     # Convert the failsafe PLY point cloud to laz in odm_georeferencing 
     # if necessary, otherwise it will not get zipped
@@ -93,12 +88,11 @@ if [ ! -z "$pointcloud_input_path" ]; then
     fi
     
     if hash entwine 2>/dev/null; then
-        # Optionally cleanup previous results (from a restart)
-        if [ -e "entwine_pointcloud" ]; then
-            rm -fr "entwine_pointcloud"
+        if [ ! -e "entwine_pointcloud" ]; then
+            entwine build --threads $(nproc) --tmp "entwine_pointcloud-tmp" -i "$pointcloud_input_path" -o entwine_pointcloud
+        else
+            echo "Entwine point cloud is already built."
         fi
-        
-        entwine build --threads $(nproc) --tmp "entwine_pointcloud-tmp" -i "$pointcloud_input_path" -o entwine_pointcloud
         
         # Cleanup
         if [ -e "entwine_pointcloud-tmp" ]; then

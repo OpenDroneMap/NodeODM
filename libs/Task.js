@@ -22,12 +22,10 @@ const async = require('async');
 const assert = require('assert');
 const logger = require('./logger');
 const fs = require('fs');
-const glob = require("glob");
 const path = require('path');
 const rmdir = require('rimraf');
 const odmRunner = require('./odmRunner');
 const processRunner = require('./processRunner');
-const archiver = require('archiver');
 const Directories = require('./Directories');
 const kill = require('tree-kill');
 const S3 = require('./S3');
@@ -252,6 +250,40 @@ module.exports = class Task{
                 return (done) => {
                     this.output.push(`Compressing ${outputFilename}\n`);
 
+                    const zipFile = path.resolve(this.getAssetsArchivePath(outputFilename));
+                    const sourcePath = !config.test ? 
+                                        this.getProjectFolderPath() : 
+                                        path.join("tests", "processing_results");
+
+                    const pathsToArchive = [];
+                    files.forEach(f => {
+                        if (fs.existsSync(path.join(sourcePath, f))){
+                            pathsToArchive.push(f);
+                        }
+                    });
+
+                    processRunner.sevenZip({
+                        destination: zipFile,
+                        pathsToArchive,
+                        cwd: sourcePath
+                    }, (err, code, _) => {
+                        if (err){
+                            logger.error(`Could not archive .zip file: ${err.message}`);
+                            done(err);
+                        }else{
+                            if (code === 0){
+                                this.updateProgress(97);
+                                done();
+                            }else done(new Error(`Could not archive .zip file, 7z exited with code ${code}`));
+                        }
+                    });
+                };
+            };
+
+            const createZipArchiveLegacy = (outputFilename, files) => {
+                return (done) => {
+                    this.output.push(`Compressing ${outputFilename}\n`);
+
                     let output = fs.createWriteStream(this.getAssetsArchivePath(outputFilename));
                     let archive = archiver.create('zip', {
                             zlib: { level: 1 } // Sets the compression level (1 = best speed since most assets are already compressed)
@@ -327,7 +359,7 @@ module.exports = class Task{
                     this.runningProcesses.push(
                         processRunner.runPostProcessingScript({
                             projectFolderPath: this.getProjectFolderPath() 
-                        }, (err, code, signal) => {
+                        }, (err, code, _) => {
                             if (err) done(err);
                             else{
                                 if (code === 0){
@@ -388,7 +420,9 @@ module.exports = class Task{
             }
             
             if (!this.skipPostProcessing) tasks.push(runPostProcessingScript());
-            tasks.push(createZipArchive('all.zip', allPaths));
+
+            const archiveFunc = config.has7z ? createZipArchive : createZipArchiveLegacy;
+            tasks.push(archiveFunc('all.zip', allPaths));
             
             // Upload to S3 all paths + all.zip file (if config says so)
             if (S3.enabled()){

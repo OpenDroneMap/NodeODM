@@ -20,6 +20,7 @@ along with this program.  If not, see <http://www.gnu.org/licenses/>.
 let fs = require('fs');
 let argv = require('minimist')(process.argv.slice(2));
 let utils = require('./libs/utils');
+const spawnSync = require('child_process').spawnSync;
 
 if (argv.help){
 	console.log(`
@@ -93,7 +94,7 @@ config.logger.logDirectory = fromConfigFile("logger.logDirectory", ''); // Set t
 
 config.port = parseInt(argv.port || argv.p || fromConfigFile("port", process.env.PORT || 3000));
 config.deamon = argv.deamonize || argv.d || fromConfigFile("daemon", false);
-config.parallelQueueProcessing = parseInt(argv.parallel_queue_processing || argv.q || fromConfigFile("parallelQueueProcessing", 2));
+config.parallelQueueProcessing = parseInt(argv.parallel_queue_processing || argv.q || fromConfigFile("parallelQueueProcessing", 1));
 config.cleanupTasksAfter = parseInt(argv.cleanup_tasks_after || fromConfigFile("cleanupTasksAfter", 2880));
 config.cleanupUploadsAfter = parseInt(argv.cleanup_uploads_after || fromConfigFile("cleanupUploadsAfter", 2880));
 config.test = argv.test || fromConfigFile("test", false);
@@ -114,5 +115,9 @@ config.s3SignatureVersion = argv.s3_signature_version || fromConfigFile("s3Signa
 config.s3UploadEverything = argv.s3_upload_everything || fromConfigFile("s3UploadEverything", false);
 config.maxConcurrency = parseInt(argv.max_concurrency || fromConfigFile("maxConcurrency", 0));
 config.maxRuntime = parseInt(argv.max_runtime || fromConfigFile("maxRuntime", -1));
+
+// Detect 7z availability
+const childProcess = spawnSync("7z", ['--help']);
+config.has7z = childProcess.status === 0;
 
 module.exports = config;
