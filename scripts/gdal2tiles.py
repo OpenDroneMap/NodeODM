@@ -472,6 +472,8 @@ class Zoomify(object):
 class GDALError(Exception):
     pass
 
+import os
+main_pid = os.getpid()
 
 def exit_with_error(message, details=""):
     # Message printing and exit code kept from the way it worked using the OptionParser (in case
@@ -481,6 +483,8 @@ def exit_with_error(message, details=""):
     if details:
         sys.stderr.write("\n\n%s\n" % details)
 
+    import signal
+    os.kill(main_pid, signal.SIGINT)
     sys.exit(2)
 
 
