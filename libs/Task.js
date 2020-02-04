@@ -31,6 +31,7 @@ const kill = require('tree-kill');
 const S3 = require('./S3');
 const request = require('request');
 const utils = require('./utils');
+const archiver = require('archiver');
 
 const statusCodes = require('./statusCodes');
 
