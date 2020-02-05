@@ -76,6 +76,9 @@ function makeRunner(command, args, requiredOptions = [], outputTestFile = null, 
         if (outputReceived !== undefined){
             childProcess.stdout.on('data', chunk => outputReceived(chunk.toString()));
             childProcess.stderr.on('data', chunk => outputReceived(chunk.toString()));
+        }else{
+            childProcess.stdout.on('data', () => {});
+            childProcess.stderr.on('data', () => {});
         }
 
         return childProcess;
@@ -90,7 +93,7 @@ module.exports = {
                      ["projectFolderPath"]),
 
     sevenZip: makeRunner("7z", function(options){
-            return ["a", "-r", "-bd", options.destination].concat(options.pathsToArchive);
+            return ["a", "-mx=0", "-r", "-bd", options.destination].concat(options.pathsToArchive);
         },
         ["destination", "pathsToArchive", "cwd"],
         null,
