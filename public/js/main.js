@@ -16,6 +16,13 @@ You should have received a copy of the GNU General Public License
 along with this program.  If not, see <http://www.gnu.org/licenses/>.
 */
 $(function() {
+    if ( window.location !== window.parent.location ) {
+        // The page is in an iframe, broadcast height
+        setInterval(function() {
+            window.parent.postMessage(document.body.scrollHeight, "*");
+        }, 200); 
+    }
+
     function App(){
         this.mode = ko.observable("file");
         this.filesCount = ko.observable(0);

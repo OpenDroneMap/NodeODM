@@ -10,9 +10,11 @@
 
     <link rel="stylesheet" href="css/bootstrap.min.css">
     <style>
-        body {
-            padding-top: 50px;
-            padding-bottom: 20px;
+        body{
+            margin-top: 0;
+        }
+        #body-row{
+            margin-top: 16px;
         }
         .navbar{
             background-color: #3498db;
@@ -26,6 +28,15 @@
         #btnSelectFiles, #images{
             display: inline-block;
         }
+        .btn-success{
+            background-color: #4582ec;
+            border-color: #4582ec;
+        }
+        .btn-success:hover, .btn-success:active, .btn-success:focus, .btn-success:active:hover,
+        .btn-success.disabled:hover, .btn-success[disabled]:hover, fieldset[disabled] .btn-success:hover, .btn-success.disabled:focus, .btn-success[disabled]:focus, fieldset[disabled] .btn-success:focus, .btn-success.disabled.focus, .btn-success[disabled].focus, fieldset[disabled] .btn-success.focus{
+            background-color: #3d74d4;
+            border-color: #4582ec;
+        }
     </style>
     <link rel="stylesheet" href="css/main.css">
 
@@ -36,17 +47,9 @@
     <!--[if lt IE 8]>
             <p class="browserupgrade">You are using an <strong>outdated</strong> browser. Please <a href="http://browsehappy.com/">upgrade your browser</a> to improve your experience.</p>
         <![endif]-->
-    <nav class="navbar navbar-inverse navbar-fixed-top" role="navigation">
-        <div class="container">
-            <div class="navbar-header">
-                <a class="navbar-brand" href="/">NodeODM - Web UI</a>
-            </div>
-        </div>
-    </nav>
-
-    <div class="container">
-        <div class="row">
-            <div class="col-md-5">
+    <div class="container-fluid">
+        <div class="row" id="body-row">
+            <div class="col-xs-12 col-sm-4">
                 <form enctype="multipart/form-data" onsubmit="return false;">
                     <div id="app">
                         <div id="imagesInput" class="form-group" data-bind="visible: mode() === 'file'">
@@ -140,7 +143,7 @@
                     </div>
                 </form>
             </div>
-            <div class="col-md-7" id="taskList">
+            <div class="col-xs-12 col-sm-8" id="taskList">
                 <div data-bind="visible: error() != ''">
                     <div class="alert alert-warning" role="alert" data-bind="text: error()"></div>
                 </div>
@@ -200,10 +203,6 @@
                 </div>
             </div>
         </div>
-        <footer>
-        <hr/>
-        This window can be closed after uploading a task. The process will continue running on the server.
-        </footer>
     </div>
     <!-- /container -->
     <script src="//ajax.googleapis.com/ajax/libs/jquery/1.11.2/jquery.min.js"></script>
