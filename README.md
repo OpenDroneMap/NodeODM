@@ -2,9 +2,9 @@
 
 [![Build Status](https://travis-ci.org/OpenDroneMap/NodeODM.svg?branch=master)](https://travis-ci.org/OpenDroneMap/NodeODM)
 
-NodeODM is a Node.js App and REST API to access aerial image processing engines such as [ODM](https://github.com/OpenDroneMap/ODM). It exposes an API which is used by clients such as [WebODM](https://github.com/OpenDroneMap/WebODM), [CloudODM](https://github.com/OpenDroneMap/CloudODM) and [PyODM](https://github.com/OpenDroneMap/PyODM).
+NodeODM is a [standard API specification](https://github.com/OpenDroneMap/NodeODM/blob/master/docs/index.adoc) for processing aerial images with engines such as [ODM](https://github.com/OpenDroneMap/ODM). The API is used by clients such as [WebODM](https://github.com/OpenDroneMap/WebODM), [CloudODM](https://github.com/OpenDroneMap/CloudODM) and [PyODM](https://github.com/OpenDroneMap/PyODM). This repository contains a performant, production grade reference implementation written in NodeJS.
 
-![Alt text](https://user-images.githubusercontent.com/1951843/42737899-ab31bddc-8848-11e8-97e7-4f7e938c7a76.png "NodeODM")
+![image](https://user-images.githubusercontent.com/1951843/78455986-4805ab80-766f-11ea-8a79-1691e062600c.png)
 
 ## Getting Started
 
