@@ -81,7 +81,7 @@ const upload = multer({
             });
         },
         filename: (req, file, cb) => {
-            let filename = utils.sanitize(file.originalname);
+            let filename = file.originalname;
             if (filename === "body.json") filename = "_body.json";
 
             let dstPath = path.join("tmp", req.id);
