@@ -62,14 +62,6 @@ $(function() {
             self.uploading(false);
         };
 
-        // validate webhook if exists
-        var webhook = $("#webhook").val();
-        var regex = new RegExp("^(http[s]?:\\/\\/(www\\.)?|ftp:\\/\\/(www\\.)?|www\\.){1}([0-9A-Za-z-\\.@:%_\+~#=]+)+((\\.[a-zA-Z]{2,3})+)(/(.)*)?(\\?(.)*)?");
-        if (webhook.length > 0 && !regex.test(webhook)){
-            die("Invalid webhook URL");
-            return;
-        }
-
         // Start upload
         var formData = new FormData();
         formData.append("name", $("#taskName").val());
