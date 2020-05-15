@@ -382,7 +382,8 @@ module.exports = class Task{
                               'odm_georeferencing', 'odm_texturing',
                               'odm_dem/dsm.tif', 'odm_dem/dtm.tif', 'dsm_tiles', 'dtm_tiles',
                               'orthophoto_tiles', 'potree_pointcloud', 'entwine_pointcloud', 
-                              'images.json', 'cameras.json'];
+                              'images.json', 'cameras.json',
+                              'odm_report'];
             
             // Did the user request different outputs than the default?
             if (this.outputs.length > 0) allPaths = this.outputs;
