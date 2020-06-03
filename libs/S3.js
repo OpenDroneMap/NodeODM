@@ -38,7 +38,8 @@ module.exports = {
                 endpoint: spacesEndpoint,
                 signatureVersion: ('v' + config.s3SignatureVersion) || 'v4',
                 accessKeyId: config.s3AccessKey,
-                secretAccessKey: config.s3SecretKey
+                secretAccessKey: config.s3SecretKey,
+                s3ForcePathStyle: config.s3ForcePathStyle,
             });
 
             // Test connection
