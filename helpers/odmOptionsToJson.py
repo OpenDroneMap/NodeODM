@@ -24,7 +24,10 @@ import json
 
 sys.path.append(sys.argv[2])
 
-imp.load_source('context', sys.argv[2] + '/opendm/context.py')
+try:
+    imp.load_source('context', sys.argv[2] + '/opendm/context.py')
+except:
+    pass
 odm = imp.load_source('config', sys.argv[2] + '/opendm/config.py')
 
 options = {}
