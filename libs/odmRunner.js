@@ -121,7 +121,9 @@ module.exports = {
         // Cleanup on done
         let handleResult = (err, result) => {
             fs.exists(env.ODM_OPTIONS_TMP_FILE, exists => {
-                if (exists) fs.unlink(env.ODM_OPTIONS_TMP_FILE);
+                if (exists) fs.unlink(env.ODM_OPTIONS_TMP_FILE, err => {
+                    if (err) console.warning(`Cannot cleanup ${env.ODM_OPTIONS_TMP_FILE}`);
+                });
             });
 
             // Don't wait
