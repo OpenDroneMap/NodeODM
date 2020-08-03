@@ -17,7 +17,4 @@ COPY . /var/www
 
 RUN npm install && mkdir tmp
 
-# Temporary fix to cryptography warning
-RUN pip install cryptography==2.9.2
-
 ENTRYPOINT ["/usr/bin/nodejs", "/var/www/index.js"]

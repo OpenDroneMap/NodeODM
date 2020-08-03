@@ -21,6 +21,9 @@ import sys
 import imp
 import argparse
 import json
+import os
+
+dest_file = os.environ.get("ODM_OPTIONS_TMP_FILE")
 
 sys.path.append(sys.argv[2])
 
@@ -43,4 +46,9 @@ class ArgumentParserStub(argparse.ArgumentParser):
 
 odm.parser = ArgumentParserStub()
 odm.config()
-print json.dumps(options)
+out = json.dumps(options)
+print(out)
+if dest_file is not None:
+    with open(dest_file, "w") as f:
+        f.write(out)
+
