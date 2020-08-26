@@ -259,7 +259,7 @@ module.exports = {
                     if (req.files && req.files.length > 0) {
                         fs.stat(destPath, (err, stat) => {
                             if (err && err.code === 'ENOENT') cb();
-                            else cb(new Error(`Directory exists (should not have happened: ${err.code})`));
+                            else cb(new Error(`Directory exists (should not have happened)`));
                         });
                     } else {
                         cb();
