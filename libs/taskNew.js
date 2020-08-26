@@ -259,7 +259,16 @@ module.exports = {
                     if (req.files && req.files.length > 0) {
                         fs.stat(destPath, (err, stat) => {
                             if (err && err.code === 'ENOENT') cb();
-                            else cb(new Error(`Directory exists (should not have happened)`));
+                            else{
+                                // Directory already exists, this could happen
+                                // if a previous attempt at upload failed and the user
+                                // used set-uuid to specify the same UUID over the previous run
+                                // Try to remove it
+                                removeDirectory(destPath, err => {
+                                    if (err) cb(new Error(`Directory exists and we couldn't remove it.`));
+                                    else cb();
+                                });
+                            } 
                         });
                     } else {
                         cb();
