@@ -24,7 +24,7 @@ docker-machine ip
 Linux users can connect to 127.0.0.1.
 
 * Open a Web Browser to `http://<yourDockerMachineIp>:3000`
-* Load [some images](https://github.com/OpenDroneMap/ODM/tree/master/tests/test_data/images)
+* Load [some images](https://github.com/OpenDroneMap/ODMdata)
 * Press "Start Task"
 * Go for a walk :)
 
