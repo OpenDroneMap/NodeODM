@@ -34,6 +34,8 @@ If the computer running NodeODM is using an old or 32bit CPU, you need to compil
 
 See the [API documentation page](https://github.com/OpenDroneMap/NodeODM/blob/master/docs/index.adoc).
 
+Some minor breaking changes exist from version `1.x` to `2.x` of the API. See [migration notes](https://github.com/OpenDroneMap/NodeODM/blob/master/MIGRATION.md).
+
 ## Run Tasks from the Command Line
 
 You can use [CloudODM](https://github.com/OpenDroneMap/CloudODM) to run tasks with NodeODM from the command line.
