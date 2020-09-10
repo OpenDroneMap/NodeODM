@@ -24,13 +24,13 @@ const uuidv4 = require('uuid/v4');
 const config = require('../config.js');
 const rmdir = require('rimraf');
 const Directories = require('./Directories');
-const unzip = require('node-unzip-2');
 const mv = require('mv');
 const Task = require('./Task');
 const async = require('async');
 const odmInfo = require('./odmInfo');
 const request = require('request');
-const utils = require('./utils');
+const ziputils = require('./ziputils');
+const { cancelJob } = require('node-schedule');
 
 const download = function(uri, filename, callback) {
     request.head(uri, function(err, res, body) {
@@ -163,7 +163,7 @@ module.exports = {
                                 else cb(null, body);
                             });
                         }catch(e){
-                            cb("Malformed body.json");
+                            cb(new Error("Malformed body.json"));
                         }
                     }
                 });
@@ -243,6 +243,17 @@ module.exports = {
             let destImagesPath = path.join(destPath, "images");
             let destGcpPath = path.join(destPath, "gcp");
 
+            const checkMaxImageLimits = (cb) => {
+                if (!config.maxImages) cb();
+                else{
+                    fs.readdir(destImagesPath, (err, files) => {
+                        if (err) cb(err);
+                        else if (files.length > config.maxImages) cb(new Error(`${files.length} images uploaded, but this node can only process up to ${config.maxImages}.`));
+                        else cb();
+                    });
+                }
+            };
+
             async.series([
                 cb => {
                     odmInfo.filterOptions(req.body.options, (err, options) => {
@@ -309,17 +320,7 @@ module.exports = {
                             
                             // Extract
                             cb => {
-                                fs.createReadStream(seedFileDst).pipe(unzip.Extract({ path: destPath }))
-                                    .on('close', cb)
-                                    .on('error', cb);
-                            },
-
-                            // Verify max images limit
-                            cb => {
-                                fs.readdir(destImagesPath, (err, files) => {
-                                    if (config.maxImages && files.length > config.maxImages) cb(`${files.length} images uploaded, but this node can only process up to ${config.maxImages}.`);
-                                    else cb(err);
-                                });
+                                ziputils.unzip(seedFileDst, destPath, cb);
                             },
 
                             // Remove
@@ -333,22 +334,10 @@ module.exports = {
                     }
 
                     const handleZipUrl = (cb) => {
-                        let filesCount = 0;
-                        fs.createReadStream(path.join(destImagesPath, "zipurl.zip")).pipe(unzip.Parse())
-                            .on('entry', function(entry) {
-                                if (entry.type === 'File') {
-                                    filesCount++;
-                                    entry.pipe(fs.createWriteStream(path.join(destImagesPath, path.basename(entry.path))));
-                                } else {
-                                    entry.autodrain();
-                                }
-                            })
-                            .on('close', () => {
-                                // Verify max images limit
-                                if (config.maxImages && filesCount > config.maxImages) cb(`${filesCount} images uploaded, but this node can only process up to ${config.maxImages}.`);
-                                else cb();
-                            })
-                            .on('error', cb);
+                        // Extract images
+                        ziputils.unzip(path.join(destImagesPath, "zipurl.zip"), 
+                                        destImagesPath, 
+                                        cb, true);
                     }
 
                     // Find and handle zip files and extract
@@ -364,6 +353,11 @@ module.exports = {
                             }, cb);
                         }
                     });
+                },
+
+                // Verify max images limit
+                cb => {
+                    checkMaxImageLimits(cb);
                 },
 
                 cb => {
