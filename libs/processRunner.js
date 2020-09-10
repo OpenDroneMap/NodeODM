@@ -93,9 +93,19 @@ module.exports = {
                      ["projectFolderPath"]),
 
     sevenZip: makeRunner("7z", function(options){
-            return ["a", "-mx=0", "-r", "-bd", options.destination].concat(options.pathsToArchive);
+            return ["a", "-mx=0", "-y", "-r", "-bd", options.destination].concat(options.pathsToArchive);
         },
         ["destination", "pathsToArchive", "cwd"],
+        null,
+        false),
+
+    sevenUnzip: makeRunner("7z", function(options){
+            let cmd = "x"; // eXtract files with full paths
+            if (options.noDirectories) cmd = "e"; //Extract files from archive (without using directory names)
+
+            return [cmd, "-aoa", "-bd", "-y", `-o${options.destination}`, options.file];
+        },
+        ["destination", "file"],
         null,
         false)
 };
