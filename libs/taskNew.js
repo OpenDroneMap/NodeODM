@@ -163,7 +163,7 @@ module.exports = {
                                 else cb(null, body);
                             });
                         }catch(e){
-                            cb("Malformed body.json");
+                            cb(new Error("Malformed body.json"));
                         }
                     }
                 });
@@ -244,10 +244,14 @@ module.exports = {
             let destGcpPath = path.join(destPath, "gcp");
 
             const checkMaxImageLimits = (cb) => {
-                fs.readdir(destImagesPath, (err, files) => {
-                    if (config.maxImages && files.length > config.maxImages) cb(`${files.length} images uploaded, but this node can only process up to ${config.maxImages}.`);
-                    else cb(err);
-                });
+                if (!config.maxImages) cb();
+                else{
+                    fs.readdir(destImagesPath, (err, files) => {
+                        if (err) cb(err);
+                        else if (files.length > config.maxImages) cb(new Error(`${files.length} images uploaded, but this node can only process up to ${config.maxImages}.`));
+                        else cb();
+                    });
+                }
             };
 
             async.series([
@@ -319,11 +323,6 @@ module.exports = {
                                 ziputils.unzip(seedFileDst, destPath, cb);
                             },
 
-                            // Verify max images limit
-                            cb => {
-                                checkMaxImageLimits(cb);
-                            },
-
                             // Remove
                             cb => {
                                 fs.exists(seedFileDst, exists => {
@@ -335,20 +334,10 @@ module.exports = {
                     }
 
                     const handleZipUrl = (cb) => {
-                        async.series([
-                            // Extract images
-                            cb => {
-                                ziputils.unzip(path.join(destImagesPath, "zipurl.zip"), 
-                                                destImagesPath, 
-                                                cb,
-                                                true);
-                            },
-
-                            // Count files
-                            cb => {
-                                checkMaxImageLimits(cb);
-                            }
-                        ], cb);
+                        // Extract images
+                        ziputils.unzip(path.join(destImagesPath, "zipurl.zip"), 
+                                        destImagesPath, 
+                                        cb, true);
                     }
 
                     // Find and handle zip files and extract
@@ -364,6 +353,11 @@ module.exports = {
                             }, cb);
                         }
                     });
+                },
+
+                // Verify max images limit
+                cb => {
+                    checkMaxImageLimits(cb);
                 },
 
                 cb => {
