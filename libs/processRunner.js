@@ -107,5 +107,13 @@ module.exports = {
         },
         ["destination", "file"],
         null,
+        false),
+
+    unzip: makeRunner("unzip", function(options){
+            const opts = options.noDirectories ? ["-j"] : [];
+            return opts.concat(["-qq", "-o", options.file, "-d", options.destination]);
+        },
+        ["destination", "file"],
+        null,
         false)
 };

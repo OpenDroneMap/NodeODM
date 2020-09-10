@@ -54,11 +54,11 @@ If you are already running [ODM](https://github.com/OpenDroneMap/ODM) on Ubuntu 
 
 1) Install Entwine: https://entwine.io/quickstart.html#installation
  
-2) Install node.js, npm dependencies and 7zip:
+2) Install node.js, npm dependencies, 7zip and unzip:
 
 ```bash
 sudo curl --silent --location https://deb.nodesource.com/setup_6.x | sudo bash -
-sudo apt-get install -y nodejs python-gdal p7zip-full
+sudo apt-get install -y nodejs python-gdal p7zip-full unzip
 git clone https://github.com/OpenDroneMap/NodeODM
 cd NodeODM
 npm install
