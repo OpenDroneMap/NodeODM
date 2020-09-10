@@ -119,7 +119,8 @@ config.maxConcurrency = parseInt(argv.max_concurrency || fromConfigFile("maxConc
 config.maxRuntime = parseInt(argv.max_runtime || fromConfigFile("maxRuntime", -1));
 
 // Detect 7z availability
-const childProcess = spawnSync("7z", ['--help']);
-config.has7z = childProcess.status === 0;
+config.has7z = spawnSync("7z", ['--help']).status === 0;
+config.hasUnzip = spawnSync("unzip", ['--help']).status === 0;
+
 
 module.exports = config;
