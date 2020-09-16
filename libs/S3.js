@@ -76,7 +76,7 @@ module.exports = {
                 Bucket: bucket,
                 Key: file.dest,
                 Body: fs.createReadStream(file.src),
-                ACL: 'public-read'
+                ACL: config.s3_acl
             }, {partSize: 5 * 1024 * 1024, queueSize: 1}, err => {
                 if (err){
                     logger.debug(err);
