@@ -32,15 +32,24 @@ module.exports = {
     },
 
     initialize: function(cb){
-        if (config.s3Endpoint && config.s3Bucket && config.s3AccessKey && config.s3SecretKey){
+        if (config.s3Endpoint && config.s3Bucket){
             const spacesEndpoint = new AWS.Endpoint(config.s3Endpoint);
-            s3 = new AWS.S3({
+            
+            const s3Config = {
                 endpoint: spacesEndpoint,
                 signatureVersion: ('v' + config.s3SignatureVersion) || 'v4',
-                accessKeyId: config.s3AccessKey,
-                secretAccessKey: config.s3SecretKey,
                 s3ForcePathStyle: config.s3ForcePathStyle,
-            });
+            };
+            
+            // If we are not using IAM roles then we need to pass access key and secret key in our config
+            if (config.s3AccessKey && config.s3SecretKey) {
+                s3Config['accessKeyId'] =  config.s3AccessKey;
+                s3Config['secretAccessKey'] =  config.s3SecretKey;
+            }else{
+                logger.info("Secret Key and Access ID not passed. Using the IAM role");
+            };
+            
+            s3 = new AWS.S3(s3Config);
 
             // Test connection
             s3.putObject({
