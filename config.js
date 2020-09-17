@@ -51,6 +51,7 @@ Options:
 	--s3_force_path_style  Whether to force path style URLs for S3 objects. (default: false)
 	--s3_secret_key <secret>	S3 secret key, required if --s3_endpoint is set. (default: none) 
 	--s3_signature_version <version>	S3 signature version. (default: 4)
+	--s3_acl <canned-acl> S3 object acl. (default: public-read)
 	--s3_upload_everything	Upload all task results to S3. (default: upload only .zip archive and orthophoto)
 	--max_concurrency   <number>	Place a cap on the max-concurrency option to use for each task. (default: no limit)
 	--max_runtime	<number> Number of minutes (approximate) that a task is allowed to run before being forcibly canceled (timeout). (default: no limit)
@@ -114,6 +115,7 @@ config.s3ForcePathStyle = argv.s3_force_path_style || fromConfigFile("s3ForcePat
 config.s3AccessKey = argv.s3_access_key || fromConfigFile("s3AccessKey", process.env.AWS_ACCESS_KEY_ID || "")
 config.s3SecretKey = argv.s3_secret_key || fromConfigFile("s3SecretKey", process.env.AWS_SECRET_ACCESS_KEY || "")
 config.s3SignatureVersion = argv.s3_signature_version || fromConfigFile("s3SignatureVersion", "4")
+config.s3ACL = argv.s3_acl || fromConfigFile("s3_acl", "public-read")
 config.s3UploadEverything = argv.s3_upload_everything || fromConfigFile("s3UploadEverything", false);
 config.maxConcurrency = parseInt(argv.max_concurrency || fromConfigFile("maxConcurrency", 0));
 config.maxRuntime = parseInt(argv.max_runtime || fromConfigFile("maxRuntime", -1));
