@@ -38,22 +38,19 @@ try {
 logPath += path.sep;
 logPath += config.instance + ".log";
 
-let logger = new (winston.Logger)({
-  transports: [
-    new (winston.transports.Console)({ level: config.logger.level }),
-  ]
-});
-logger.add(winston.transports.File, {
+let transports = [];
+if (!config.deamon){
+    transports.push(new winston.transports.Console({ level: config.logger.level, format: winston.format.simple() }));
+}
+
+let logger = winston.createLogger({ transports });
+logger.add(new winston.transports.File({
+        format: winston.format.simple(), 
         filename: logPath, // Write to projectname.log
         json: false, // Write in plain text, not JSON
         maxsize: config.logger.maxFileSize, // Max size of each file
         maxFiles: config.logger.maxFiles, // Max number of files
         level: config.logger.level // Level of log messages
-    });
-
-if (config.deamon){
-    // Console transport is no use to us when running as a daemon
-    logger.remove(winston.transports.Console);
-}
+    }));
 
 module.exports = logger;

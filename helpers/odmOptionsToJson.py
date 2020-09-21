@@ -28,6 +28,10 @@ dest_file = os.environ.get("ODM_OPTIONS_TMP_FILE")
 sys.path.append(sys.argv[2])
 
 try:
+    imp.load_source('opendm', sys.argv[2] + '/opendm/__init__.py')
+except:
+    pass
+try:
     imp.load_source('context', sys.argv[2] + '/opendm/context.py')
 except:
     pass
@@ -44,11 +48,16 @@ class ArgumentParserStub(argparse.ArgumentParser):
 	def add_mutually_exclusive_group(self):
 		return ArgumentParserStub()
 
-odm.parser = ArgumentParserStub()
-odm.config()
+if not hasattr(odm, 'parser'):
+    # ODM >= 2.0
+    odm.config(parser=ArgumentParserStub())
+else:
+    # ODM 1.0
+    odm.parser = ArgumentParserStub()
+    odm.config()
+    
 out = json.dumps(options)
 print(out)
 if dest_file is not None:
     with open(dest_file, "w") as f:
         f.write(out)
-

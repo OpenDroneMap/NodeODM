@@ -71,7 +71,7 @@ let server;
  *        -
  *          name: skipPostProcessing
  *          in: formData
- *          description: 'When set, skips generation of map tiles, derivate assets, point cloud tiles.'
+ *          description: 'When set, skips generation of point cloud tiles.'
  *          required: false
  *          type: boolean
  *        -
@@ -229,7 +229,7 @@ app.post('/task/new/commit/:uuid', authCheck, taskNew.getUUID, taskNew.handleCom
  *        -
  *          name: skipPostProcessing
  *          in: formData
- *          description: 'When set, skips generation of map tiles, derivate assets, point cloud tiles.'
+ *          description: 'When set, skips generation of point cloud tiles.'
  *          required: false
  *          type: boolean
  *        -
@@ -476,7 +476,6 @@ app.get('/task/:uuid/output', authCheck, getTaskFromUuid, (req, res) => {
  *          required: true
  *          enum:
  *            - all.zip
- *            - orthophoto.tif
  *        -
  *          name: token
  *          in: query

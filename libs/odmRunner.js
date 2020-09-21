@@ -112,38 +112,46 @@ module.exports = {
             return; // Skip rest
         }
 
-        // Launch
-        const env = utils.clone(process.env);
-        env.ODM_OPTIONS_TMP_FILE = utils.tmpPath(".json");
-        let childProcess = spawn("python", [path.join(__dirname, "..", "helpers", "odmOptionsToJson.py"),
-                "--project-path", config.odm_path, "bogusname"], { env });
-
-        // Cleanup on done
-        let handleResult = (err, result) => {
-            fs.exists(env.ODM_OPTIONS_TMP_FILE, exists => {
-                if (exists) fs.unlink(env.ODM_OPTIONS_TMP_FILE, err => {
-                    if (err) console.warning(`Cannot cleanup ${env.ODM_OPTIONS_TMP_FILE}`);
-                });
-            });
-
-            // Don't wait
-            done(err, result);
-        };
-
-        childProcess
-            .on('exit', (code, signal) => {
-                try{
-                    fs.readFile(env.ODM_OPTIONS_TMP_FILE, { encoding: "utf8" }, (err, data) => {
-                        if (err) handleResult(new Error(`Cannot read list of options from ODM (from temporary file). Is ODM installed in ${config.odm_path}?`));
-                        else{
-                            let json = JSON.parse(data);
-                            handleResult(null, json);
-                        }
+        const getOdmOptions = (pythonExe, done) => {
+            // Launch
+            const env = utils.clone(process.env);
+            env.ODM_OPTIONS_TMP_FILE = utils.tmpPath(".json");
+            let childProcess = spawn(pythonExe, [path.join(__dirname, "..", "helpers", "odmOptionsToJson.py"),
+                    "--project-path", config.odm_path, "bogusname"], { env });
+    
+            // Cleanup on done
+            let handleResult = (err, result) => {
+                fs.exists(env.ODM_OPTIONS_TMP_FILE, exists => {
+                    if (exists) fs.unlink(env.ODM_OPTIONS_TMP_FILE, err => {
+                        if (err) console.warning(`Cannot cleanup ${env.ODM_OPTIONS_TMP_FILE}`);
                     });
-                }catch(err){
-                    handleResult(new Error(`Could not load list of options from ODM. Is ODM installed in ${config.odm_path}? Make sure that OpenDroneMap is installed and that --odm_path is set properly: ${err.message}`));
-                }
-            })
-            .on('error', handleResult);
+                });
+    
+                // Don't wait
+                done(err, result);
+            };
+    
+            childProcess
+                .on('exit', (code, signal) => {
+                    try{
+                        fs.readFile(env.ODM_OPTIONS_TMP_FILE, { encoding: "utf8" }, (err, data) => {
+                            if (err) handleResult(new Error(`Cannot read list of options from ODM (from temporary file). Is ODM installed in ${config.odm_path}?`));
+                            else{
+                                let json = JSON.parse(data);
+                                handleResult(null, json);
+                            }
+                        });
+                    }catch(err){
+                        handleResult(new Error(`Could not load list of options from ODM. Is ODM installed in ${config.odm_path}? Make sure that OpenDroneMap is installed and that --odm_path is set properly: ${err.message}`));
+                    }
+                })
+                .on('error', handleResult);
+        }
+
+        // Try Python3 first
+        getOdmOptions("python3", (err, result) => {
+            if (err) getOdmOptions("python", done);
+            else done(null, result);
+        });
     }
 };

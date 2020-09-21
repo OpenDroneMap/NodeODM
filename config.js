@@ -31,7 +31,7 @@ Options:
 	-p, --port <number> 	Port to bind the server to (default: 3000)
 	--odm_path <path>	Path to OpenDroneMap's code	(default: /code)
 	--log_level <logLevel>	Set log level verbosity (default: info)
-	-d, --deamonize 	Set process to run as a deamon
+	-d, --daemon 	Set process to run as a deamon
 	-q, --parallel_queue_processing <number> Number of simultaneous processing tasks (default: 2)
 	--cleanup_tasks_after <number> Number of minutes that elapse before deleting finished and canceled tasks (default: 2880) 
 	--cleanup_uploads_after <number> Number of minutes that elapse before deleting unfinished uploads. Set this value to the maximum time you expect a dataset to be uploaded. (default: 2880) 
@@ -95,7 +95,7 @@ config.logger.maxFiles = fromConfigFile("logger.maxFiles", 10); // Max number of
 config.logger.logDirectory = fromConfigFile("logger.logDirectory", ''); // Set this to a full path to a directory - if not set logs will be written to the application directory.
 
 config.port = parseInt(argv.port || argv.p || fromConfigFile("port", process.env.PORT || 3000));
-config.deamon = argv.deamonize || argv.d || fromConfigFile("daemon", false);
+config.deamon = argv.deamonize || argv.daemon || argv.d || fromConfigFile("daemon", false);
 config.parallelQueueProcessing = parseInt(argv.parallel_queue_processing || argv.q || fromConfigFile("parallelQueueProcessing", 1));
 config.cleanupTasksAfter = parseInt(argv.cleanup_tasks_after || fromConfigFile("cleanupTasksAfter", 2880));
 config.cleanupUploadsAfter = parseInt(argv.cleanup_uploads_after || fromConfigFile("cleanupUploadsAfter", 2880));

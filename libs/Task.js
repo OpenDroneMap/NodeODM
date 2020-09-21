@@ -137,13 +137,6 @@ module.exports = class Task{
     getAssetsArchivePath(filename){
         if (filename == 'all.zip'){
             // OK, do nothing
-        }else if (filename == 'orthophoto.tif'){
-            if (config.test){
-                if (config.testSkipOrthophotos) return false;
-                else filename = path.join('..', '..', 'processing_results', 'odm_orthophoto', `odm_${filename}`);
-            }else{
-                filename = path.join('odm_orthophoto', `odm_${filename}`);
-            }
         }else{
             return false; // Invalid
         }
@@ -435,7 +428,7 @@ module.exports = class Task{
                     }else if (config.s3UploadEverything){
                         s3Paths = ['all.zip'].concat(allPaths);
                     }else{
-                        s3Paths = ['all.zip', 'odm_orthophoto/odm_orthophoto.tif'];
+                        s3Paths = ['all.zip'];
                     }
                     
                     S3.uploadPaths(this.getProjectFolderPath(), config.s3Bucket, this.uuid, s3Paths, 
