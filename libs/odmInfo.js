@@ -75,12 +75,14 @@ module.exports = {
 
                     switch((values.type || "").trim()){
                         case "<type 'int'>":
+                        case "<class 'int'>":
                             type = "int";
                             value = values['default'] !== undefined ? 
                                             parseInt(values['default']) :
                                             0;
                             break;
                         case "<type 'float'>":
+                        case "<class 'float'>":
                             type = "float";
                             value = values['default'] !== undefined ? 
                                             parseFloat(values['default']) :
