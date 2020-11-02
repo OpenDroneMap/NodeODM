@@ -137,7 +137,7 @@ module.exports = {
                         if (onOutput) {
                             onOutput(`Uploading ${filename}... ${progress[filename]}%`);
                             if (progress[filename] == 100){
-                                onOutput(`Merging ${filename} parts (if any), this could take a bit...`);
+                                onOutput(`Finalizing ${filename} upload, this could take a bit...`);
                             }
                         }
                     }
