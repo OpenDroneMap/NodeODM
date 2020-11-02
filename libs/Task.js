@@ -423,9 +423,7 @@ module.exports = class Task{
             if (S3.enabled()){
                 tasks.push((done) => {
                     let s3Paths;
-                    if (config.test){
-                        s3Paths = ['all.zip']; // During testing only upload all.zip
-                    }else if (config.s3UploadEverything){
+                    if (config.s3UploadEverything){
                         s3Paths = ['all.zip'].concat(allPaths);
                     }else{
                         s3Paths = ['all.zip'];
