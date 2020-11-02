@@ -76,8 +76,11 @@ module.exports = {
     uploadPaths: function(srcFolder, bucket, dstFolder, paths, cb, onOutput){
         if (!s3) throw new Error("S3 is not initialized");
 
-        const PARALLEL_UPLOADS = 5;
+        const PARALLEL_UPLOADS = 5; // Upload these many files at the same time
         const MAX_RETRIES = 6;
+
+        let concurrency = 10; // Upload these many parts per file at the same time
+        let progress = 0;
 
         const q = async.queue((file, done) => {
             logger.debug(`Uploading ${file.src} --> ${file.dest}`);
@@ -86,13 +89,16 @@ module.exports = {
                 Key: file.dest,
                 Body: fs.createReadStream(file.src),
                 ACL: config.s3ACL
-            }, {partSize: 5 * 1024 * 1024, queueSize: 1}, err => {
+            }, {partSize: 100 * 1024 * 1024, queueSize: concurrency}, err => {
                 if (err){
                     logger.debug(err);
                     const msg = `Cannot upload file to S3: ${err.code}, retrying... ${file.retries}`;
                     if (onOutput) onOutput(msg);
                     if (file.retries < MAX_RETRIES){
                         file.retries++;
+                        concurrency = Math.max(1, Math.floor(concurrency * 0.66));
+                        progress = 0;
+
                         setTimeout(() => {
                             q.push(file, errHandler);
                             done();
@@ -101,6 +107,12 @@ module.exports = {
                         done(new Error(msg));
                     }
                 }else done();
+            }).on('httpUploadProgress', p => {
+                const perc = Math.round((p.loaded / p.total) * 100)
+                if (perc % 5 == 0 && progress < perc){
+                    progress = perc;
+                    if (onOutput) onOutput(`Uploading ${path.basename(file.dest)}... ${progress}%`);
+                }
             });
         }, PARALLEL_UPLOADS);
 
