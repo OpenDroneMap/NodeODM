@@ -18,4 +18,4 @@ COPY . /var/www
 
 RUN npm install && mkdir tmp
 
-ENTRYPOINT ["/usr/bin/nodejs", "/var/www/index.js"]
+ENTRYPOINT ["/usr/bin/node", "/var/www/index.js"]
