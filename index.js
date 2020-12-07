@@ -747,9 +747,10 @@ app.get('/info', authCheck, (req, res) => {
     async.parallel({
         cpu: cb => si.cpu(data => cb(null, data)),
         mem: cb => si.mem(data => cb(null, data)),
-        engineVersion: odmInfo.getVersion
+        engineVersion: odmInfo.getVersion,
+        engine: odmInfo.getEngine
     }, (_, data) => {
-        const { cpu, mem, engineVersion } = data;
+        const { cpu, mem, engineVersion, engine } = data;
 
         // For testing
         if (req.query._debugUnauthorized){
@@ -766,8 +767,8 @@ app.get('/info', authCheck, (req, res) => {
             cpuCores: cpu.cores,
             maxImages: config.maxImages,
             maxParallelTasks: config.parallelQueueProcessing,
-            engineVersion: engineVersion,
-            engine: 'odm'
+            engineVersion,
+            engine
         });
     });
 });
