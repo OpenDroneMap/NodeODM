@@ -24,6 +24,7 @@ const logger = require('./logger');
 
 let odmOptions = null;
 let odmVersion = null;
+let engine = null;
 
 module.exports = {
     initialize: function(done){
@@ -39,7 +40,22 @@ module.exports = {
             return;
         }
 
-        odmRunner.getVersion(done);
+        odmRunner.getVersion((err, version) => {
+            odmVersion = version;
+            done(null, version);
+        });
+    },
+
+    getEngine: function(done){
+        if (engine){
+            done(null, engine);
+            return;
+        }
+
+        odmRunner.getEngine((err, eng) => {
+            engine = eng;
+            done(null, eng);
+        });
     },
 
     getOptions: function(done){
@@ -124,8 +140,10 @@ module.exports = {
                         // is in the list of choices
                         if (domain.indexOf(value) === -1) domain.unshift(value);
                     }
+                    
+                    const choicesStr = Array.isArray(domain) ? domain.join(", ") : domain;
 
-                    help = help.replace(/^One of: \%\(choices\)s. /, "");
+                    help = help.replace(/\%\(choices\)s/g, choicesStr);
                     help = help.replace(/\%\(default\)s/g, value);
 
                     odmOptions.push({

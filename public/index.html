@@ -38,7 +38,7 @@
             border-color: #4582ec;
         }
     </style>
-    <link rel="stylesheet" href="css/main.css">
+    <link rel="stylesheet" href="css/main.css?t=1">
 
     <script src="js/vendor/modernizr-2.8.3.min.js"></script>
 </head>
@@ -123,13 +123,20 @@
 
                                 <div data-bind="foreach: options">
                                     <label data-bind="text: properties.name + (properties.domain ? ' (' + properties.domain + ')' : '')"></label><br/>
-                                    <!-- ko if: properties.type !== 'bool' -->
+                                    <!-- ko if: properties.type !== 'bool' && properties.type !== 'enum' -->
                                     <input type="text" class="form-control" data-bind="attr: {placeholder: properties.value}, value: value">
                                     <!-- /ko -->
                                     <!-- ko if: properties.type === 'bool' -->
                                     <div class="checkbox">
                                         <label>
                                             <input type="checkbox" data-bind="checked: value"> Enable
+                                        </label>
+                                    </div>
+                                    <!-- /ko -->
+                                    <!-- ko if: properties.type === 'enum' -->
+                                    <div class="selectBox">
+                                        <label>
+                                            <select class="form-control" data-bind="options: properties.domain, value: value"></select>
                                         </label>
                                     </div>
                                     <!-- /ko -->
