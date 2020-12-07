@@ -140,8 +140,10 @@ module.exports = {
                         // is in the list of choices
                         if (domain.indexOf(value) === -1) domain.unshift(value);
                     }
+                    
+                    const choicesStr = Array.isArray(domain) ? domain.join(", ") : domain;
 
-                    help = help.replace(/^One of: \%\(choices\)s. /, "");
+                    help = help.replace(/\%\(choices\)s/g, choicesStr);
                     help = help.replace(/\%\(default\)s/g, value);
 
                     odmOptions.push({
