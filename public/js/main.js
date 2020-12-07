@@ -491,6 +491,8 @@ $(function() {
         this.defaultValue = undefined;
         if (properties.type === 'bool' && properties.value === 'true'){
             this.defaultValue = true;
+        }else if (properties.type === 'enum'){
+            this.defaultValue = properties.value;
         }
         
         this.value = ko.observable(this.defaultValue);
@@ -528,11 +530,21 @@ $(function() {
         var result = [];
         for (var i = 0; i < this.options().length; i++) {
             var opt = this.options()[i];
-            if (opt.value() !== undefined) {
-                result.push({
-                    name: opt.properties.name,
-                    value: opt.value()
-                });
+            if (opt.properties.name == 'feature-type') console.log(opt, opt.value());
+            if (opt.properties.type === 'enum'){
+                if (opt.value() !== opt.defaultValue){
+                    result.push({
+                        name: opt.properties.name,
+                        value: opt.value()
+                    });
+                }
+            }else{
+                if (opt.value() !== undefined) {
+                    result.push({
+                        name: opt.properties.name,
+                        value: opt.value()
+                    });
+                }
             }
         }
         return result;
