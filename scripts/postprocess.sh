@@ -75,12 +75,14 @@ if [ ! -z "$pointcloud_input_path" ]; then
         if [ -e "entwine_pointcloud-tmp" ]; then
             rm -fr "entwine_pointcloud-tmp"
         fi
-    else
-        echo "Entwine is not installed, checking if PotreeConverter is available instead..."
+    fi
+
+    if [ ! -e "entwine_pointcloud" ]; then
+        echo "Checking if PotreeConverter is available..."
         if hash PotreeConverter 2>/dev/null; then
             PotreeConverter "$pointcloud_input_path" -o potree_pointcloud --overwrite -a RGB CLASSIFICATION
         else
-            echo "PotreeConverter is also not installed, will skip generation of Potree point cloud"
+            echo "PotreeConverter is not installed, will skip generation of Potree point cloud"
         fi
     fi
 else
