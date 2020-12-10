@@ -50,6 +50,20 @@ if [ ! -z "$pointcloud_input_path" ]; then
         fi
     fi
     
+
+    if hash entwine 2>/dev/null; then
+        if [ ! -e "entwine_pointcloud" ]; then
+            entwine build --threads $(nproc) --tmp "entwine_pointcloud-tmp" -i "$pointcloud_input_path" -o entwine_pointcloud
+        else
+            echo "Entwine point cloud is already built."
+        fi
+        
+        # Cleanup
+        if [ -e "entwine_pointcloud-tmp" ]; then
+            rm -fr "entwine_pointcloud-tmp"
+        fi
+    fi
+
     if hash untwine 2>/dev/null; then
         if [ ! -e "entwine_pointcloud" ]; then
             untwine --temp_dir "entwine_pointcloud-tmp" --files "$pointcloud_input_path" --output_dir entwine_pointcloud
@@ -61,17 +75,6 @@ if [ ! -z "$pointcloud_input_path" ]; then
         if [ -e "entwine_pointcloud-tmp" ]; then
             rm -fr "entwine_pointcloud-tmp"
         fi
-    elif hash entwine 2>/dev/null; then
-        if [ ! -e "entwine_pointcloud" ]; then
-            entwine build --threads $(nproc) --tmp "entwine_pointcloud-tmp" -i "$pointcloud_input_path" -o entwine_pointcloud
-        else
-            echo "Entwine point cloud is already built."
-        fi
-        
-        # Cleanup
-        if [ -e "entwine_pointcloud-tmp" ]; then
-            rm -fr "entwine_pointcloud-tmp"
-        fi    
     else
         echo "Entwine is not installed, checking if PotreeConverter is available instead..."
         if hash PotreeConverter 2>/dev/null; then
