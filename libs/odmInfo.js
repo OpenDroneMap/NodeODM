@@ -141,11 +141,6 @@ module.exports = {
                         if (domain.indexOf(value) === -1) domain.unshift(value);
                     }
                     
-                    const choicesStr = Array.isArray(domain) ? domain.join(", ") : domain;
-
-                    help = help.replace(/\%\(choices\)s/g, choicesStr);
-                    help = help.replace(/\%\(default\)s/g, value);
-
                     odmOptions.push({
                         name, type, value, domain, help
                     });
