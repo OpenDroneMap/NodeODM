@@ -495,8 +495,8 @@ $(function() {
             this.defaultValue = properties.value;
         }
 
-        if (this.properties.help){
-            var choicesStr = typeof domain === "object" ? domain.join(", ") : domain;
+        if (this.properties.help !== undefined && this.properties.domain !== undefined){
+            var choicesStr = typeof this.properties.domain === "object" ? this.properties.domain.join(", ") : this.properties.domain;
 
             this.properties.help = this.properties.help.replace(/\%\(choices\)s/g, choicesStr);
             this.properties.help = this.properties.help.replace(/\%\(default\)s/g, this.properties.value);
