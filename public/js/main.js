@@ -494,6 +494,13 @@ $(function() {
         }else if (properties.type === 'enum'){
             this.defaultValue = properties.value;
         }
+
+        if (this.properties.help){
+            var choicesStr = typeof domain === "object" ? domain.join(", ") : domain;
+
+            this.properties.help = this.properties.help.replace(/\%\(choices\)s/g, choicesStr);
+            this.properties.help = this.properties.help.replace(/\%\(default\)s/g, this.properties.value);
+        }
         
         this.value = ko.observable(this.defaultValue);
     }
