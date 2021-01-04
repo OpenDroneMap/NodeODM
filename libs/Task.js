@@ -48,6 +48,7 @@ module.exports = class Task{
         this.setStatus(statusCodes.QUEUED);
         this.options = options;
         this.gcpFiles = [];
+        this.geoFiles = [];
         this.output = [];
         this.runningProcesses = [];
         this.webhook = webhook;
@@ -74,11 +75,14 @@ module.exports = class Task{
                     if (err) cb(err);
                     else{
                         files.forEach(file => {
-                            if (/\.txt$/gi.test(file)){
+                            if (/^geo\.txt$/gi.test(file)){
+                                this.geoFiles.push(file);
+                            }else if (/\.txt$/gi.test(file)){
                                 this.gcpFiles.push(file);
                             }
                         });
                         logger.debug(`Found ${this.gcpFiles.length} GCP files (${this.gcpFiles.join(" ")}) for ${this.uuid}`);
+                        logger.debug(`Found ${this.geoFiles.length} GEO files (${this.geoFiles.join(" ")}) for ${this.uuid}`);
                         cb(null);
                     }
                 });
@@ -462,6 +466,9 @@ module.exports = class Task{
 
             if (this.gcpFiles.length > 0){
                 runnerOptions.gcp = fs.realpathSync(path.join(this.getGcpFolderPath(), this.gcpFiles[0]));
+            }
+            if (this.geoFiles.length > 0){
+                runnerOptions.geo = fs.realpathSync(path.join(this.getGcpFolderPath(), this.geoFiles[0]));
             }
 
             this.runningProcesses.push(odmRunner.run(runnerOptions, this.uuid, (err, code, signal) => {
