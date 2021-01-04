@@ -8,7 +8,7 @@ REST API to access ODM
 
 === Version information
 [%hardbreaks]
-_Version_ : 2.1.0
+_Version_ : 2.1.3
 
 
 === Contact information
@@ -18,7 +18,7 @@ _Contact_ : Piero Toffanin
 
 === License information
 [%hardbreaks]
-_License_ : GPL-3.0
+_License_ : AGPL-3.0
 
 
 === URI scheme
@@ -340,7 +340,7 @@ _optional_|Token required for authentication (when authentication is required).|
 |*FormData*|*dateCreated* +
 _optional_|An optional timestamp overriding the default creation date of the task.|integer|
 |*FormData*|*images* +
-_optional_|Images to process, plus an optional GCP file (*.txt) and/or an optional seed file (seed.zip). If included, the GCP file should have .txt extension. If included, the seed archive pre-polulates the task directory with its contents.|file|
+_optional_|Images to process, plus an optional GEO file (geo.txt) and/or an optional GCP file (*.txt) and/or an optional seed file (seed.zip). If included, the GCP file should have .txt extension. If included, the seed archive pre-polulates the task directory with its contents.|file|
 |*FormData*|*name* +
 _optional_|An optional name to be associated with the task|string|
 |*FormData*|*options* +
@@ -352,7 +352,7 @@ _optional_|When set, skips generation of point cloud tiles.|boolean|
 |*FormData*|*webhook* +
 _optional_|Optional URL to call when processing has ended (either successfully or unsuccessfully).|string|
 |*FormData*|*zipurl* +
-_optional_|URL of the zip file containing the images to process, plus an optional GCP file. If included, the GCP file should have .txt extension|string|
+_optional_|URL of the zip file containing the images to process, plus an optional GEO file and/or an optional GCP file. If included, the GCP file should have .txt extension|string|
 |===
 
 
@@ -503,7 +503,7 @@ _required_|UUID of the task|string|
 |*Query*|*token* +
 _optional_|Token required for authentication (when authentication is required).|string|
 |*FormData*|*images* +
-_required_|Images to process, plus an optional GCP file (*.txt) and/or an optional seed file (seed.zip). If included, the GCP file should have .txt extension. If included, the seed archive pre-polulates the task directory with its contents.|file|
+_required_|Images to process, plus an optional GEO file (geo.txt) and/or an optional GCP file (*.txt) and/or an optional seed file (seed.zip). If included, the GCP file should have .txt extension. If included, the seed archive pre-polulates the task directory with its contents.|file|
 |===
 
 
