@@ -49,6 +49,7 @@ module.exports = class Task{
         this.options = options;
         this.gcpFiles = [];
         this.geoFiles = [];
+        this.imageGroupsFiles = [];
         this.output = [];
         this.runningProcesses = [];
         this.webhook = webhook;
@@ -77,12 +78,15 @@ module.exports = class Task{
                         files.forEach(file => {
                             if (/^geo\.txt$/gi.test(file)){
                                 this.geoFiles.push(file);
+                            }else if (/^image_groups\.txt$/gi.test(file)){
+                                this.imageGroupsFiles.push(file);
                             }else if (/\.txt$/gi.test(file)){
                                 this.gcpFiles.push(file);
                             }
                         });
                         logger.debug(`Found ${this.gcpFiles.length} GCP files (${this.gcpFiles.join(" ")}) for ${this.uuid}`);
                         logger.debug(`Found ${this.geoFiles.length} GEO files (${this.geoFiles.join(" ")}) for ${this.uuid}`);
+                        logger.debug(`Found ${this.imageGroupsFiles.length} image groups files (${this.imageGroupsFiles.join(" ")}) for ${this.uuid}`);
                         cb(null);
                     }
                 });
@@ -469,6 +473,9 @@ module.exports = class Task{
             }
             if (this.geoFiles.length > 0){
                 runnerOptions.geo = fs.realpathSync(path.join(this.getGcpFolderPath(), this.geoFiles[0]));
+            }
+            if (this.geoFiles.length > 0){
+                runnerOptions["split-image-groups"] = fs.realpathSync(path.join(this.getGcpFolderPath(), this.imageGroupsFiles[0]));
             }
 
             this.runningProcesses.push(odmRunner.run(runnerOptions, this.uuid, (err, code, signal) => {
