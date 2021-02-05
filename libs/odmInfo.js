@@ -74,6 +74,7 @@ module.exports = {
                     if (["-h", "--project-path", "--cmvs-maxImages", "--time",
                         "--zip-results", "--pmvs-num-cores",
                         "--start-with", "--gcp", "--images", "--geo",
+                        "--split-image-groups",
                         "--rerun-all", "--rerun",
                         "--slam-config", "--video", "--version", "name"].indexOf(option) !== -1) continue;
 
