@@ -474,7 +474,7 @@ module.exports = class Task{
             if (this.geoFiles.length > 0){
                 runnerOptions.geo = fs.realpathSync(path.join(this.getGcpFolderPath(), this.geoFiles[0]));
             }
-            if (this.geoFiles.length > 0){
+            if (this.imageGroupsFiles.length > 0){
                 runnerOptions["split-image-groups"] = fs.realpathSync(path.join(this.getGcpFolderPath(), this.imageGroupsFiles[0]));
             }
 
