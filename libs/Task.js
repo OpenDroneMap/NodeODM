@@ -376,6 +376,15 @@ module.exports = class Task{
                 };
             };
 
+            const saveTaskOutput = (destination) => {
+                return (done) => {
+                    fs.writeFile(destination, this.output.join("\n"), err => {
+                        if (err) logger.info(`Cannot write log at ${destination}, skipping...`);
+                        done();
+                    });
+                };
+            }
+
             // All paths are relative to the project directory (./data/<uuid>/)
             let allPaths = ['odm_orthophoto/odm_orthophoto.tif', 
                               'odm_orthophoto/odm_orthophoto.png',
@@ -384,6 +393,7 @@ module.exports = class Task{
                               'odm_dem/dsm.tif', 'odm_dem/dtm.tif', 'dsm_tiles', 'dtm_tiles',
                               'orthophoto_tiles', 'potree_pointcloud', 'entwine_pointcloud', 
                               'images.json', 'cameras.json',
+                              'task_output.txt',
                               'odm_report'];
             
             // Did the user request different outputs than the default?
@@ -423,6 +433,9 @@ module.exports = class Task{
             }
             
             if (!this.skipPostProcessing) tasks.push(runPostProcessingScript());
+            
+            const taskOutputFile = path.join(this.getProjectFolderPath(), 'task_output.txt');
+            tasks.push(saveTaskOutput(taskOutputFile));
 
             const archiveFunc = config.has7z ? createZipArchive : createZipArchiveLegacy;
             tasks.push(archiveFunc('all.zip', allPaths));
