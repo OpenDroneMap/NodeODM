@@ -8,7 +8,7 @@ REST API to access ODM
 
 === Version information
 [%hardbreaks]
-_Version_ : 2.1.3
+_Version_ : 2.1.4
 
 
 === Contact information
@@ -340,7 +340,7 @@ _optional_|Token required for authentication (when authentication is required).|
 |*FormData*|*dateCreated* +
 _optional_|An optional timestamp overriding the default creation date of the task.|integer|
 |*FormData*|*images* +
-_optional_|Images to process, plus an optional GEO file (geo.txt) and/or an optional GCP file (*.txt) and/or an optional seed file (seed.zip). If included, the GCP file should have .txt extension. If included, the seed archive pre-polulates the task directory with its contents.|file|
+_optional_|Images to process, plus optional files such as a GEO file (geo.txt), image groups file (image_groups.txt), GCP file (*.txt) or seed file (seed.zip). If included, the GCP file should have .txt extension. If included, the seed archive pre-polulates the task directory with its contents.|file|
 |*FormData*|*name* +
 _optional_|An optional name to be associated with the task|string|
 |*FormData*|*options* +
@@ -503,7 +503,7 @@ _required_|UUID of the task|string|
 |*Query*|*token* +
 _optional_|Token required for authentication (when authentication is required).|string|
 |*FormData*|*images* +
-_required_|Images to process, plus an optional GEO file (geo.txt) and/or an optional GCP file (*.txt) and/or an optional seed file (seed.zip). If included, the GCP file should have .txt extension. If included, the seed archive pre-polulates the task directory with its contents.|file|
+_required_|Images to process, plus optional files such as a GEO file (geo.txt), image groups file (image_groups.txt), GCP file (*.txt) or seed file (seed.zip). If included, the GCP file should have .txt extension. If included, the seed archive pre-polulates the task directory with its contents.|file|
 |===
 
 

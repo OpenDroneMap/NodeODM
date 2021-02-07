@@ -49,6 +49,7 @@ module.exports = class Task{
         this.options = options;
         this.gcpFiles = [];
         this.geoFiles = [];
+        this.imageGroupsFiles = [];
         this.output = [];
         this.runningProcesses = [];
         this.webhook = webhook;
@@ -77,12 +78,15 @@ module.exports = class Task{
                         files.forEach(file => {
                             if (/^geo\.txt$/gi.test(file)){
                                 this.geoFiles.push(file);
+                            }else if (/^image_groups\.txt$/gi.test(file)){
+                                this.imageGroupsFiles.push(file);
                             }else if (/\.txt$/gi.test(file)){
                                 this.gcpFiles.push(file);
                             }
                         });
                         logger.debug(`Found ${this.gcpFiles.length} GCP files (${this.gcpFiles.join(" ")}) for ${this.uuid}`);
                         logger.debug(`Found ${this.geoFiles.length} GEO files (${this.geoFiles.join(" ")}) for ${this.uuid}`);
+                        logger.debug(`Found ${this.imageGroupsFiles.length} image groups files (${this.imageGroupsFiles.join(" ")}) for ${this.uuid}`);
                         cb(null);
                     }
                 });
@@ -372,6 +376,15 @@ module.exports = class Task{
                 };
             };
 
+            const saveTaskOutput = (destination) => {
+                return (done) => {
+                    fs.writeFile(destination, this.output.join("\n"), err => {
+                        if (err) logger.info(`Cannot write log at ${destination}, skipping...`);
+                        done();
+                    });
+                };
+            }
+
             // All paths are relative to the project directory (./data/<uuid>/)
             let allPaths = ['odm_orthophoto/odm_orthophoto.tif', 
                               'odm_orthophoto/odm_orthophoto.png',
@@ -380,6 +393,7 @@ module.exports = class Task{
                               'odm_dem/dsm.tif', 'odm_dem/dtm.tif', 'dsm_tiles', 'dtm_tiles',
                               'orthophoto_tiles', 'potree_pointcloud', 'entwine_pointcloud', 
                               'images.json', 'cameras.json',
+                              'task_output.txt',
                               'odm_report'];
             
             // Did the user request different outputs than the default?
@@ -419,6 +433,9 @@ module.exports = class Task{
             }
             
             if (!this.skipPostProcessing) tasks.push(runPostProcessingScript());
+            
+            const taskOutputFile = path.join(this.getProjectFolderPath(), 'task_output.txt');
+            tasks.push(saveTaskOutput(taskOutputFile));
 
             const archiveFunc = config.has7z ? createZipArchive : createZipArchiveLegacy;
             tasks.push(archiveFunc('all.zip', allPaths));
@@ -469,6 +486,9 @@ module.exports = class Task{
             }
             if (this.geoFiles.length > 0){
                 runnerOptions.geo = fs.realpathSync(path.join(this.getGcpFolderPath(), this.geoFiles[0]));
+            }
+            if (this.imageGroupsFiles.length > 0){
+                runnerOptions["split-image-groups"] = fs.realpathSync(path.join(this.getGcpFolderPath(), this.imageGroupsFiles[0]));
             }
 
             this.runningProcesses.push(odmRunner.run(runnerOptions, this.uuid, (err, code, signal) => {
