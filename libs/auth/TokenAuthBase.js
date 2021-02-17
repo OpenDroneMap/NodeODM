@@ -15,28 +15,35 @@ GNU General Public License for more details.
 You should have received a copy of the GNU General Public License
 along with this program.  If not, see <http://www.gnu.org/licenses/>.
 */
-let logger = require('../logger');
+let logger = require("../logger");
 
-module.exports = /*abstract */ class TokenAuthBase{
-    initialize(cb){
-        logger.info(`Authentication using ${this.constructor.name.replace(/Auth$/, "")}`);
+module.exports = /*abstract */ class TokenAuthBase {
+    initialize(cb) {
+        logger.info(
+            `Authentication using ${this.constructor.name.replace(/Auth$/, "")}`
+        );
         cb();
     }
 
-    cleanup(cb){
+    cleanup(cb) {
         cb();
     }
-    
-    validateToken(token, cb){ cb(new Error("Not implemented"), false); }
 
-    getMiddleware(){
+    validateToken(token, cb) {
+        cb(new Error("Not implemented"), false);
+    }
+
+    getMiddleware() {
         return (req, res, next) => {
             this.validateToken(req.query.token, (err, valid) => {
                 if (valid) next();
-                else{
-                    res.json({ error: "Invalid authentication token: " + err.message });
+                else {
+                    res.json({
+                        error: "Invalid authentication token: " + err.message,
+                    });
                 }
             });
         };
     }
 };
+

@@ -17,34 +17,34 @@ along with this program.  If not, see <http://www.gnu.org/licenses/>.
 */
 "use strict";
 
-const fs = require('fs');
-const config = require('./config.js');
-const packageJson = JSON.parse(fs.readFileSync('./package.json'));
+const fs = require("fs");
+const config = require("./config.js");
+const packageJson = JSON.parse(fs.readFileSync("./package.json"));
 
-const logger = require('./libs/logger');
-const async = require('async');
-const mime = require('mime');
+const logger = require("./libs/logger");
+const async = require("async");
+const mime = require("mime");
 
-const express = require('express');
+const express = require("express");
 const app = express();
 
-const bodyParser = require('body-parser');
-const multer = require('multer');
+const bodyParser = require("body-parser");
+const multer = require("multer");
 
-const TaskManager = require('./libs/TaskManager');
-const odmInfo = require('./libs/odmInfo');
-const si = require('systeminformation');
-const S3 = require('./libs/S3');
+const TaskManager = require("./libs/TaskManager");
+const odmInfo = require("./libs/odmInfo");
+const si = require("systeminformation");
+const S3 = require("./libs/S3");
 
-const auth = require('./libs/auth/factory').fromConfig(config);
+const auth = require("./libs/auth/factory").fromConfig(config);
 const authCheck = auth.getMiddleware();
-const taskNew = require('./libs/taskNew');
+const taskNew = require("./libs/taskNew");
 
-app.use(express.static('public'));
-app.use('/swagger.json', express.static('docs/swagger.json'));
+app.use(express.static("public"));
+app.use("/swagger.json", express.static("docs/swagger.json"));
 
 const formDataParser = multer().none();
-const urlEncodedBodyParser = bodyParser.urlencoded({extended: false});
+const urlEncodedBodyParser = bodyParser.urlencoded({ extended: false });
 const jsonBodyParser = bodyParser.json();
 
 let taskManager;
@@ -62,6 +62,12 @@ let server;
  *          description: An optional name to be associated with the task
  *          required: false
  *          type: string
+ *        -
+ *          name: projectId
+ *          in: formData
+ *          description: ProjectID for saha-gozu
+ *          required: true
+ *          type: number
  *        -
  *          name: options
  *          in: formData
@@ -119,7 +125,13 @@ let server;
  *          schema:
  *            $ref: '#/definitions/Error'
  */
-app.post('/task/new/init', authCheck, taskNew.assignUUID, formDataParser, taskNew.handleInit);
+app.post(
+    "/task/new/init",
+    authCheck,
+    taskNew.assignUUID,
+    formDataParser,
+    taskNew.handleInit
+);
 
 /** @swagger
  *  /task/new/upload/{uuid}:
@@ -157,7 +169,14 @@ app.post('/task/new/init', authCheck, taskNew.assignUUID, formDataParser, taskNe
  *          schema:
  *            $ref: '#/definitions/Error'
  */
-app.post('/task/new/upload/:uuid', authCheck, taskNew.getUUID, taskNew.preUpload, taskNew.uploadImages, taskNew.handleUpload);
+app.post(
+    "/task/new/upload/:uuid",
+    authCheck,
+    taskNew.getUUID,
+    taskNew.preUpload,
+    taskNew.uploadImages,
+    taskNew.handleUpload
+);
 
 /** @swagger
  *  /task/new/commit/{uuid}:
@@ -192,7 +211,13 @@ app.post('/task/new/upload/:uuid', authCheck, taskNew.getUUID, taskNew.preUpload
  *          schema:
  *            $ref: '#/definitions/Error'
  */
-app.post('/task/new/commit/:uuid', authCheck, taskNew.getUUID, taskNew.handleCommit, taskNew.createTask);
+app.post(
+    "/task/new/commit/:uuid",
+    authCheck,
+    taskNew.getUUID,
+    taskNew.handleCommit,
+    taskNew.createTask
+);
 
 /** @swagger
  *  /task/new:
@@ -277,12 +302,25 @@ app.post('/task/new/commit/:uuid', authCheck, taskNew.getUUID, taskNew.handleCom
  *          schema:
  *            $ref: '#/definitions/Error'
  */
-app.post('/task/new', authCheck, taskNew.assignUUID, taskNew.uploadImages, (req, res, next) => {
-    req.body = req.body || {};
-    if ((!req.files || req.files.length === 0) && !req.body.zipurl) req.error = "Need at least 1 file or a zip file url.";
-    else if (config.maxImages && req.files && req.files.length > config.maxImages) req.error = `${req.files.length} images uploaded, but this node can only process up to ${config.maxImages}.`;
-    next();
-}, taskNew.createTask);
+app.post(
+    "/task/new",
+    authCheck,
+    taskNew.assignUUID,
+    taskNew.uploadImages,
+    (req, res, next) => {
+        req.body = req.body || {};
+        if ((!req.files || req.files.length === 0) && !req.body.zipurl)
+            req.error = "Need at least 1 file or a zip file url.";
+        else if (
+            config.maxImages &&
+            req.files &&
+            req.files.length > config.maxImages
+        )
+            req.error = `${req.files.length} images uploaded, but this node can only process up to ${config.maxImages}.`;
+        next();
+    },
+    taskNew.createTask
+);
 
 let getTaskFromUuid = (req, res, next) => {
     let task = taskManager.find(req.params.uuid);
@@ -322,10 +360,10 @@ let getTaskFromUuid = (req, res, next) => {
  *          schema:
  *            $ref: '#/definitions/Error'
  */
-app.get('/task/list', authCheck, (req, res) => {
+app.get("/task/list", authCheck, (req, res) => {
     const tasks = [];
-    for (let uuid in taskManager.tasks){
-        tasks.push({uuid});
+    for (let uuid in taskManager.tasks) {
+        tasks.push({ uuid });
     }
     res.json(tasks);
 });
@@ -412,9 +450,10 @@ app.get('/task/list', authCheck, (req, res) => {
  *          schema:
  *            $ref: '#/definitions/Error'
  */
-app.get('/task/:uuid/info', authCheck, getTaskFromUuid, (req, res) => {
+app.get("/task/:uuid/info", authCheck, getTaskFromUuid, (req, res) => {
     const info = req.task.getInfo();
-    if (req.query.with_output !== undefined) info.output = req.task.getOutput(req.query.with_output);
+    if (req.query.with_output !== undefined)
+        info.output = req.task.getOutput(req.query.with_output);
     res.json(info);
 });
 
@@ -453,7 +492,7 @@ app.get('/task/:uuid/info', authCheck, getTaskFromUuid, (req, res) => {
  *          schema:
  *            $ref: '#/definitions/Error'
  */
-app.get('/task/:uuid/output', authCheck, getTaskFromUuid, (req, res) => {
+app.get("/task/:uuid/output", authCheck, getTaskFromUuid, (req, res) => {
     res.json(req.task.getOutput(req.query.line));
 });
 
@@ -492,24 +531,33 @@ app.get('/task/:uuid/output', authCheck, getTaskFromUuid, (req, res) => {
  *          schema:
  *            $ref: '#/definitions/Error'
  */
-app.get('/task/:uuid/download/:asset', authCheck, getTaskFromUuid, (req, res) => {
-    let asset = req.params.asset !== undefined ? req.params.asset : "all.zip";
-    let filePath = req.task.getAssetsArchivePath(asset);
-    if (filePath) {
-        if (fs.existsSync(filePath)) {
-            res.setHeader('Content-Disposition', `attachment; filename=${asset}`);
-            res.setHeader('Content-Type', mime.getType(filePath));
-            res.setHeader('Content-Length', fs.statSync(filePath).size);
+app.get(
+    "/task/:uuid/download/:asset",
+    authCheck,
+    getTaskFromUuid,
+    (req, res) => {
+        let asset =
+            req.params.asset !== undefined ? req.params.asset : "all.zip";
+        let filePath = req.task.getAssetsArchivePath(asset);
+        if (filePath) {
+            if (fs.existsSync(filePath)) {
+                res.setHeader(
+                    "Content-Disposition",
+                    `attachment; filename=${asset}`
+                );
+                res.setHeader("Content-Type", mime.getType(filePath));
+                res.setHeader("Content-Length", fs.statSync(filePath).size);
 
-            const filestream = fs.createReadStream(filePath);
-            filestream.pipe(res);
+                const filestream = fs.createReadStream(filePath);
+                filestream.pipe(res);
+            } else {
+                res.json({ error: "Asset not ready" });
+            }
         } else {
-            res.json({ error: "Asset not ready" });
+            res.json({ error: "Invalid asset" });
         }
-    } else {
-        res.json({ error: "Invalid asset" });
     }
-});
+);
 
 /** @swagger
  * definition:
@@ -538,8 +586,8 @@ let uuidCheck = (req, res, next) => {
     else next();
 };
 
-let successHandler = res => {
-    return err => {
+let successHandler = (res) => {
+    return (err) => {
         if (!err) res.json({ success: true });
         else res.json({ success: false, error: err.message });
     };
@@ -569,9 +617,16 @@ let successHandler = res => {
  *          schema:
  *            $ref: "#/definitions/Response"
  */
-app.post('/task/cancel', urlEncodedBodyParser, jsonBodyParser, authCheck, uuidCheck, (req, res) => {
-    taskManager.cancel(req.body.uuid, successHandler(res));
-});
+app.post(
+    "/task/cancel",
+    urlEncodedBodyParser,
+    jsonBodyParser,
+    authCheck,
+    uuidCheck,
+    (req, res) => {
+        taskManager.cancel(req.body.uuid, successHandler(res));
+    }
+);
 
 /** @swagger
  * /task/remove:
@@ -597,9 +652,16 @@ app.post('/task/cancel', urlEncodedBodyParser, jsonBodyParser, authCheck, uuidCh
  *          schema:
  *            $ref: "#/definitions/Response"
  */
-app.post('/task/remove', urlEncodedBodyParser, jsonBodyParser, authCheck, uuidCheck, (req, res) => {
-    taskManager.remove(req.body.uuid, successHandler(res));
-});
+app.post(
+    "/task/remove",
+    urlEncodedBodyParser,
+    jsonBodyParser,
+    authCheck,
+    uuidCheck,
+    (req, res) => {
+        taskManager.remove(req.body.uuid, successHandler(res));
+    }
+);
 
 /** @swagger
  * /task/restart:
@@ -632,19 +694,31 @@ app.post('/task/remove', urlEncodedBodyParser, jsonBodyParser, authCheck, uuidCh
  *          schema:
  *            $ref: "#/definitions/Response"
  */
-app.post('/task/restart', urlEncodedBodyParser, jsonBodyParser, authCheck, uuidCheck, (req, res, next) => {
-    if (req.body.options){
-        odmInfo.filterOptions(req.body.options, (err, options) => {
-            if (err) res.json({ error: err.message });
-            else {
-                req.body.options = options;
-                next();
-            }
-        });
-    } else next();
-}, (req, res) => {
-    taskManager.restart(req.body.uuid, req.body.options, successHandler(res));
-});
+app.post(
+    "/task/restart",
+    urlEncodedBodyParser,
+    jsonBodyParser,
+    authCheck,
+    uuidCheck,
+    (req, res, next) => {
+        if (req.body.options) {
+            odmInfo.filterOptions(req.body.options, (err, options) => {
+                if (err) res.json({ error: err.message });
+                else {
+                    req.body.options = options;
+                    next();
+                }
+            });
+        } else next();
+    },
+    (req, res) => {
+        taskManager.restart(
+            req.body.uuid,
+            req.body.options,
+            successHandler(res)
+        );
+    }
+);
 
 /** @swagger
  * /options:
@@ -689,7 +763,7 @@ app.post('/task/restart', urlEncodedBodyParser, jsonBodyParser, authCheck, uuidC
  *                 type: string
  *                 description: Description of what this option does
  */
-app.get('/options', authCheck, (req, res) => {
+app.get("/options", authCheck, (req, res) => {
     odmInfo.getOptions((err, options) => {
         if (err) res.json({ error: err.message });
         else res.json(options);
@@ -743,34 +817,37 @@ app.get('/options', authCheck, (req, res) => {
  *               type: string
  *               description: Lowercase identifier of processing engine
  */
-app.get('/info', authCheck, (req, res) => {
-    async.parallel({
-        cpu: cb => si.cpu(data => cb(null, data)),
-        mem: cb => si.mem(data => cb(null, data)),
-        engineVersion: odmInfo.getVersion,
-        engine: odmInfo.getEngine
-    }, (_, data) => {
-        const { cpu, mem, engineVersion, engine } = data;
+app.get("/info", authCheck, (req, res) => {
+    async.parallel(
+        {
+            cpu: (cb) => si.cpu((data) => cb(null, data)),
+            mem: (cb) => si.mem((data) => cb(null, data)),
+            engineVersion: odmInfo.getVersion,
+            engine: odmInfo.getEngine,
+        },
+        (_, data) => {
+            const { cpu, mem, engineVersion, engine } = data;
 
-        // For testing
-        if (req.query._debugUnauthorized){
-            res.writeHead(401, "unauthorized")
-            res.end();
-            return;
+            // For testing
+            if (req.query._debugUnauthorized) {
+                res.writeHead(401, "unauthorized");
+                res.end();
+                return;
+            }
+
+            res.json({
+                version: packageJson.version,
+                taskQueueCount: taskManager.getQueueCount(),
+                totalMemory: mem.total,
+                availableMemory: mem.available,
+                cpuCores: cpu.cores,
+                maxImages: config.maxImages,
+                maxParallelTasks: config.parallelQueueProcessing,
+                engineVersion,
+                engine,
+            });
         }
-
-        res.json({
-            version: packageJson.version,
-            taskQueueCount: taskManager.getQueueCount(),
-            totalMemory: mem.total,
-            availableMemory: mem.available,
-            cpuCores: cpu.cores,
-            maxImages: config.maxImages,
-            maxParallelTasks: config.parallelQueueProcessing,
-            engineVersion,
-            engine
-        });
-    });
+    );
 });
 
 /** @swagger
@@ -795,11 +872,11 @@ app.get('/info', authCheck, (req, res) => {
  *               type: string
  *               description: URL (absolute or relative) where to make a POST request to register a user, or null if registration is disabled.
  */
-app.get('/auth/info', (req, res) => {
+app.get("/auth/info", (req, res) => {
     res.json({
-        message: "Authentication not available on this node", 
+        message: "Authentication not available on this node",
         loginUrl: null,
-        registerUrl: null
+        registerUrl: null,
     });
 });
 
@@ -836,8 +913,8 @@ app.get('/auth/info', (req, res) => {
  *          schema:
  *            $ref: '#/definitions/Error'
  */
-app.post('/auth/login', (req, res) => {
-    res.json({error: "Not available"});
+app.post("/auth/login", (req, res) => {
+    res.json({ error: "Not available" });
 });
 
 /** @swagger
@@ -864,34 +941,36 @@ app.post('/auth/login', (req, res) => {
  *          schema:
  *            $ref: "#/definitions/Response"
  */
-app.post('/auth/register', (req, res) => {
-    res.json({error: "Not available"});
+app.post("/auth/register", (req, res) => {
+    res.json({ error: "Not available" });
 });
-
 
 app.use((err, req, res, next) => {
     logger.error(err.stack);
-    res.json({error: err.message});
+    res.json({ error: err.message });
 });
 
-let gracefulShutdown = done => {
-    async.series([
-        cb => taskManager.dumpTaskList(cb),
-        cb => auth.cleanup(cb),
-        cb => {
-            logger.info("Closing server");
-            server.close();
-            logger.info("Exiting...");
-            process.exit(0);
-        }
-    ], done);
+let gracefulShutdown = (done) => {
+    async.series(
+        [
+            (cb) => taskManager.dumpTaskList(cb),
+            (cb) => auth.cleanup(cb),
+            (cb) => {
+                logger.info("Closing server");
+                server.close();
+                logger.info("Exiting...");
+                process.exit(0);
+            },
+        ],
+        done
+    );
 };
 
 // listen for TERM signal .e.g. kill
-process.on('SIGTERM', gracefulShutdown);
+process.on("SIGTERM", gracefulShutdown);
 
 // listen for INT signal e.g. Ctrl-C
-process.on('SIGINT', gracefulShutdown);
+process.on("SIGINT", gracefulShutdown);
 
 // Startup
 if (config.test) {
@@ -901,34 +980,42 @@ if (config.test) {
     if (config.testDropUploads) logger.info("Uploads will drop at random");
 }
 
-if (!config.hasUnzip) logger.warn("The unzip program is not installed, (certain unzip operations might be slower)");
-if (!config.has7z) logger.warn("The 7z program is not installed, falling back to legacy (zipping will be slower)");
-
+if (!config.hasUnzip)
+    logger.warn(
+        "The unzip program is not installed, (certain unzip operations might be slower)"
+    );
+if (!config.has7z)
+    logger.warn(
+        "The 7z program is not installed, falling back to legacy (zipping will be slower)"
+    );
 
 let commands = [
-    cb => odmInfo.initialize(cb),
-    cb => auth.initialize(cb),
-    cb => S3.initialize(cb),
-    cb => { 
+    (cb) => odmInfo.initialize(cb),
+    (cb) => auth.initialize(cb),
+    (cb) => S3.initialize(cb),
+    (cb) => {
         TaskManager.initialize(cb);
         taskManager = TaskManager.singleton();
     },
-    cb => {
-        server = app.listen(config.port, err => {
-            if (!err) logger.info('Server has started on port ' + String(config.port));
+    (cb) => {
+        server = app.listen(config.port, (err) => {
+            if (!err)
+                logger.info(
+                    "Server has started on port " + String(config.port)
+                );
             cb(err);
         });
-    }
+    },
 ];
 
 if (config.powercycle) {
-    commands.push(cb => {
+    commands.push((cb) => {
         logger.info("Power cycling is set, application will shut down...");
         process.exit(0);
     });
 }
 
-async.series(commands, err => {
+async.series(commands, (err) => {
     if (err) {
         logger.error("Error during startup: " + err.message);
         process.exit(1);
