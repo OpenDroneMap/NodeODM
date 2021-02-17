@@ -19,12 +19,11 @@ const TokenAuthBase = require("./TokenAuthBase");
 
 module.exports = class TokenIpAuth extends TokenAuthBase {
     // @param token {String} token to use for authentication
-    constructor(token, ips = []) {
-        // TODO get authorized ip's from config during initialization
+    constructor(token, authorizedIps) {
         super(token);
 
         this.token = token;
-        this.ips = ips;
+        this.authorizedIps = authorizedIps;
     }
 
     validateToken(token, cb) {
@@ -35,11 +34,24 @@ module.exports = class TokenIpAuth extends TokenAuthBase {
         }
     }
 
+    validateIp(ip, cb) {
+        if (this.authorizedIps.indexOf(ip) !== -1) return cb(null, true)
+        else cb(new Error('IP is not one of authorized IPs.', false))
+    }
+
     getMiddleware() {
         return (req, res, next) => {
-            // TODO check ip from req here
             this.validateToken(req.query.token, (err, valid) => {
-                if (valid) next();
+                if (valid) {
+                    this.validateIp(req.connection.remoteAddress, (err, valid) => {
+                        if (valid) next();
+                        else {
+                            res.json({
+                                error: "Invalid authentication IP: " + err.message,
+                            });
+                        }
+                    });
+                }
                 else {
                     res.json({
                         error: "Invalid authentication token: " + err.message,

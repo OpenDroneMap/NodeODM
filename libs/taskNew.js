@@ -200,7 +200,11 @@ module.exports = {
 
     handleInit: (req, res) => {
         req.body = req.body || {};
-        // TODO Check if req.body has projectID
+    
+        if (!req.body.projectId) {
+            res.json({ error: 'noProjectId' }); // error can be changed accordingly
+            return;
+        }
 
         const srcPath = path.join("tmp", req.id);
         const bodyFile = path.join(srcPath, "body.json");
@@ -469,9 +473,9 @@ module.exports = {
 
                     // Create task
                     (cb) => {
-                        // TODO crate task with sg-projectId(req.body should have it)
                         new Task(
                             req.id,
+                            req.body.projectId,
                             req.body.name,
                             req.body.options,
                             req.body.webhook,

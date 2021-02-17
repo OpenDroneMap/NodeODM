@@ -38,6 +38,7 @@ const statusCodes = require("./statusCodes");
 module.exports = class Task {
     constructor(
         uuid,
+        projectId,
         name,
         options = [],
         webhook = null,
@@ -46,11 +47,13 @@ module.exports = class Task {
         dateCreated = new Date().getTime(),
         done = () => {}
     ) {
-        // TODO get and set projectID here
+        
+        assert(projectId !== undefined, 'projectId must be set');
         assert(uuid !== undefined, "uuid must be set");
         assert(done !== undefined, "ready must be set");
 
         this.uuid = uuid;
+        this.projectId = projectId;
         this.name = name !== "" ? name : "Task of " + new Date().toISOString();
         this.dateCreated = isNaN(parseInt(dateCreated))
             ? new Date().getTime()
