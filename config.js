@@ -107,6 +107,7 @@ config.testFailTasks = argv.test_fail_tasks || fromConfigFile("testFailTasks", f
 config.testSeconds = parseInt(argv.test_seconds || fromConfigFile("testSeconds", 0));
 config.powercycle = argv.powercycle || fromConfigFile("powercycle", false);
 config.token = argv.token || fromConfigFile("token", "");
+config.authorizedIps = fromConfigFile("authorizedIps", []);
 config.maxImages = parseInt(argv.max_images || fromConfigFile("maxImages", "")) || null;
 config.webhook = argv.webhook || fromConfigFile("webhook", "");
 config.s3Endpoint = argv.s3_endpoint || fromConfigFile("s3Endpoint", "");
