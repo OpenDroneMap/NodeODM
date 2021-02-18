@@ -69,7 +69,7 @@ module.exports = {
                         cb(
                             new Error(
                                 "Cannot connect to S3. Check your S3 configuration: " +
-                                    err.code
+                                err.code
                             )
                         );
                     }
@@ -222,8 +222,21 @@ module.exports = {
             q.push(uploadList, errHandler);
         });
     },
+
     // @param key {String} Source key in the bucket
     // @param dest {String} Destination file path
     // @param cb {Function} Callback
-    downloadPath: (key, dest, cb) => {},
+    downloadPath: (key, dest, cb) => {
+        const writeStream = fs.createWriteStream(dest);
+
+        s3.getObject({
+            Bucket: config.s3Bucket,
+            Key: key,
+        })
+        .createReadStream()
+        .on("error", (err) => cb(err))
+        .pipe(writeStream)
+        .on('error', (err) => cb(err))
+        .on('finish', () => cb());
+    },
 };

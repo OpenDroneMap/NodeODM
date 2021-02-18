@@ -179,6 +179,50 @@ app.post(
 );
 
 /** @swagger
+ *  /task/new/upload/link/{uuid}:
+ *    post:
+ *      description: Adds one or more file links to the task created via /task/new/init. It does not start the task. To start the task, call /task/new/commit.
+ *      tags: [task]
+ *      consumes:
+ *        - multipart/form-data
+ *      parameters:
+ *        -
+*           name: uuid
+*           in: path
+*           description: UUID of the task
+*           required: true
+*           type: string
+ *        -
+ *          name: images
+ *          in: formData
+ *          description: Images to process, plus optional files such as a GEO file (geo.txt), image groups file (image_groups.txt), GCP file (*.txt) or seed file (seed.zip). If included, the GCP file should have .txt extension. If included, the seed archive pre-polulates the task directory with its contents.
+ *          required: true
+ *          type: array
+ *        -
+ *          name: token
+ *          in: query
+ *          description: 'Token required for authentication (when authentication is required).'
+ *          required: false
+ *          type: string
+ *      responses:
+ *        200:
+ *          description: File Received
+ *          schema:
+ *            $ref: "#/definitions/Response"
+ *        default:
+ *          description: Error
+ *          schema:
+ *            $ref: '#/definitions/Error'
+ */
+app.post(
+    "/task/new/upload/link/:uuid",
+    authCheck,
+    taskNew.getUUID,
+    formDataParser,
+    taskNew.handleImageLinks
+);
+
+/** @swagger
  *  /task/new/commit/{uuid}:
  *    post:
  *      description: Creates a new task for which images have been uploaded via /task/new/upload.
@@ -216,7 +260,7 @@ app.post(
     authCheck,
     taskNew.getUUID,
     taskNew.handleCommit,
-    taskNew.createTask
+    // taskNew.createTask
 );
 
 /** @swagger

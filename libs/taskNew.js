@@ -32,6 +32,8 @@ const request = require("request");
 const ziputils = require("./ziputils");
 const { cancelJob } = require("node-schedule");
 
+const s3 = require('./S3');
+
 const download = function (uri, filename, callback) {
     request.head(uri, function (err, res, body) {
         if (err) callback(err);
@@ -43,7 +45,7 @@ const download = function (uri, filename, callback) {
     });
 };
 
-const removeDirectory = function (dir, cb = () => {}) {
+const removeDirectory = function (dir, cb = () => { }) {
     fs.stat(dir, (err, stats) => {
         if (!err && stats.isDirectory()) rmdir(dir, cb);
         // ignore errors, don't wait
@@ -60,8 +62,7 @@ const assureUniqueFilename = (dstPath, filename, cb) => {
             if (parts.length > 1) {
                 assureUniqueFilename(
                     dstPath,
-                    `${parts.slice(0, parts.length - 1).join(".")}_.${
-                        parts[parts.length - 1]
+                    `${parts.slice(0, parts.length - 1).join(".")}_.${parts[parts.length - 1]
                     }`,
                     cb
                 );
@@ -159,9 +160,21 @@ module.exports = {
         }
     },
 
+    handleImageLinks: (req, res) => {
+        if (req.body.images && req.body.images.length) {
+            const srcPath = path.join("tmp", req.id);
+            req.body.images.forEach((i) => {
+                fs.appendFile(`${srcPath}/images.sg`, i + '\n', (err) => {
+                    if (err) res.json({ error: err })
+                })
+            })
+        }
+    },
+
     handleCommit: (req, res, next) => {
         const srcPath = path.join("tmp", req.id);
         const bodyFile = path.join(srcPath, "body.json");
+        const imagesFile = path.join(srcPath, 'images.sg');
 
         async.series(
             [
@@ -172,8 +185,8 @@ module.exports = {
                             try {
                                 const body = JSON.parse(data);
                                 fs.unlink(bodyFile, (err) => {
-                                    if (err) cb(err);
-                                    else cb(null, body);
+                                    if (err) cb(err)
+                                    else cb(null, body)
                                 });
                             } catch (e) {
                                 cb(new Error("Malformed body.json"));
@@ -181,17 +194,39 @@ module.exports = {
                         }
                     });
                 },
-                (cb) => fs.readdir(srcPath, cb),
+                (cb) => {
+                    fs.readFile(imagesFile, "utf8", (err, data) => {
+                        if (err) cb(err);
+                        else {
+                            try {
+                                const imageLinks = data.split('\n');
+                                imageLinks.pop(); // in order to manipulate data so that it does not contain final \n character
+                                (function downloadImage(imagePath) {
+                                    if (!imagePath) {
+                                        fs.unlink(imagesFile, (err) => {
+                                            if (err) cb(err)
+                                            else cb(null)
+                                        });
+                                    } else {
+                                        const imageName = imagePath.split('/').pop();
+                                        s3.downloadPath(imagePath, `${srcPath}/${imageName}`, (err) => {
+                                            if (err) cb(err)
+                                            else downloadImage(imageLinks.shift())
+                                        })
+                                    }
+                                })(imageLinks.shift())
+                            } catch (e) {
+                                cb(new Error("Malformed images.txt file"));
+                            }
+                        }
+                    });
+                }
             ],
-            (err, [body, files]) => {
+            (err, [body]) => {
                 if (err) res.json({ error: err.message });
                 else {
                     req.body = body;
-                    req.files = files;
 
-                    if (req.files.length === 0) {
-                        req.error = "Need at least 1 file.";
-                    }
                     next();
                 }
             }
@@ -200,7 +235,7 @@ module.exports = {
 
     handleInit: (req, res) => {
         req.body = req.body || {};
-    
+
         if (!req.body.projectId) {
             res.json({ error: 'noProjectId' }); // error can be changed accordingly
             return;
