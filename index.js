@@ -25,6 +25,7 @@ const logger = require('./libs/logger');
 const async = require('async');
 const mime = require('mime');
 
+const cors = require('cors')
 const express = require('express');
 const app = express();
 
@@ -39,6 +40,9 @@ const S3 = require('./libs/S3');
 const auth = require('./libs/auth/factory').fromConfig(config);
 const authCheck = auth.getMiddleware();
 const taskNew = require('./libs/taskNew');
+
+app.use(cors())
+app.options('*', cors())
 
 app.use(express.static('public'));
 app.use('/swagger.json', express.static('docs/swagger.json'));
