@@ -61,6 +61,25 @@ error | debug | info | verbose | debug | silly
 	process.exit(0);
 }
 
+const allOpts = ["slice","help","config","odm_path","log_level","port","p",
+"deamonize","daemon","d","parallel_queue_processing","q",
+"cleanup_tasks_after","cleanup_uploads_after","test","test_skip_orthophotos",
+"test_skip_dems","test_drop_uploads","test_fail_tasks","test_seconds",
+"powercycle","token","max_images","webhook","s3_endpoint","s3_bucket",
+"s3_force_path_style","s3_access_key","s3_secret_key","s3_signature_version",
+"s3_acl","s3_upload_everything","max_concurrency","max_runtime"];
+
+// Support for "-" or "_" style params syntax
+for (let k in argv){
+    if (k === "_") continue;
+    
+    const opt = k.replace(/-/g, "_");
+    argv[opt] = argv[k];
+    if (allOpts.indexOf(opt) === -1){
+        console.log(`warning: Unrecognized flag ${k}`);
+    }
+}
+
 let config = {};
 
 // Read configuration from file
