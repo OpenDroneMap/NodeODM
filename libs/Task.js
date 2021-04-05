@@ -367,7 +367,7 @@ module.exports = class Task{
                                 if (code === 0){
                                     this.updateProgress(93);
                                     done();
-                                }else done(new Error(`Process exited with code ${code}`));
+                                }else done(new Error(`Postprocessing failed (${code})`));
                             }
                         }, output => {
                             this.output.push(output);
@@ -501,7 +501,27 @@ module.exports = class Task{
                             if (code === 0){
                                 postProcess();
                             }else{
-                                this.setStatus(statusCodes.FAILED, {errorMessage: `Process exited with code ${code}`});
+                                let errorMessage = "";
+                                switch(code){
+                                    case 1:
+                                    case 139:
+                                    case 134:
+                                        errorMessage = `Cannot process dataset`;
+                                        break;
+                                    case 137:
+                                        errorMessage = `Not enough memory`;
+                                        break;
+                                    case 132:
+                                        errorMessage = `Unsupported CPU`;
+                                        break;
+                                    case 3:
+                                        errorMessage = `Installation issue`;
+                                        break;
+                                    default:
+                                        errorMessage = `Processing failed (${code})`;
+                                        break;
+                                }
+                                this.setStatus(statusCodes.FAILED, { errorMessage });
                                 finished();
                             }
                         }else{
