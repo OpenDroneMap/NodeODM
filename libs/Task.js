@@ -19,12 +19,14 @@ along with this program.  If not, see <http://www.gnu.org/licenses/>.
 
 const config = require('../config');
 const async = require('async');
+const os = require('os');
 const assert = require('assert');
 const logger = require('./logger');
 const fs = require('fs');
 const path = require('path');
 const rmdir = require('rimraf');
 const odmRunner = require('./odmRunner');
+const odmInfo = require('./odmInfo');
 const processRunner = require('./processRunner');
 const Directories = require('./Directories');
 const kill = require('tree-kill');
@@ -58,6 +60,26 @@ module.exports = class Task{
         this.progress = 0;
         
         async.series([
+            // Handle post-processing options logic
+            cb => {
+                // If we need to post process results
+                // if pc-ept is supported (build entwine point cloud)
+                // we automatically add the pc-ept option to the task options by default
+                if (skipPostProcessing) cb();
+                else{
+                    odmInfo.supportsOption("pc-ept", (err, supported) => {
+                        if (err){
+                            console.warn(`Cannot check for supported option pc-ept: ${err}`);
+                        }else if (supported){
+                            if (!this.options.find(opt => opt.name === "pc-ept")){
+                                this.options.push({ name: 'pc-ept', value: true });
+                            }
+                        }
+                        cb();
+                    });
+                }
+            },
+
             // Read images info
             cb => {
                 fs.readdir(this.getImagesFolderPath(), (err, files) => {
@@ -432,7 +454,15 @@ module.exports = class Task{
 
             }
             
-            if (!this.skipPostProcessing) tasks.push(runPostProcessingScript());
+            // postprocess.sh is still here for legacy/backward compatibility
+            // purposes, but we might remove it in the future. The new logic
+            // instructs the processing engine to do the necessary processing
+            // of outputs without post processing steps (build EPT).
+            // We're leaving it here only for Linux/docker setups, but will not
+            // be triggered on Windows.
+            if (os.platform() !== "win32" && !this.skipPostProcessing){
+                tasks.push(runPostProcessingScript());
+            }
             
             const taskOutputFile = path.join(this.getProjectFolderPath(), 'task_output.txt');
             tasks.push(saveTaskOutput(taskOutputFile));
