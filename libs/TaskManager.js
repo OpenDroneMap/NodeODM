@@ -184,7 +184,7 @@ class TaskManager{
     // Finds the first QUEUED task.
     findNextTaskToProcess(){
         for (let uuid in this.tasks){
-            if (this.tasks[uuid].getStatus() === statusCodes.QUEUED){
+            if (this.tasks[uuid].getStatus() === statusCodes.QUEUED && this.tasks[uuid].initialized){
                 return this.tasks[uuid];
             }
         }

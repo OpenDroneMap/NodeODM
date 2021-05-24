@@ -30,7 +30,7 @@ const async = require('async');
 const odmInfo = require('./odmInfo');
 const request = require('request');
 const ziputils = require('./ziputils');
-const { cancelJob } = require('node-schedule');
+const statusCodes = require('./statusCodes');
 
 const download = function(uri, filename, callback) {
     request.head(uri, function(err, res, body) {
@@ -224,10 +224,6 @@ module.exports = {
     },
 
     createTask: (req, res) => {
-        // IMPROVEMENT: consider doing the file moving in the background
-        // and return a response more quickly instead of a long timeout.
-        req.setTimeout(1000 * 60 * 20);
-
         const srcPath = path.join("tmp", req.id);
 
         // Print error message and cleanup
@@ -235,26 +231,149 @@ module.exports = {
             res.json({error});
             removeDirectory(srcPath);
         };
+        
+        let destPath = path.join(Directories.data, req.id);
+        let destImagesPath = path.join(destPath, "images");
+        let destGcpPath = path.join(destPath, "gcp");
+
+        const checkMaxImageLimits = (cb) => {
+            if (!config.maxImages) cb();
+            else{
+                fs.readdir(destImagesPath, (err, files) => {
+                    if (err) cb(err);
+                    else if (files.length > config.maxImages) cb(new Error(`${files.length} images uploaded, but this node can only process up to ${config.maxImages}.`));
+                    else cb();
+                });
+            }
+        };
+
+        let initSteps = [
+            // Check if dest directory already exists
+            cb => {
+                if (req.files && req.files.length > 0) {
+                    fs.stat(destPath, (err, stat) => {
+                        if (err && err.code === 'ENOENT') cb();
+                        else{
+                            // Directory already exists, this could happen
+                            // if a previous attempt at upload failed and the user
+                            // used set-uuid to specify the same UUID over the previous run
+                            // Try to remove it
+                            removeDirectory(destPath, err => {
+                                if (err) cb(new Error(`Directory exists and we couldn't remove it.`));
+                                else cb();
+                            });
+                        } 
+                    });
+                } else {
+                    cb();
+                }
+            },
+
+            // Unzips zip URL to tmp/<uuid>/ (if any)
+            cb => {
+                if (req.body.zipurl) {
+                    let archive = "zipurl.zip";
+
+                    upload.storage.getDestination(req, archive, (err, dstPath) => {
+                        if (err) cb(err);
+                        else{
+                            let archiveDestPath = path.join(dstPath, archive);
+
+                            download(req.body.zipurl, archiveDestPath, cb);
+                        }
+                    });
+                } else {
+                    cb();
+                }
+            },
+            
+            // Move all uploads to data/<uuid>/images dir (if any)
+            cb => fs.mkdir(destPath, undefined, cb),
+            cb => fs.mkdir(destGcpPath, undefined, cb),
+            cb => mv(srcPath, destImagesPath, cb),
+            
+            // Zip files handling
+            cb => {
+                const handleSeed = (cb) => {
+                    const seedFileDst = path.join(destPath, "seed.zip");
+
+                    async.series([
+                        // Move to project root
+                        cb => mv(path.join(destImagesPath, "seed.zip"), seedFileDst, cb),
+                        
+                        // Extract
+                        cb => {
+                            ziputils.unzip(seedFileDst, destPath, cb);
+                        },
+
+                        // Remove
+                        cb => {
+                            fs.exists(seedFileDst, exists => {
+                                if (exists) fs.unlink(seedFileDst, cb);
+                                else cb();
+                            });
+                        }
+                    ], cb);
+                }
+
+                const handleZipUrl = (cb) => {
+                    // Extract images
+                    ziputils.unzip(path.join(destImagesPath, "zipurl.zip"), 
+                                    destImagesPath, 
+                                    cb, true);
+                }
+
+                // Find and handle zip files and extract
+                fs.readdir(destImagesPath, (err, entries) => {
+                    if (err) cb(err);
+                    else {
+                        async.eachSeries(entries, (entry, cb) => {
+                            if (entry === "seed.zip"){
+                                handleSeed(cb);
+                            }else if (entry === "zipurl.zip") {
+                                handleZipUrl(cb);
+                            } else cb();
+                        }, cb);
+                    }
+                });
+            },
+
+            // Verify max images limit
+            cb => {
+                checkMaxImageLimits(cb);
+            },
+
+            cb => {
+                // Find any *.txt (GCP) file and move it to the data/<uuid>/gcp directory
+                // also remove any lingering zipurl.zip
+                fs.readdir(destImagesPath, (err, entries) => {
+                    if (err) cb(err);
+                    else {
+                        async.eachSeries(entries, (entry, cb) => {
+                            if (/\.txt$/gi.test(entry)) {
+                                mv(path.join(destImagesPath, entry), path.join(destGcpPath, entry), cb);
+                            }else if (/\.zip$/gi.test(entry)){
+                                fs.unlink(path.join(destImagesPath, entry), cb);
+                            } else cb();
+                        }, cb);
+                    }
+                });
+            }
+        ];
 
         if (req.error !== undefined){
             die(req.error);
         }else{
-            let destPath = path.join(Directories.data, req.id);
-            let destImagesPath = path.join(destPath, "images");
-            let destGcpPath = path.join(destPath, "gcp");
-
-            const checkMaxImageLimits = (cb) => {
-                if (!config.maxImages) cb();
-                else{
-                    fs.readdir(destImagesPath, (err, files) => {
-                        if (err) cb(err);
-                        else if (files.length > config.maxImages) cb(new Error(`${files.length} images uploaded, but this node can only process up to ${config.maxImages}.`));
-                        else cb();
-                    });
-                }
-            };
+            let imagesCountEstimate = -1;
 
             async.series([
+                cb => {
+                    // Basic path check
+                    fs.exists(srcPath, exists => {
+                        if (exists) cb();
+                        else cb(new Error(`Invalid UUID`));
+                    });
+                },
                 cb => {
                     odmInfo.filterOptions(req.body.options, (err, options) => {
                         if (err) cb(err);
@@ -264,134 +383,36 @@ module.exports = {
                         }
                     });
                 },
-
-                // Check if dest directory already exists
                 cb => {
-                    if (req.files && req.files.length > 0) {
-                        fs.stat(destPath, (err, stat) => {
-                            if (err && err.code === 'ENOENT') cb();
-                            else{
-                                // Directory already exists, this could happen
-                                // if a previous attempt at upload failed and the user
-                                // used set-uuid to specify the same UUID over the previous run
-                                // Try to remove it
-                                removeDirectory(destPath, err => {
-                                    if (err) cb(new Error(`Directory exists and we couldn't remove it.`));
-                                    else cb();
-                                });
-                            } 
-                        });
-                    } else {
+                    fs.readdir(srcPath, (err, entries) => {
+                        if (!err) imagesCountEstimate = entries.length;
                         cb();
-                    }
-                },
-
-                // Unzips zip URL to tmp/<uuid>/ (if any)
-                cb => {
-                    if (req.body.zipurl) {
-                        let archive = "zipurl.zip";
-
-                        upload.storage.getDestination(req, archive, (err, dstPath) => {
-                            if (err) cb(err);
-                            else{
-                                let archiveDestPath = path.join(dstPath, archive);
-
-                                download(req.body.zipurl, archiveDestPath, cb);
-                            }
-                        });
-                    } else {
-                        cb();
-                    }
-                },
-
-                // Move all uploads to data/<uuid>/images dir (if any)
-                cb => fs.mkdir(destPath, undefined, cb),
-                cb => fs.mkdir(destGcpPath, undefined, cb),
-                cb => mv(srcPath, destImagesPath, cb),
-                
-                // Zip files handling
-                cb => {
-                    const handleSeed = (cb) => {
-                        const seedFileDst = path.join(destPath, "seed.zip");
-
-                        async.series([
-                            // Move to project root
-                            cb => mv(path.join(destImagesPath, "seed.zip"), seedFileDst, cb),
-                            
-                            // Extract
-                            cb => {
-                                ziputils.unzip(seedFileDst, destPath, cb);
-                            },
-
-                            // Remove
-                            cb => {
-                                fs.exists(seedFileDst, exists => {
-                                    if (exists) fs.unlink(seedFileDst, cb);
-                                    else cb();
-                                });
-                            }
-                        ], cb);
-                    }
-
-                    const handleZipUrl = (cb) => {
-                        // Extract images
-                        ziputils.unzip(path.join(destImagesPath, "zipurl.zip"), 
-                                        destImagesPath, 
-                                        cb, true);
-                    }
-
-                    // Find and handle zip files and extract
-                    fs.readdir(destImagesPath, (err, entries) => {
-                        if (err) cb(err);
-                        else {
-                            async.eachSeries(entries, (entry, cb) => {
-                                if (entry === "seed.zip"){
-                                    handleSeed(cb);
-                                }else if (entry === "zipurl.zip") {
-                                    handleZipUrl(cb);
-                                } else cb();
-                            }, cb);
-                        }
                     });
                 },
-
-                // Verify max images limit
                 cb => {
-                    checkMaxImageLimits(cb);
-                },
+                    const task = new Task(req.id, req.body.name, req.body.options,
+                            req.body.webhook,
+                            req.body.skipPostProcessing === 'true',
+                            req.body.outputs,
+                            req.body.dateCreated,
+                            imagesCountEstimate
+                        );
+                    TaskManager.singleton().addNew(task);
+                    res.json({ uuid: req.id });
+                    cb();
 
-                cb => {
-                    // Find any *.txt (GCP) file and move it to the data/<uuid>/gcp directory
-                    // also remove any lingering zipurl.zip
-                    fs.readdir(destImagesPath, (err, entries) => {
-                        if (err) cb(err);
-                        else {
-                            async.eachSeries(entries, (entry, cb) => {
-                                if (/\.txt$/gi.test(entry)) {
-                                    mv(path.join(destImagesPath, entry), path.join(destGcpPath, entry), cb);
-                                }else if (/\.zip$/gi.test(entry)){
-                                    fs.unlink(path.join(destImagesPath, entry), cb);
-                                } else cb();
-                            }, cb);
-                        }
-                    });
-                },
+                    // We return a UUID right away but continue
+                    // doing processing in the background
 
-                // Create task
-                cb => {
-                    new Task(req.id, req.body.name, req.body.options,
-                    req.body.webhook,
-                    req.body.skipPostProcessing === 'true',
-                    req.body.outputs,
-                    req.body.dateCreated,
-                    (err, task) => {
-                        if (err) cb(err);
-                        else {
-                            TaskManager.singleton().addNew(task);
-                            res.json({ uuid: req.id });
-                            cb();
-                        }
-                    });
+                    task.initialize(err => {
+                        if (err) {
+                            task.setStatus(statusCodes.FAILED, { errorMessage: err.message });
+
+                            // Cleanup
+                            removeDirectory(srcPath);
+                            removeDirectory(destPath);
+                        } else TaskManager.singleton().processNextTask();
+                    }, initSteps);
                 }
             ], err => {
                 if (err) die(err.message);

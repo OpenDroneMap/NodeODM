@@ -38,9 +38,8 @@ const archiver = require('archiver');
 const statusCodes = require('./statusCodes');
 
 module.exports = class Task{
-    constructor(uuid, name, options = [], webhook = null, skipPostProcessing = false, outputs = [], dateCreated = new Date().getTime(), done = () => {}){
+    constructor(uuid, name, options = [], webhook = null, skipPostProcessing = false, outputs = [], dateCreated = new Date().getTime(), imagesCountEstimate = -1){
         assert(uuid !== undefined, "uuid must be set");
-        assert(done !== undefined, "ready must be set");
 
         this.uuid = uuid;
         this.name = name !== "" ? name : "Task of " + (new Date()).toISOString();
@@ -58,14 +57,18 @@ module.exports = class Task{
         this.skipPostProcessing = skipPostProcessing;
         this.outputs = utils.parseUnsafePathsList(outputs);
         this.progress = 0;
-        
-        async.series([
+        this.imagesCountEstimate = imagesCountEstimate;
+        this.initialized = false;
+    }
+
+    initialize(done, additionalSteps = []){
+        async.series(additionalSteps.concat([
             // Handle post-processing options logic
             cb => {
                 // If we need to post process results
                 // if pc-ept is supported (build entwine point cloud)
                 // we automatically add the pc-ept option to the task options by default
-                if (skipPostProcessing) cb();
+                if (this.skipPostProcessing) cb();
                 else{
                     odmInfo.supportsOption("pc-ept", (err, supported) => {
                         if (err){
@@ -113,35 +116,37 @@ module.exports = class Task{
                     }
                 });
             }
-        ], err => {
+        ]), err => {
+            this.initialized = true;
             done(err, this);
         });
     }
 
     static CreateFromSerialized(taskJson, done){
-        new Task(taskJson.uuid, 
+        const task = new Task(taskJson.uuid, 
             taskJson.name, 
-            taskJson.options, 
+            taskJson.options,
             taskJson.webhook, 
             taskJson.skipPostProcessing,
             taskJson.outputs,
-            taskJson.dateCreated,
-            (err, task) => {
-                if (err) done(err);
-                else{
-                    // Override default values with those
-                    // provided in the taskJson
-                    for (let k in taskJson){
-                        task[k] = taskJson[k];
-                    }
-    
-                    // Tasks that were running should be put back to QUEUED state
-                    if (task.status.code === statusCodes.RUNNING){
-                        task.status.code = statusCodes.QUEUED;
-                    }
-                    done(null, task);
+            taskJson.dateCreated);
+
+        task.initialize((err, task) => {
+            if (err) done(err);
+            else{
+                // Override default values with those
+                // provided in the taskJson
+                for (let k in taskJson){
+                    task[k] = taskJson[k];
                 }
-            });
+
+                // Tasks that were running should be put back to QUEUED state
+                if (task.status.code === statusCodes.RUNNING){
+                    task.status.code = statusCodes.QUEUED;
+                }
+                done(null, task);
+            }
+        });
     }
 
     // Get path where images are stored for this task
@@ -578,7 +583,7 @@ module.exports = class Task{
     // Re-executes the task (by setting it's state back to QUEUED)
     // Only tasks that have been canceled, completed or have failed can be restarted.
     restart(options, cb){
-        if ([statusCodes.CANCELED, statusCodes.FAILED, statusCodes.COMPLETED].indexOf(this.status.code) !== -1){
+        if ([statusCodes.CANCELED, statusCodes.FAILED, statusCodes.COMPLETED].indexOf(this.status.code) !== -1 && this.initialized){
             this.setStatus(statusCodes.QUEUED);
             this.dateCreated = new Date().getTime();
             this.dateStarted = 0;
@@ -601,7 +606,7 @@ module.exports = class Task{
             processingTime: this.processingTime,
             status: this.status,
             options: this.options,
-            imagesCount: this.images.length,
+            imagesCount: this.images !== undefined ? this.images.length : this.imagesCountEstimate,
             progress: this.progress
         };
     }
