@@ -25,7 +25,6 @@ jobs:
     - name: Build bundle
       run: |
         npm run winbundle
-        python configure.py dist --signtool-path $((Get-Command signtool).Source) --code-sign-cert-path $env:CODE_SIGN_CERT_PATH
     - name: Upload Bundle File
       uses: actions/upload-artifact@v2
       with:
