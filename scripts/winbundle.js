@@ -6,6 +6,8 @@ const async = require('async');
 const nodeUnzip = require('node-unzip-2');
 const archiver = require('archiver');
 
+const bundleName = "nodeodm-windows-x64.zip";
+
 const download = function(uri, filename, callback) {
     console.log(`Downloading ${uri}`);
     request.head(uri, function(err, res, body) {
@@ -75,7 +77,7 @@ async.series([
     },
     cb => {
         // Zip
-        const outFile = path.join("dist", "nodeodm.zip");
+        const outFile = path.join("dist", bundleName);
         if (!fs.existsSync("dist")) fs.mkdirSync("dist");
         if (fs.existsSync(outFile)) fs.unlinkSync(outFile);
 
@@ -125,7 +127,7 @@ async.series([
     }
 ], (err) => {
     if (err) console.log(`Bundle failed: ${err}`);
-    else console.log("Bundle ==> dist/nodeodm.zip");
+    else console.log(`Bundle ==> dist/${bundleName}`);
 });
 
 
