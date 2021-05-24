@@ -17,6 +17,7 @@ along with this program.  If not, see <http://www.gnu.org/licenses/>.
 */
 "use strict";
 let fs = require('fs');
+let apps = require('./apps');
 let path = require('path');
 let assert = require('assert');
 let spawn = require('child_process').spawn;
@@ -92,14 +93,14 @@ module.exports = {
                      },
                      ["projectFolderPath"]),
 
-    sevenZip: makeRunner("7z", function(options){
+    sevenZip: makeRunner(apps.sevenZ, function(options){
             return ["a", "-mx=0", "-y", "-r", "-bd", options.destination].concat(options.pathsToArchive);
         },
         ["destination", "pathsToArchive", "cwd"],
         null,
         false),
 
-    sevenUnzip: makeRunner("7z", function(options){
+    sevenUnzip: makeRunner(apps.sevenZ, function(options){
             let cmd = "x"; // eXtract files with full paths
             if (options.noDirectories) cmd = "e"; //Extract files from archive (without using directory names)
 
@@ -109,7 +110,7 @@ module.exports = {
         null,
         false),
 
-    unzip: makeRunner("unzip", function(options){
+    unzip: makeRunner(apps.unzip, function(options){
             const opts = options.noDirectories ? ["-j"] : [];
             return opts.concat(["-qq", "-o", options.file, "-d", options.destination]);
         },
