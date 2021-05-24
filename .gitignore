@@ -44,3 +44,5 @@ jspm_packages
 
 package-lock.json
 apps/
+nodeodm.exe
+dist/
