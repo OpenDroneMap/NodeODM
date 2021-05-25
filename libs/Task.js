@@ -59,6 +59,7 @@ module.exports = class Task{
         this.progress = 0;
         this.imagesCountEstimate = imagesCountEstimate;
         this.initialized = false;
+        this.onInitialize = []; // Events to trigger on initialization
     }
 
     initialize(done, additionalSteps = []){
@@ -117,9 +118,15 @@ module.exports = class Task{
                 });
             }
         ]), err => {
-            if (err) this.setStatus(statusCodes.FAILED, { errorMessage: err.message });
-            else this.setStatus(statusCodes.QUEUED);
+            // Status might have changed due to user action
+            // in which case we leave it unchanged
+            if (this.getStatus() === statusCodes.RUNNING){
+                if (err) this.setStatus(statusCodes.FAILED, { errorMessage: err.message });
+                else this.setStatus(statusCodes.QUEUED);
+            }
             this.initialized = true;
+            this.onInitialize.forEach(evt => evt(this));
+            this.onInitialize = [];
             done(err, this);
         });
     }
@@ -183,7 +190,10 @@ module.exports = class Task{
 
     // Deletes files and folders related to this task
     cleanup(cb){
-        rmdir(this.getProjectFolderPath(), cb);
+        if (this.initialized) rmdir(this.getProjectFolderPath(), cb);
+        else this.onInitialize.push(() => {
+            rmdir(this.getProjectFolderPath(), cb);
+        });
     }
 
     setStatus(code, extra){
@@ -584,8 +594,13 @@ module.exports = class Task{
 
     // Re-executes the task (by setting it's state back to QUEUED)
     // Only tasks that have been canceled, completed or have failed can be restarted.
+    // unless they are being initialized, in which case we switch them back to running
     restart(options, cb){
-        if ([statusCodes.CANCELED, statusCodes.FAILED, statusCodes.COMPLETED].indexOf(this.status.code) !== -1 && this.initialized){
+        if (!this.initialized && this.status.code === statusCodes.CANCELED){
+            this.setStatus(statusCodes.RUNNING);
+            if (options !== undefined) this.options = options;
+            cb(null);
+        }else if ([statusCodes.CANCELED, statusCodes.FAILED, statusCodes.COMPLETED].indexOf(this.status.code) !== -1){
             this.setStatus(statusCodes.QUEUED);
             this.dateCreated = new Date().getTime();
             this.dateStarted = 0;

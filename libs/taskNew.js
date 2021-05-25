@@ -269,6 +269,10 @@ module.exports = {
                 }
             },
 
+            cb => {
+                setTimeout(cb, 5000);
+            },
+
             // Unzips zip URL to tmp/<uuid>/ (if any)
             cb => {
                 if (req.body.zipurl) {
