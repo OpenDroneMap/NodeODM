@@ -46,7 +46,7 @@ module.exports = class Task{
         this.dateCreated = isNaN(parseInt(dateCreated)) ? new Date().getTime() : parseInt(dateCreated);
         this.dateStarted = 0;
         this.processingTime = -1;
-        this.setStatus(statusCodes.QUEUED);
+        this.setStatus(statusCodes.RUNNING);
         this.options = options;
         this.gcpFiles = [];
         this.geoFiles = [];
@@ -117,6 +117,8 @@ module.exports = class Task{
                 });
             }
         ]), err => {
+            if (err) this.setStatus(statusCodes.FAILED, { errorMessage: err.message });
+            else this.setStatus(statusCodes.QUEUED);
             this.initialized = true;
             done(err, this);
         });

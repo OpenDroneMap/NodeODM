@@ -406,8 +406,6 @@ module.exports = {
 
                     task.initialize(err => {
                         if (err) {
-                            task.setStatus(statusCodes.FAILED, { errorMessage: err.message });
-
                             // Cleanup
                             removeDirectory(srcPath);
                             removeDirectory(destPath);
