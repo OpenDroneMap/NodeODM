@@ -58,6 +58,15 @@ module.exports = {
         });
     },
 
+    supportsOption: function(optName, cb){
+        this.getOptions((err, json) => {
+            if (err) cb(err);
+            else{
+                cb(null, !!json.find(opt => opt.name === optName));
+            }
+        });
+    },
+
     getOptions: function(done){
         if (odmOptions){
             done(null, odmOptions);

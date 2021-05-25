@@ -19,12 +19,14 @@ along with this program.  If not, see <http://www.gnu.org/licenses/>.
 
 const config = require('../config');
 const async = require('async');
+const os = require('os');
 const assert = require('assert');
 const logger = require('./logger');
 const fs = require('fs');
 const path = require('path');
 const rmdir = require('rimraf');
 const odmRunner = require('./odmRunner');
+const odmInfo = require('./odmInfo');
 const processRunner = require('./processRunner');
 const Directories = require('./Directories');
 const kill = require('tree-kill');
@@ -36,16 +38,15 @@ const archiver = require('archiver');
 const statusCodes = require('./statusCodes');
 
 module.exports = class Task{
-    constructor(uuid, name, options = [], webhook = null, skipPostProcessing = false, outputs = [], dateCreated = new Date().getTime(), done = () => {}){
+    constructor(uuid, name, options = [], webhook = null, skipPostProcessing = false, outputs = [], dateCreated = new Date().getTime(), imagesCountEstimate = -1){
         assert(uuid !== undefined, "uuid must be set");
-        assert(done !== undefined, "ready must be set");
 
         this.uuid = uuid;
         this.name = name !== "" ? name : "Task of " + (new Date()).toISOString();
         this.dateCreated = isNaN(parseInt(dateCreated)) ? new Date().getTime() : parseInt(dateCreated);
         this.dateStarted = 0;
         this.processingTime = -1;
-        this.setStatus(statusCodes.QUEUED);
+        this.setStatus(statusCodes.RUNNING);
         this.options = options;
         this.gcpFiles = [];
         this.geoFiles = [];
@@ -56,8 +57,33 @@ module.exports = class Task{
         this.skipPostProcessing = skipPostProcessing;
         this.outputs = utils.parseUnsafePathsList(outputs);
         this.progress = 0;
-        
-        async.series([
+        this.imagesCountEstimate = imagesCountEstimate;
+        this.initialized = false;
+        this.onInitialize = []; // Events to trigger on initialization
+    }
+
+    initialize(done, additionalSteps = []){
+        async.series(additionalSteps.concat([
+            // Handle post-processing options logic
+            cb => {
+                // If we need to post process results
+                // if pc-ept is supported (build entwine point cloud)
+                // we automatically add the pc-ept option to the task options by default
+                if (this.skipPostProcessing) cb();
+                else{
+                    odmInfo.supportsOption("pc-ept", (err, supported) => {
+                        if (err){
+                            console.warn(`Cannot check for supported option pc-ept: ${err}`);
+                        }else if (supported){
+                            if (!this.options.find(opt => opt.name === "pc-ept")){
+                                this.options.push({ name: 'pc-ept', value: true });
+                            }
+                        }
+                        cb();
+                    });
+                }
+            },
+
             // Read images info
             cb => {
                 fs.readdir(this.getImagesFolderPath(), (err, files) => {
@@ -91,35 +117,45 @@ module.exports = class Task{
                     }
                 });
             }
-        ], err => {
+        ]), err => {
+            // Status might have changed due to user action
+            // in which case we leave it unchanged
+            if (this.getStatus() === statusCodes.RUNNING){
+                if (err) this.setStatus(statusCodes.FAILED, { errorMessage: err.message });
+                else this.setStatus(statusCodes.QUEUED);
+            }
+            this.initialized = true;
+            this.onInitialize.forEach(evt => evt(this));
+            this.onInitialize = [];
             done(err, this);
         });
     }
 
     static CreateFromSerialized(taskJson, done){
-        new Task(taskJson.uuid, 
+        const task = new Task(taskJson.uuid, 
             taskJson.name, 
-            taskJson.options, 
+            taskJson.options,
             taskJson.webhook, 
             taskJson.skipPostProcessing,
             taskJson.outputs,
-            taskJson.dateCreated,
-            (err, task) => {
-                if (err) done(err);
-                else{
-                    // Override default values with those
-                    // provided in the taskJson
-                    for (let k in taskJson){
-                        task[k] = taskJson[k];
-                    }
-    
-                    // Tasks that were running should be put back to QUEUED state
-                    if (task.status.code === statusCodes.RUNNING){
-                        task.status.code = statusCodes.QUEUED;
-                    }
-                    done(null, task);
+            taskJson.dateCreated);
+
+        task.initialize((err, task) => {
+            if (err) done(err);
+            else{
+                // Override default values with those
+                // provided in the taskJson
+                for (let k in taskJson){
+                    task[k] = taskJson[k];
                 }
-            });
+
+                // Tasks that were running should be put back to QUEUED state
+                if (task.status.code === statusCodes.RUNNING){
+                    task.status.code = statusCodes.QUEUED;
+                }
+                done(null, task);
+            }
+        });
     }
 
     // Get path where images are stored for this task
@@ -154,7 +190,10 @@ module.exports = class Task{
 
     // Deletes files and folders related to this task
     cleanup(cb){
-        rmdir(this.getProjectFolderPath(), cb);
+        if (this.initialized) rmdir(this.getProjectFolderPath(), cb);
+        else this.onInitialize.push(() => {
+            rmdir(this.getProjectFolderPath(), cb);
+        });
     }
 
     setStatus(code, extra){
@@ -432,7 +471,15 @@ module.exports = class Task{
 
             }
             
-            if (!this.skipPostProcessing) tasks.push(runPostProcessingScript());
+            // postprocess.sh is still here for legacy/backward compatibility
+            // purposes, but we might remove it in the future. The new logic
+            // instructs the processing engine to do the necessary processing
+            // of outputs without post processing steps (build EPT).
+            // We're leaving it here only for Linux/docker setups, but will not
+            // be triggered on Windows.
+            if (os.platform() !== "win32" && !this.skipPostProcessing){
+                tasks.push(runPostProcessingScript());
+            }
             
             const taskOutputFile = path.join(this.getProjectFolderPath(), 'task_output.txt');
             tasks.push(saveTaskOutput(taskOutputFile));
@@ -547,8 +594,13 @@ module.exports = class Task{
 
     // Re-executes the task (by setting it's state back to QUEUED)
     // Only tasks that have been canceled, completed or have failed can be restarted.
+    // unless they are being initialized, in which case we switch them back to running
     restart(options, cb){
-        if ([statusCodes.CANCELED, statusCodes.FAILED, statusCodes.COMPLETED].indexOf(this.status.code) !== -1){
+        if (!this.initialized && this.status.code === statusCodes.CANCELED){
+            this.setStatus(statusCodes.RUNNING);
+            if (options !== undefined) this.options = options;
+            cb(null);
+        }else if ([statusCodes.CANCELED, statusCodes.FAILED, statusCodes.COMPLETED].indexOf(this.status.code) !== -1){
             this.setStatus(statusCodes.QUEUED);
             this.dateCreated = new Date().getTime();
             this.dateStarted = 0;
@@ -571,7 +623,7 @@ module.exports = class Task{
             processingTime: this.processingTime,
             status: this.status,
             options: this.options,
-            imagesCount: this.images.length,
+            imagesCount: this.images !== undefined ? this.images.length : this.imagesCountEstimate,
             progress: this.progress
         };
     }

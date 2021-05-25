@@ -81,6 +81,14 @@ You're in good shape!
 
 See https://github.com/NVIDIA/nvidia-docker and https://docs.nvidia.com/datacenter/cloud-native/container-toolkit/install-guide.html#docker for information on docker/NVIDIA setup.
 
+### Windows Bundle
+
+NodeODM can run as a self-contained executable on Windows without the need for additional dependencies (except for [ODM](https://github.com/OpenDroneMap/ODM) which needs to be installed separately). You can download the latest `nodeodm-windows-x64.zip` bundle from the [releases](https://github.com/OpenDroneMap/NodeODM/releases) page. Extract the contents in a folder and run:
+
+```bash
+nodeodm.exe --odm_path c:\path\to\ODM
+```
+
 ### Run it Natively
 
 If you are already running [ODM](https://github.com/OpenDroneMap/ODM) on Ubuntu natively you can follow these steps:

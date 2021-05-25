@@ -20,6 +20,7 @@ along with this program.  If not, see <http://www.gnu.org/licenses/>.
 let fs = require('fs');
 let argv = require('minimist')(process.argv.slice(2));
 let utils = require('./libs/utils');
+let apps = require('./libs/apps');
 const spawnSync = require('child_process').spawnSync;
 
 if (argv.help){
@@ -141,8 +142,8 @@ config.maxConcurrency = parseInt(argv.max_concurrency || fromConfigFile("maxConc
 config.maxRuntime = parseInt(argv.max_runtime || fromConfigFile("maxRuntime", -1));
 
 // Detect 7z availability
-config.has7z = spawnSync("7z", ['--help']).status === 0;
-config.hasUnzip = spawnSync("unzip", ['--help']).status === 0;
+config.has7z = spawnSync(apps.sevenZ, ['--help']).status === 0;
+config.hasUnzip = spawnSync(apps.unzip, ['--help']).status === 0;
 
 
 module.exports = config;
