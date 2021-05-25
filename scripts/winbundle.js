@@ -102,6 +102,7 @@ async.series([
             "helpers",
             "public",
             "scripts",
+            "tests",
             "tmp",
             "config-default.json",
             "LICENSE",
