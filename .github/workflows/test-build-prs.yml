@@ -21,7 +21,7 @@ jobs:
         context: .
         platforms: linux/amd64
         push: true
-        tags: localhost:5000/opendronemap/nodeodm:test
+        tags: 0.0.0.0:5000/opendronemap/nodeodm:test
     - name: Test Powercycle
       run: |
-        docker run --rm localhost:5000/opendronemap/nodeodm:test --powercycle
+        docker run --rm 0.0.0.0:5000/opendronemap/nodeodm:test --powercycle
