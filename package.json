@@ -1,6 +1,6 @@
 {
   "name": "NodeODM",
-  "version": "2.1.5",
+  "version": "2.1.6",
   "description": "REST API to access ODM",
   "main": "index.js",
   "scripts": {

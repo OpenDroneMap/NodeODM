@@ -6,6 +6,11 @@ on:
 jobs:
   docker:
     runs-on: ubuntu-latest
+    services:
+      registry:
+        image: registry:2
+        ports:
+          - 5000:5000
     steps:
     - name: Checkout
       uses: actions/checkout@v2
@@ -13,12 +18,15 @@ jobs:
       uses: docker/setup-qemu-action@v1
     - name: Set up Docker Buildx
       uses: docker/setup-buildx-action@v1
+      with:
+          driver-opts: network=host
     - name: Build
       uses: docker/build-push-action@v2
       with:
+        context: .
         platforms: linux/amd64
-        push: false
-        tags: opendronemap/nodeodm:test
+        push: true
+        tags: localhost:5000/opendronemap/nodeodm:test
     - name: Test Powercycle
       run: |
-        docker run -ti --rm opendronemap/nodeodm:test --powercycle
+        docker run --rm localhost:5000/opendronemap/nodeodm:test --powercycle
