@@ -22,4 +22,4 @@ jobs:
         tags: opendronemap/nodeodm:test
     - name: Test Powercycle
       run: |
-        docker run -ti --rm opendronemap/nodeodm:test --powercycle
+        docker run --rm opendronemap/nodeodm:test --powercycle
