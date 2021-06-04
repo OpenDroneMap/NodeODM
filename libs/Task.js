@@ -84,6 +84,25 @@ module.exports = class Task{
                 }
             },
 
+            cb => {
+                // If we need to post process results
+                // if cog is supported (build cloud optimized geotiffs)
+                // we automatically add the cog option to the task options by default
+                if (this.skipPostProcessing) cb();
+                else{
+                    odmInfo.supportsOption("cog", (err, supported) => {
+                        if (err){
+                            console.warn(`Cannot check for supported option cog: ${err}`);
+                        }else if (supported){
+                            if (!this.options.find(opt => opt.name === "cog")){
+                                this.options.push({ name: 'cog', value: true });
+                            }
+                        }
+                        cb();
+                    });
+                }
+            },
+
             // Read images info
             cb => {
                 fs.readdir(this.getImagesFolderPath(), (err, files) => {
