@@ -451,7 +451,7 @@ module.exports = class Task{
                               'odm_dem/dsm.tif', 'odm_dem/dtm.tif', 'dsm_tiles', 'dtm_tiles',
                               'orthophoto_tiles', 'potree_pointcloud', 'entwine_pointcloud', 
                               'images.json', 'cameras.json',
-                              'task_output.txt',
+                              'task_output.txt', 'log.json',
                               'odm_report'];
             
             // Did the user request different outputs than the default?
