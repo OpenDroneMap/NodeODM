@@ -158,7 +158,8 @@ class TaskManager{
                 try{
                     tasks = JSON.parse(data.toString());
                 }catch(e){
-                    done(new Error(`Could not load task list. It looks like the ${TASKS_DUMP_FILE} is corrupted (${e.message}). Please manually delete the file and try again.`));
+                    logger.warn(`Could not load task list. It looks like the ${TASKS_DUMP_FILE} is corrupted (${e.message}).`);
+                    if (done !== undefined) done();
                     return;
                 }
 
