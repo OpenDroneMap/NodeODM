@@ -290,8 +290,26 @@ module.exports = {
             // Move all uploads to data/<uuid>/images dir (if any)
             cb => fs.mkdir(destPath, undefined, cb),
             cb => fs.mkdir(destGcpPath, undefined, cb),
-            cb => mv(srcPath, destImagesPath, cb),
-            
+            cb => {
+                // We attempt to do this multiple times,
+                // as antivirus software sometimes is scanning
+                // the folder while we try to move it, resulting in
+                // an operation not permitted error
+                let retries = 0;
+
+                const move = () => {
+                    mv(srcPath, destImagesPath, err => {
+                        if (!err) cb(); // Done
+                        else{
+                            if (++retries < 20){
+                                logger.warn(`Cannot move ${srcPath}, probably caused by antivirus software (please disable it or add an exception), retrying (${retries})...`);
+                                setTimeout(2000, move);
+                            }else cb(err);
+                        }
+                    });
+                }
+                move();
+            },
             // Zip files handling
             cb => {
                 const handleSeed = (cb) => {
