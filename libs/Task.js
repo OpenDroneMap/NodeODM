@@ -63,46 +63,7 @@ module.exports = class Task{
     }
 
     initialize(done, additionalSteps = []){
-        async.series(additionalSteps.concat([
-            // Handle post-processing options logic
-            cb => {
-                // If we need to post process results
-                // if pc-ept is supported (build entwine point cloud)
-                // we automatically add the pc-ept option to the task options by default
-                if (this.skipPostProcessing) cb();
-                else{
-                    odmInfo.supportsOption("pc-ept", (err, supported) => {
-                        if (err){
-                            console.warn(`Cannot check for supported option pc-ept: ${err}`);
-                        }else if (supported){
-                            if (!this.options.find(opt => opt.name === "pc-ept")){
-                                this.options.push({ name: 'pc-ept', value: true });
-                            }
-                        }
-                        cb();
-                    });
-                }
-            },
-
-            cb => {
-                // If we need to post process results
-                // if cog is supported (build cloud optimized geotiffs)
-                // we automatically add the cog option to the task options by default
-                if (this.skipPostProcessing) cb();
-                else{
-                    odmInfo.supportsOption("cog", (err, supported) => {
-                        if (err){
-                            console.warn(`Cannot check for supported option cog: ${err}`);
-                        }else if (supported){
-                            if (!this.options.find(opt => opt.name === "cog")){
-                                this.options.push({ name: 'cog', value: true });
-                            }
-                        }
-                        cb();
-                    });
-                }
-            },
-
+        async.series(additionalSteps.concat(this.setPostProcessingOptsSteps(), [
             // Read images info
             cb => {
                 fs.readdir(this.getImagesFolderPath(), (err, files) => {
@@ -148,6 +109,48 @@ module.exports = class Task{
             this.onInitialize = [];
             done(err, this);
         });
+    }
+
+    setPostProcessingOptsSteps(){
+        return [
+            cb => {
+                // If we need to post process results
+                // if pc-ept is supported (build entwine point cloud)
+                // we automatically add the pc-ept option to the task options by default
+                if (this.skipPostProcessing) cb();
+                else{
+                    odmInfo.supportsOption("pc-ept", (err, supported) => {
+                        if (err){
+                            console.warn(`Cannot check for supported option pc-ept: ${err}`);
+                        }else if (supported){
+                            if (!this.options.find(opt => opt.name === "pc-ept")){
+                                this.options.push({ name: 'pc-ept', value: true });
+                            }
+                        }
+                        cb();
+                    });
+                }
+            },
+
+            cb => {
+                // If we need to post process results
+                // if cog is supported (build cloud optimized geotiffs)
+                // we automatically add the cog option to the task options by default
+                if (this.skipPostProcessing) cb();
+                else{
+                    odmInfo.supportsOption("cog", (err, supported) => {
+                        if (err){
+                            console.warn(`Cannot check for supported option cog: ${err}`);
+                        }else if (supported){
+                            if (!this.options.find(opt => opt.name === "cog")){
+                                this.options.push({ name: 'cog', value: true });
+                            }
+                        }
+                        cb();
+                    });
+                }
+            }
+        ];
     }
 
     static CreateFromSerialized(taskJson, done){
@@ -617,8 +620,12 @@ module.exports = class Task{
     restart(options, cb){
         if (!this.initialized && this.status.code === statusCodes.CANCELED){
             this.setStatus(statusCodes.RUNNING);
-            if (options !== undefined) this.options = options;
-            cb(null);
+            if (options !== undefined){
+                this.options = options;
+                async.series(this.setPostProcessingOptsSteps(), cb);
+            }else{
+                cb();
+            }
         }else if ([statusCodes.CANCELED, statusCodes.FAILED, statusCodes.COMPLETED].indexOf(this.status.code) !== -1){
             this.setStatus(statusCodes.QUEUED);
             this.dateCreated = new Date().getTime();
@@ -626,8 +633,12 @@ module.exports = class Task{
             this.output = [];
             this.progress = 0;
             this.stopTrackingProcessingTime(true);
-            if (options !== undefined) this.options = options;
-            cb(null);
+            if (options !== undefined){
+                this.options = options;
+                async.series(this.setPostProcessingOptsSteps(), cb);
+            }else{
+                cb();
+            }
         }else{
             cb(new Error("Task cannot be restarted"));
         }
