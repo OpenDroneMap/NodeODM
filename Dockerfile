@@ -17,6 +17,6 @@ RUN mkdir /var/www
 WORKDIR "/var/www"
 COPY . /var/www
 
-RUN npm install && mkdir tmp
+RUN npm install && mkdir -p tmp
 
 ENTRYPOINT ["/usr/bin/node", "/var/www/index.js"]
