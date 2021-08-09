@@ -1,7 +1,13 @@
 name: Publish Docker
 
-# Triggered by ODM build (after docker push)
 on:
+  push:
+    branches:
+    - master
+    tags:
+    - v*
+  
+  # Triggered by ODM build (after docker push)
   workflow_dispatch:
 
 jobs:
