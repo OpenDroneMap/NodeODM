@@ -450,6 +450,7 @@ module.exports = class Task{
             let allPaths = ['odm_orthophoto/odm_orthophoto.tif', 
                               'odm_orthophoto/odm_orthophoto.png',
                               'odm_orthophoto/odm_orthophoto.mbtiles',
+                              'odm_orthophoto/odm_orthophoto.kmz',
                               'odm_georeferencing', 'odm_texturing',
                               'odm_dem/dsm.tif', 'odm_dem/dtm.tif', 'dsm_tiles', 'dtm_tiles',
                               'orthophoto_tiles', 'potree_pointcloud', 'entwine_pointcloud', 
