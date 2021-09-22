@@ -200,13 +200,7 @@ module.exports = class Task{
 
     // Get the path of the archive where all assets
     // outputted by this task are stored.
-    getAssetsArchivePath(filename){
-        if (filename == 'all.zip'){
-            // OK, do nothing
-        }else{
-            return false; // Invalid
-        }
-        
+    getAssetsArchivePath(filename){       
         return path.join(this.getProjectFolderPath(), filename);
     }
 
