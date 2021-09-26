@@ -21,7 +21,7 @@ const dgram = require('dgram');
 
 module.exports = class ProgressReceiver{
     constructor(){
-        const server = dgram.createSocket('udp4');
+        const server = dgram.createSocket({type: 'udp4', reuseAddr: true});
         this.callbacks = [];
 
         server.on('error', (err) => {

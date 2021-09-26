@@ -9,7 +9,7 @@
 		"logDirectory": ""
 	},
 
-	"port": 3000,
+	"port": "auto",
 	"deamon": false,
 	"parallelQueueProcessing": 1,
 	"cleanupTasksAfter": 2880,

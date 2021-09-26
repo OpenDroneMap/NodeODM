@@ -29,7 +29,7 @@ Usage: node index.js [options]
 
 Options:
 	--config <path>	Path to the configuration file (default: config-default.json)	
-	-p, --port <number> 	Port to bind the server to (default: 3000)
+	-p, --port <number> 	Port to bind the server to, or "auto" to automatically find an available port (default: 3000)
 	--odm_path <path>	Path to OpenDroneMap's code	(default: /code)
 	--log_level <logLevel>	Set log level verbosity (default: info)
 	-d, --daemon 	Set process to run as a deamon
@@ -114,7 +114,7 @@ config.logger.maxFileSize = fromConfigFile("logger.maxFileSize", 1024 * 1024 * 1
 config.logger.maxFiles = fromConfigFile("logger.maxFiles", 10); // Max number of log files kept
 config.logger.logDirectory = fromConfigFile("logger.logDirectory", ''); // Set this to a full path to a directory - if not set logs will be written to the application directory.
 
-config.port = parseInt(argv.port || argv.p || fromConfigFile("port", process.env.PORT || 3000));
+config.port = (argv.port || argv.p || fromConfigFile("port", process.env.PORT || "auto"));
 config.deamon = argv.deamonize || argv.daemon || argv.d || fromConfigFile("daemon", false);
 config.parallelQueueProcessing = parseInt(argv.parallel_queue_processing || argv.q || fromConfigFile("parallelQueueProcessing", 1));
 config.cleanupTasksAfter = parseInt(argv.cleanup_tasks_after || fromConfigFile("cleanupTasksAfter", 2880));
