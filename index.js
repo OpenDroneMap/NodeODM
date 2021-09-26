@@ -918,10 +918,29 @@ let commands = [
         taskManager = TaskManager.singleton();
     },
     cb => {
-        server = app.listen(config.port, err => {
-            if (!err) logger.info('Server has started on port ' + String(config.port));
-            cb(err);
-        });
+        const startServer = (port, cb) => {
+            server = app.listen(parseInt(port), (err) => {
+                if (!err) logger.info('Server has started on port ' + String(port));
+                cb(err);
+            });
+            server.on("error", cb);
+        };
+
+        const tryStartServer = (port, cb) => {
+            startServer(port, (err) => {
+                if (err && err.code === 'EADDRINUSE' && port < 5000){
+                    tryStartServer(port + 1, cb);
+                }else cb(err);
+            });
+        };
+
+        if (Number.isInteger(parseInt(config.port))){
+            startServer(config.port, cb);
+        }else if (config.port === "auto"){
+            tryStartServer(3000, cb);
+        }else{
+            cb(new Error(`Invalid port: ${config.port}`));
+        }
     }
 ];
 
@@ -934,7 +953,7 @@ if (config.powercycle) {
 
 async.series(commands, err => {
     if (err) {
-        logger.error("Error during startup: " + err.message);
+        logger.error(err.message);
         process.exit(1);
     }
 });
