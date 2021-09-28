@@ -15,8 +15,12 @@ RUN apt-get install -y nodejs unzip p7zip-full && npm install -g nodemon && \
 RUN mkdir /var/www
 
 WORKDIR "/var/www"
-COPY . /var/www
+COPY --chown=odm:odm . /var/www
 
 RUN npm install && mkdir -p tmp
+
+RUN chown -R /var/www
+
+USER odm
 
 ENTRYPOINT ["/usr/bin/node", "/var/www/index.js"]

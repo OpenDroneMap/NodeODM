@@ -1,0 +1,34 @@
+FROM opendronemap/nodeodm:gpu
+
+ARG RENDER_GROUP_ID=0
+
+USER root
+
+RUN apt-get remove --purge -y intel-opencl-icd && \
+    apt-get autoremove -y
+
+RUN mkdir /tmp/opencl
+WORKDIR /tmp/opencl
+RUN apt-get update && \
+    apt-get install -y --no-install-recommends ocl-icd-libopencl1 curl && \
+    rm -rf /var/lib/apt/lists/* && \
+    curl -L "https://github.com/intel/compute-runtime/releases/download/19.41.14441/intel-gmmlib_19.3.2_amd64.deb" --output "intel-gmmlib_19.3.2_amd64.deb" && \
+    curl -L "https://github.com/intel/compute-runtime/releases/download/19.41.14441/intel-igc-core_1.0.2597_amd64.deb" --output "intel-igc-core_1.0.2597_amd64.deb" && \
+    curl -L "https://github.com/intel/compute-runtime/releases/download/19.41.14441/intel-igc-opencl_1.0.2597_amd64.deb" --output "intel-igc-opencl_1.0.2597_amd64.deb" && \
+    curl -L "https://github.com/intel/compute-runtime/releases/download/19.41.14441/intel-opencl_19.41.14441_amd64.deb" --output "intel-opencl_19.41.14441_amd64.deb" && \
+    curl -L "https://github.com/intel/compute-runtime/releases/download/19.41.14441/intel-ocloc_19.41.14441_amd64.deb" --output "intel-ocloc_19.04.12237_amd64.deb" && \
+    dpkg -i /tmp/opencl/*.deb && \
+    ldconfig && \
+    rm -Rf /tmp/opencl
+WORKDIR /var/www
+
+RUN apt-get update && \
+    apt-get install -y --no-install-recommends clinfo
+
+RUN usermod -aG video,users odm
+RUN usermod -aG video,users,odm root
+RUN if [ "${RENDER_GROUP_ID}" -ne 0 ]; then groupadd -g "${RENDER_GROUP_ID}" render; fi
+
+USER odm
+
+ENTRYPOINT ["/usr/bin/node", "/var/www/index.js"]
