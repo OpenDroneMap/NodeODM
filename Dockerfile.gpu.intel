@@ -28,7 +28,7 @@ RUN apt-get update && \
 
 RUN usermod -aG video,users odm
 RUN usermod -aG video,users,odm root
-RUN if [ "${RENDER_GROUP_ID}" -ne 0 ]; then groupadd -g "${RENDER_GROUP_ID}" render; fi
+RUN if [ "${RENDER_GROUP_ID}" -ne 0 ]; then groupadd -g "${RENDER_GROUP_ID}" render; usermod -aG render odm; fi
 
 USER odm
 
