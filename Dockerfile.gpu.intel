@@ -1,5 +1,7 @@
 FROM opendronemap/nodeodm:gpu
 
+EXPOSE 3000
+
 ARG RENDER_GROUP_ID=0
 
 USER root
