@@ -4,7 +4,7 @@ MAINTAINER Piero Toffanin <pt@masseranolabs.com>
 EXPOSE 3000
 
 USER root
-RUN apt-get update && apt-get install -y curl gpg-agent
+RUN apt-get update && apt-get install -y curl gpg-agent ca-certificates
 RUN curl --silent --location https://deb.nodesource.com/setup_10.x | bash -
 RUN apt-get install -y nodejs unzip p7zip-full && npm install -g nodemon && \
     ln -s /code/SuperBuild/install/bin/untwine /usr/bin/untwine && \
@@ -15,8 +15,13 @@ RUN apt-get install -y nodejs unzip p7zip-full && npm install -g nodemon && \
 RUN mkdir /var/www
 
 WORKDIR "/var/www"
-COPY . /var/www
+RUN useradd -m -d "/home/odm" -s /bin/bash odm
+COPY --chown=odm:odm . /var/www
 
 RUN npm install && mkdir -p tmp
+
+RUN chown -R odm:odm /var/www
+
+USER odm
 
 ENTRYPOINT ["/usr/bin/node", "/var/www/index.js"]
