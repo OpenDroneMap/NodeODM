@@ -21,7 +21,6 @@ RUN apt-get update && \
     dpkg -i /tmp/opencl/*.deb && \
     ldconfig && \
     rm -Rf /tmp/opencl
-WORKDIR /var/www
 
 RUN apt-get update && \
     apt-get install -y --no-install-recommends clinfo
@@ -30,6 +29,7 @@ RUN usermod -aG video,users odm
 RUN usermod -aG video,users,odm root
 RUN if [ "${RENDER_GROUP_ID}" -ne 0 ]; then groupadd -g "${RENDER_GROUP_ID}" render; usermod -aG render odm; fi
 
+WORKDIR /var/www
 USER odm
 
 ENTRYPOINT ["/usr/bin/node", "/var/www/index.js"]
