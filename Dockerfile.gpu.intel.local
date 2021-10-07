@@ -1,0 +1,14 @@
+FROM opendronemap/nodeodm:gpu.intel
+
+EXPOSE 3000
+
+ARG RENDER_GROUP_ID=0
+
+USER root
+
+RUN if [ "${RENDER_GROUP_ID}" -ne 0 ]; then groupadd -g "${RENDER_GROUP_ID}" render; usermod -aG render odm; fi
+
+WORKDIR /var/www
+USER odm
+
+ENTRYPOINT ["/usr/bin/node", "/var/www/index.js"]
