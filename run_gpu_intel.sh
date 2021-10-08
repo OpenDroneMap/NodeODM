@@ -9,7 +9,7 @@ fi
 
 while IFS='=' read -r name value ; do
     echo "export ${name}=\"${value}\"" >> /home/odm/env
-done < <(env)
+done < <(env | grep -v "HOME")
 chown odm:odm /home/odm/env
 
 su - odm -c "source /home/odm/env; cd /var/www; echo $WO_DEFAULT_NODES; /usr/bin/node /var/www/index.js $@"
