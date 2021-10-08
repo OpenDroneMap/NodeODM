@@ -29,6 +29,5 @@ RUN usermod -aG video,users odm
 RUN usermod -aG video,users,odm root
 
 WORKDIR /var/www
-USER odm
 
-ENTRYPOINT ["/usr/bin/node", "/var/www/index.js"]
+ENTRYPOINT ["/var/www/run_gpu_intel.sh"]
