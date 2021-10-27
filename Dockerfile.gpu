@@ -21,6 +21,7 @@ COPY --chown=odm:odm . /var/www
 RUN npm install && mkdir -p tmp
 
 RUN chown -R odm:odm /var/www
+RUN chown -R odm:odm /code
 
 USER odm
 
