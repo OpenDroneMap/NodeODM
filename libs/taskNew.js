@@ -143,7 +143,7 @@ module.exports = {
         if (req.files && req.files.length > 0){
             res.json({success: true});
         }else{
-            res.json({error: "Need at least 1 file."});
+            res.json({error: "Need at least 1 file.", noRetry: true});
         }
     },
 
