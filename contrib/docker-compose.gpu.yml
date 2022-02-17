@@ -1,0 +1,16 @@
+version: '3.8'
+services:
+  node-odm:
+    image: opendronemap/nodeodm:gpu
+    ports:
+      - "3000:3000"
+    volumes:
+      - ./config-default.json:/var/www/config-default.json
+    privileged: true
+    restart: unless-stopped
+    deploy:
+      resources:
+        reservations:
+          devices:
+            - driver: nvidia
+              capabilities: [gpu]
