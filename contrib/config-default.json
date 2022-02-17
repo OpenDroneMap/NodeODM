@@ -6,7 +6,7 @@
 		"level": "error",
 		"maxFileSize": 104857600,
 		"maxFiles": 10,
-		"logDirectory": "/var/log"
+		"logDirectory": ""
 	},
 
 	"port": "3000",
