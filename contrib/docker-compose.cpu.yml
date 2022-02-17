@@ -1,0 +1,9 @@
+version: '3.8'
+services:
+  node-odm:
+    image: opendronemap/nodeodm
+    ports:
+      - "3000:3000"
+    volumes:
+      - ./config-default.json:/var/www/config-default.json
+    restart: unless-stopped
