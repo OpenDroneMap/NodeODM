@@ -1,0 +1,22 @@
+{
+	"instance": "YOUR-INSTANCENAME",
+	"odm_path": "/code",
+
+	"logger": {
+		"level": "error",
+		"maxFileSize": 104857600,
+		"maxFiles": 10,
+		"logDirectory": ""
+	},
+
+	"port": "3000",
+	"deamon": false,
+	"parallelQueueProcessing": 1,
+	"cleanupTasksAfter": 2880,
+	"test": false,
+	"testSkipOrthophotos": false,
+	"testSkipDems": false,
+	"token": "CHANGE-THIS-TOKEN-TO-YOUR-OWN-SECRET",
+	"authorizedIps": [],
+	"maxImages": ""
+}
