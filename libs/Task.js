@@ -454,6 +454,7 @@ module.exports = class Task{
                               'odm_georeferencing', 'odm_texturing',
                               'odm_dem/dsm.tif', 'odm_dem/dtm.tif', 'dsm_tiles', 'dtm_tiles',
                               'orthophoto_tiles', 'potree_pointcloud', 'entwine_pointcloud', 
+                              '3d_tiles',
                               'images.json', 'cameras.json',
                               'task_output.txt', 'log.json',
                               'odm_report'];
