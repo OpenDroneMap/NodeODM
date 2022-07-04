@@ -106,13 +106,15 @@ module.exports = {
                 logger.debug(`Uploading ${file.src} --> ${file.dest}`);
                 const filename = path.basename(file.dest);
                 progress[filename] = 0;
-
-                s3.upload({
+                
+                const uploadOpts = {
                     Bucket: bucket,
                     Key: file.dest,
-                    Body: fs.createReadStream(file.src),
-                    ACL: config.s3ACL
-                }, {partSize, queueSize: concurrency}, err => {
+                    Body: fs.createReadStream(file.src)
+                };
+                if (config.s3ACL) uploadOpts.ACL = config.s3ACL;
+                
+                s3.upload(uploadOpts, {partSize, queueSize: concurrency}, err => {
                     if (err){
                         logger.debug(err);
                         const msg = `Cannot upload file to S3: ${err.code}, retrying... ${file.retries}`;
