@@ -23,6 +23,7 @@ const glob = require('glob');
 const path = require('path');
 const logger = require('./logger');
 const config = require('../config');
+const https = require('https');
 const si = require('systeminformation');
 
 let s3 = null;
@@ -34,8 +35,18 @@ module.exports = {
 
     initialize: function(cb){
         if (config.s3Endpoint && config.s3Bucket){
+            if (config.s3IgnoreSSL){
+                AWS.config.update({
+                    httpOptions: {
+                      agent: new https.Agent({
+                        rejectUnauthorized: false
+                      })
+                    }
+                });
+            }
+
             const spacesEndpoint = new AWS.Endpoint(config.s3Endpoint);
-            
+
             const s3Config = {
                 endpoint: spacesEndpoint,
                 signatureVersion: ('v' + config.s3SignatureVersion) || 'v4',
@@ -62,7 +73,7 @@ module.exports = {
                     logger.info("Connected to S3");
                     cb();
                 }else{
-                    cb(new Error("Cannot connect to S3. Check your S3 configuration: " + err.code));
+                    cb(new Error(`Cannot connect to S3. Check your S3 configuration: ${err.message} (${err.code})`));
                 }
             });
         }else cb();
@@ -115,7 +126,7 @@ module.exports = {
                 }, {partSize, queueSize: concurrency}, err => {
                     if (err){
                         logger.debug(err);
-                        const msg = `Cannot upload file to S3: ${err.code}, retrying... ${file.retries}`;
+                        const msg = `Cannot upload file to S3: ${err.message} (${err.code}), retrying... ${file.retries}`;
                         if (onOutput) onOutput(msg);
                         if (file.retries < MAX_RETRIES){
                             file.retries++;

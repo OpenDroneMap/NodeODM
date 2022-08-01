@@ -54,6 +54,7 @@ Options:
 	--s3_signature_version <version>	S3 signature version. (default: 4)
 	--s3_acl <canned-acl> S3 object acl. (default: public-read)
 	--s3_upload_everything	Upload all task results to S3. (default: upload only all.zip archive)
+	--s3_ignore_ssl Whether to ignore SSL errors while connecting to S3. (default: false)
 	--max_concurrency   <number>	Place a cap on the max-concurrency option to use for each task. (default: no limit)
 	--max_runtime	<number> Number of minutes (approximate) that a task is allowed to run before being forcibly canceled (timeout). (default: no limit)
 Log Levels: 
@@ -68,7 +69,7 @@ const allOpts = ["slice","help","config","odm_path","log_level","port","p",
 "test_skip_dems","test_drop_uploads","test_fail_tasks","test_seconds",
 "powercycle","token","max_images","webhook","s3_endpoint","s3_bucket",
 "s3_force_path_style","s3_access_key","s3_secret_key","s3_signature_version",
-"s3_acl","s3_upload_everything","max_concurrency","max_runtime"];
+"s3_acl","s3_upload_everything","s3_ignore_ssl","max_concurrency","max_runtime"];
 
 // Support for "-" or "_" style params syntax
 for (let k in argv){
@@ -138,6 +139,7 @@ config.s3SecretKey = argv.s3_secret_key || fromConfigFile("s3SecretKey", process
 config.s3SignatureVersion = argv.s3_signature_version || fromConfigFile("s3SignatureVersion", "4")
 config.s3ACL = argv.s3_acl || fromConfigFile("s3_acl", "public-read")
 config.s3UploadEverything = argv.s3_upload_everything || fromConfigFile("s3UploadEverything", false);
+config.s3IgnoreSSL = argv.s3_ignore_ssl || fromConfigFile("s3IgnoreSSL", false);
 config.maxConcurrency = parseInt(argv.max_concurrency || fromConfigFile("maxConcurrency", 0));
 config.maxRuntime = parseInt(argv.max_runtime || fromConfigFile("maxRuntime", -1));
 
