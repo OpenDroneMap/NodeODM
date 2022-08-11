@@ -50,15 +50,15 @@ docker run -p 3000:3000 -v /mnt/external_hd:/var/www/data opendronemap/nodeodm
 
 This can be also used to access the computation results directly from the file system.
 
-## Using GPU Acceleration for SIFT processing inside NodeODM
-Since the ODM has support [of GPU acceleration](https://github.com/OpenDroneMap/ODM#gpu-acceleration) you can use another base image for GPU processing.
+## Using GPU Acceleration
 
-To use this feature, you need to use the `opendronemap/nodeodm:gpu` docker image instead of `opendronemap/nodeodm` and you need to pass the `--gpus all` flag:
+Since ODM has support [for GPU acceleration](https://github.com/OpenDroneMap/ODM#gpu-acceleration) you can use another base image for GPU processing. You need to use the `opendronemap/nodeodm:gpu` docker image instead of `opendronemap/nodeodm` and you need to pass the `--gpus all` flag:
+
 ```bash
 docker run -p 3000:3000 --gpus all opendronemap/nodeodm:gpu
 ```
 
-The SIFT GPU implementation is OpenCL-based, so should work with most graphics card (not just NVIDIA).
+The GPU implementation is CUDA-based, so will only work on NVIDIA GPUs.
 
 If you have an NVIDIA card, you can test that docker is recognizing the GPU by running:
 
