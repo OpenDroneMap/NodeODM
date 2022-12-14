@@ -82,7 +82,7 @@ module.exports = {
                     // (num cores can be set programmatically, so can gcpFile, etc.)
                     if (["-h", "--project-path", "--cmvs-maxImages", "--time",
                         "--zip-results", "--pmvs-num-cores",
-                        "--start-with", "--gcp", "--images", "--geo",
+                        "--start-with", "--gcp", "--images", "--geo", "--align",
                         "--split-image-groups", "--copy-to",
                         "--rerun-all", "--rerun",
                         "--slam-config", "--video", "--version", "name"].indexOf(option) !== -1) continue;

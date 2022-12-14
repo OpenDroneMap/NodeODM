@@ -50,6 +50,7 @@ module.exports = class Task{
         this.options = options;
         this.gcpFiles = [];
         this.geoFiles = [];
+        this.alignFiles = [];
         this.imageGroupsFiles = [];
         this.output = [];
         this.runningProcesses = [];
@@ -88,11 +89,15 @@ module.exports = class Task{
                                 this.imageGroupsFiles.push(file);
                             }else if (/\.txt$/gi.test(file)){
                                 this.gcpFiles.push(file);
+                            }else if (/^align.(tif|laz|las)$/.test(file)){
+                                this.alignFiles.push(file);
                             }
                         });
                         logger.debug(`Found ${this.gcpFiles.length} GCP files (${this.gcpFiles.join(" ")}) for ${this.uuid}`);
                         logger.debug(`Found ${this.geoFiles.length} GEO files (${this.geoFiles.join(" ")}) for ${this.uuid}`);
                         logger.debug(`Found ${this.imageGroupsFiles.length} image groups files (${this.imageGroupsFiles.join(" ")}) for ${this.uuid}`);
+                        logger.debug(`Found ${this.alignFiles.length} alignment files (${this.alignFiles.join(" ")}) for ${this.uuid}`);
+
                         cb(null);
                     }
                 });
@@ -557,6 +562,9 @@ module.exports = class Task{
             }
             if (this.geoFiles.length > 0){
                 runnerOptions.geo = fs.realpathSync(path.join(this.getGcpFolderPath(), this.geoFiles[0]));
+            }
+            if (this.alignFiles.length > 0){
+                runnerOptions.align = fs.realpathSync(path.join(this.getGcpFolderPath(), this.alignFiles[0]));
             }
             if (this.imageGroupsFiles.length > 0){
                 runnerOptions["split-image-groups"] = fs.realpathSync(path.join(this.getGcpFolderPath(), this.imageGroupsFiles[0]));
