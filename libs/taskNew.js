@@ -363,13 +363,13 @@ module.exports = {
             },
 
             cb => {
-                // Find any *.txt (GCP) file and move it to the data/<uuid>/gcp directory
+                // Find any *.txt (GCP) file or alignment file and move it to the data/<uuid>/gcp directory
                 // also remove any lingering zipurl.zip
                 fs.readdir(destImagesPath, (err, entries) => {
                     if (err) cb(err);
                     else {
                         async.eachSeries(entries, (entry, cb) => {
-                            if (/\.txt$/gi.test(entry)) {
+                            if (/\.txt$/gi.test(entry) || /^align\.(las|laz|tif)$/gi.test(entry)) {
                                 mv(path.join(destImagesPath, entry), path.join(destGcpPath, entry), cb);
                             }else if (/\.zip$/gi.test(entry)){
                                 fs.unlink(path.join(destImagesPath, entry), cb);

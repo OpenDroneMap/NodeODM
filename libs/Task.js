@@ -89,9 +89,10 @@ module.exports = class Task{
                                 this.imageGroupsFiles.push(file);
                             }else if (/\.txt$/gi.test(file)){
                                 this.gcpFiles.push(file);
-                            }else if (/^align.(tif|laz|las)$/.test(file)){
+                            }else if (/^align\.(tif|laz|las)$/gi.test(file)){
                                 this.alignFiles.push(file);
                             }
+                            logger.debug(file);
                         });
                         logger.debug(`Found ${this.gcpFiles.length} GCP files (${this.gcpFiles.join(" ")}) for ${this.uuid}`);
                         logger.debug(`Found ${this.geoFiles.length} GEO files (${this.geoFiles.join(" ")}) for ${this.uuid}`);

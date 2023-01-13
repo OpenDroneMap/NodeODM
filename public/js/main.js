@@ -119,7 +119,7 @@ $(function() {
         url : "/task/new/upload/",
         parallelUploads: 8, // http://blog.olamisan.com/max-parallel-http-connections-in-a-browser max parallel connections
         uploadMultiple: false,
-        acceptedFiles: "image/*,text/*,application/*",
+        acceptedFiles: "image/*,text/*,application/*,.las,.laz",
         autoProcessQueue: false,
         createImageThumbnails: false,
         previewTemplate: '<div style="display:none"></div>',
