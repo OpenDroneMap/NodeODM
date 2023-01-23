@@ -1,0 +1,34 @@
+Bootstrap: docker
+From: opendronemap/odm:latest
+Stage: spython-base
+
+%files
+. /var/www
+%labels
+MAINTAINER Piero Toffanin <pt@masseranolabs.com>
+%post
+
+# EXPOSE 3000
+
+su -  root # USER root
+apt-get update && apt-get install -y curl gpg-agent
+curl --silent --location https://deb.nodesource.com/setup_14.x | bash -
+apt-get install -y nodejs unzip p7zip-full && npm install -g nodemon && \
+ln -s /code/SuperBuild/install/bin/untwine /usr/bin/untwine && \
+ln -s /code/SuperBuild/install/bin/entwine /usr/bin/entwine && \
+ln -s /code/SuperBuild/install/bin/pdal /usr/bin/pdal
+
+
+mkdir -p /var/www
+
+mkdir -p "/var/www"
+cd "/var/www"
+
+npm install --production && mkdir -p tmp
+
+%runscript
+cd "/var/www"
+exec /usr/bin/node /var/www/index.js "$@"
+%startscript
+cd "/var/www"
+exec /usr/bin/node /var/www/index.js "$@"
