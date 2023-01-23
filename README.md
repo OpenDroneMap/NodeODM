@@ -21,6 +21,13 @@ docker run -p 3000:3000 opendronemap/nodeodm
 docker-machine ip
 ```
 
+* A rootless alternative to Docker is using [Apptainer](https://apptainer.org/). In order to run NodeODM together with ClusterODM on HPC, we need a rootless alternative to Docker, and that's where Apptainer comes in to play. From the Linux command line, run:
+
+```
+apptainer build --sandbox node/ singularity.def
+apptainer run --writable node/ 
+```
+
 Linux users can connect to 127.0.0.1.
 
 * Open a Web Browser to `http://<yourDockerMachineIp>:3000`
