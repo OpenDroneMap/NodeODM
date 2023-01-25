@@ -20,8 +20,9 @@ docker run -p 3000:3000 opendronemap/nodeodm
 ```
 docker-machine ip
 ```
+### Running rootless
 
-* A rootless alternative to Docker is using [Apptainer](https://apptainer.org/). In order to run NodeODM together with ClusterODM on HPC, we need a rootless alternative to Docker, and that's where Apptainer comes in to play. From the Linux command line, cd into the NodeODM folder and run the following commands to host a NodeODM instance:
+* A rootless alternative to Docker is using [Apptainer](https://apptainer.org/). In order to run NodeODM together with ClusterODM in rootless environments, for example on HPC, we need a rootless alternative to Docker, and that's where Apptainer comes in to play. From the Linux command line, cd into the NodeODM folder and run the following commands to host a NodeODM instance:
 
 ```
 apptainer build --sandbox node/ apptainer.def
