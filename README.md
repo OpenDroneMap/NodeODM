@@ -24,7 +24,7 @@ docker-machine ip
 * A rootless alternative to Docker is using [Apptainer](https://apptainer.org/). In order to run NodeODM together with ClusterODM on HPC, we need a rootless alternative to Docker, and that's where Apptainer comes in to play. From the Linux command line, cd into the NodeODM folder and run the following commands to host a NodeODM instance:
 
 ```
-apptainer build --sandbox node/ singularity.def
+apptainer build --sandbox node/ apptainer.def
 apptainer run --writable node/ 
 ```
 
