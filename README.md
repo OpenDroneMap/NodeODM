@@ -39,7 +39,7 @@ apptainer build --sandbox node/ apptainer.def
 apptainer run --writable node/ 
 ```
 
-An apptainer.def file can be built directory from the dockerfile as needed:
+An apptainer.def file can be built directly from the dockerfile as needed:
 
 ```
 pip3 install spython
