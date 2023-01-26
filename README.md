@@ -39,6 +39,8 @@ apptainer build --sandbox node/ apptainer.def
 apptainer run --writable node/ 
 ```
 
+`apptainer build --sandbox` requires you to have root permission to build this apptainer container. Make sure someone with root permission build this for you. You will need to build this apptainer container if you want to work with ClusterODM on the HPC. Check for [ClusterODM](https://github.com/OpenDroneMap/ClusterODM) for more instructions on using SLURM to set it up.
+
 An apptainer.def file can be built directly from the dockerfile as needed:
 
 ```
