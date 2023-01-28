@@ -118,44 +118,32 @@ module.exports = class Task{
     }
 
     setPostProcessingOptsSteps(){
-        return [
-            cb => {
-                // If we need to post process results
-                // if pc-ept is supported (build entwine point cloud)
-                // we automatically add the pc-ept option to the task options by default
-                if (this.skipPostProcessing) cb();
-                else{
-                    odmInfo.supportsOption("pc-ept", (err, supported) => {
-                        if (err){
-                            console.warn(`Cannot check for supported option pc-ept: ${err}`);
-                        }else if (supported){
-                            if (!this.options.find(opt => opt.name === "pc-ept")){
-                                this.options.push({ name: 'pc-ept', value: true });
-                            }
-                        }
-                        cb();
-                    });
-                }
-            },
 
-            cb => {
+        const autoSet = (opt) => {
+            return cb => {
                 // If we need to post process results
-                // if cog is supported (build cloud optimized geotiffs)
-                // we automatically add the cog option to the task options by default
+                // if opt is supported
+                // we automatically add the opt to the task options by default
                 if (this.skipPostProcessing) cb();
                 else{
-                    odmInfo.supportsOption("cog", (err, supported) => {
+                    odmInfo.supportsOption(opt, (err, supported) => {
                         if (err){
-                            console.warn(`Cannot check for supported option cog: ${err}`);
+                            console.warn(`Cannot check for supported option ${opt}: ${err}`);
                         }else if (supported){
-                            if (!this.options.find(opt => opt.name === "cog")){
-                                this.options.push({ name: 'cog', value: true });
+                            if (!this.options.find(o => o.name === opt)){
+                                this.options.push({ name: opt, value: true });
                             }
                         }
                         cb();
                     });
                 }
             }
+        };
+
+        return [
+            autoSet("pc-ept"),
+            autoSet("cog"),
+            autoSet("gltf")
         ];
     }
 
