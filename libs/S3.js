@@ -125,8 +125,8 @@ module.exports = {
                 }
                 
                 if (config.s3ACL != "none") {
-					uploadCfg.ACL = config.s3ACL;
-				}
+                    uploadCfg.ACL = config.s3ACL;
+                }
 
                 s3.upload(uploadCfg, {partSize, queueSize: concurrency}, err => {
                     if (err){
