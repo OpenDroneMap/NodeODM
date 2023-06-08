@@ -1,9 +1,9 @@
 /*
-Node-OpenDroneMap Node.js App and REST API to access OpenDroneMap.
-Copyright (C) 2016 Node-OpenDroneMap Contributors
+NodeODM App and REST API to access ODM.
+Copyright (C) 2016 NodeODM Contributors
 
 This program is free software: you can redistribute it and/or modify
-it under the terms of the GNU General Public License as published by
+it under the terms of the GNU Affero General Public License as published by
 the Free Software Foundation, either version 3 of the License, or
 (at your option) any later version.
 
@@ -12,7 +12,7 @@ but WITHOUT ANY WARRANTY; without even the implied warranty of
 MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
 GNU General Public License for more details.
 
-You should have received a copy of the GNU General Public License
+You should have received a copy of the GNU Affero General Public License
 along with this program.  If not, see <http://www.gnu.org/licenses/>.
 */
 'use strict';
@@ -30,13 +30,13 @@ Usage: node index.js [options]
 Options:
 	--config <path>	Path to the configuration file (default: config-default.json)	
 	-p, --port <number> 	Port to bind the server to, or "auto" to automatically find an available port (default: 3000)
-	--odm_path <path>	Path to OpenDroneMap's code	(default: /code)
+	--odm_path <path>	Path to ODM's code	(default: /code)
 	--log_level <logLevel>	Set log level verbosity (default: info)
 	-d, --daemon 	Set process to run as a deamon
 	-q, --parallel_queue_processing <number> Number of simultaneous processing tasks (default: 2)
 	--cleanup_tasks_after <number> Number of minutes that elapse before deleting finished and canceled tasks (default: 2880) 
 	--cleanup_uploads_after <number> Number of minutes that elapse before deleting unfinished uploads. Set this value to the maximum time you expect a dataset to be uploaded. (default: 2880) 
-	--test Enable test mode. In test mode, no commands are sent to OpenDroneMap. This can be useful during development or testing (default: false)
+	--test Enable test mode. In test mode, no commands are sent to ODM. This can be useful during development or testing (default: false)
 	--test_skip_orthophotos	If test mode is enabled, skip orthophoto results when generating assets. (default: false) 
 	--test_skip_dems	If test mode is enabled, skip dems results when generating assets. (default: false) 
 	--test_drop_uploads	If test mode is enabled, drop /task/new/upload requests with 50% probability. (default: false)
