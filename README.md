@@ -38,6 +38,13 @@ If you need to test changes as a docker image, you can build easily as follows:
 docker build -t my_nodeodm_image --no-cache .
 ```
 
+Run as follows:
+
+```
+docker run -p 3000:3000 my_nodeodm_image &
+```
+
+
 ### Testing alternative ODM images through NodeODM
 
 In order to test alternative ODM docker images in NodeODM, you will need to change the dockerfile for NodeODM to point to your ODM image. For example if you built an alternate ODM image as follows:
@@ -46,7 +53,7 @@ In order to test alternative ODM docker images in NodeODM, you will need to chan
 docker build -t my_odm_image --no-cache .
 ```
 
-Then you'll modify NodeODM's Dockerfile to point to the new ODM image in the first line:
+Then modify NodeODM's Dockerfile to point to the new ODM image in the first line:
 
 ```
 FROM my_odm_image
@@ -54,6 +61,18 @@ MAINTAINER Piero Toffanin <pt@masseranolabs.com>
 
 EXPOSE 3000
 ...
+```
+
+Then build the NodeODM image:
+
+```
+docker build -t my_nodeodm_image --no-cache .
+```
+
+Finally run as follows:
+
+```
+docker run -p 3000:3000 my_nodeodm_image &
 ```
 
 ### Running rootless
