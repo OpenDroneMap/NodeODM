@@ -516,6 +516,70 @@ app.get('/task/:uuid/download/:asset', authCheck, getTaskFromUuid, (req, res) =>
 });
 
 /** @swagger
+ *  /task/{uuid}/tiles/{z}/{x}/{y}:
+ *    get:
+ *      description: Get the tile images via api , ASAP to use in your project
+ *      tags: [task]
+ *      produces: [application/zip]
+ *      parameters:
+ *        - name: uuid
+ *          in: path
+ *          type: string
+ *          description: UUID of the task
+ *          required: true
+ *        - name: z
+ *          in: path
+ *          type: int
+ *          description: z
+ *          required: true
+ *        - name: x
+ *          in: path
+ *          type: int
+ *          description: x
+ *          required: true
+ *        - name: y
+ *          in: path
+ *          type: int
+ *          description: y
+ *          required: true
+ *      responses:
+ *        200:
+ *          description: tile image
+ *          schema:
+ *            type: file
+ *        default:
+ *          description: Error message
+ *          schema:
+ *            $ref: '#/definitions/Error'
+ */
+app.get('/task/:uuid/tiles/:z/:x/:y', authCheck, getTaskFromUuid, (req, res) => {
+    // let asset = req.params.asset !== undefined ? req.params.asset : "all.zip";
+    logger.info('titles services ' +req.params.z + '/'+req.params.x + '/' + req.params.y );
+    let filePath = req.task.getTilePath(req.params.z,req.params.x,req.params.y);
+    logger.info('titles services path  ' +filePath );
+    if (filePath) {
+        logger.info('titles services path  1');
+        if (fs.existsSync(filePath)) {
+            logger.info('titles services path  2');
+            // res.setHeader('Content-Disposition', `attachment; filename=${asset}`);
+            res.setHeader('Content-Type', mime.getType(filePath));
+            res.setHeader('Content-Length', fs.statSync(filePath).size);
+
+            const filestream = fs.createReadStream(filePath);
+            logger.info('titles services path  3');
+            filestream.pipe(res);
+        } else {
+            logger.info('titles services path  4');
+            res.json({ error: "Asset not ready" });
+            
+        }
+    } else {
+        logger.info('titles services path  5');
+        res.json({ error: "Invalid asset" });
+    }
+});
+
+/** @swagger
  * definition:
  *   Error:
  *     type: object
