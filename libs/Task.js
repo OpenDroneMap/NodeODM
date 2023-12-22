@@ -204,6 +204,11 @@ module.exports = class Task{
         return path.join(this.getProjectFolderPath(), filename);
     }
 
+    //get the tile path
+    getTilePath(z,x,y){
+        return path.join(this.getProjectFolderPath(), "orthophoto_tiles",z,x,y+".png");
+    }
+
     // Deletes files and folders related to this task
     cleanup(cb){
         if (this.initialized) rmdir(this.getProjectFolderPath(), cb);
