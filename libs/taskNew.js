@@ -304,8 +304,11 @@ module.exports = {
                         else{
                             if (++retries < 20){
                                 logger.warn(`Cannot move ${srcPath}, probably caused by antivirus software (please disable it or add an exception), retrying (${retries})...`);
-                                setTimeout(2000, move);
-                            }else cb(err);
+                                setTimeout(move, 2000);
+                            } else {
+                                logger.error(`Unable to move temp images (${srcPath}) after 20 retries. Error: ${err}`);
+                                cb(err);
+                            }
                         }
                     });
                 }
