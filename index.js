@@ -18,6 +18,7 @@ along with this program.  If not, see <http://www.gnu.org/licenses/>.
 "use strict";
 
 const fs = require('fs');
+const path = require('path');
 const config = require('./config.js');
 const packageJson = JSON.parse(fs.readFileSync('./package.json'));
 
@@ -285,6 +286,10 @@ app.post('/task/new', authCheck, taskNew.assignUUID, taskNew.uploadImages, (req,
     req.body = req.body || {};
     if ((!req.files || req.files.length === 0) && !req.body.zipurl) req.error = "Need at least 1 file or a zip file url.";
     else if (config.maxImages && req.files && req.files.length > config.maxImages) req.error = `${req.files.length} images uploaded, but this node can only process up to ${config.maxImages}.`;
+    else if ((!req.files || req.files.length === 0) && req.body.zipurl) {
+        const srcPath = path.join("tmp", req.id);
+        fs.mkdirSync(srcPath);
+    }
     next();
 }, taskNew.createTask);
 
