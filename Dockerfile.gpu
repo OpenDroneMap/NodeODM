@@ -5,21 +5,28 @@ EXPOSE 3000
 
 USER root
 RUN apt-get update && apt-get install -y curl gpg-agent ca-certificates
-RUN curl --silent --location https://deb.nodesource.com/setup_14.x | bash -
-RUN apt-get install -y nodejs unzip p7zip-full && npm install -g nodemon && \
-    ln -s /code/SuperBuild/install/bin/untwine /usr/bin/untwine && \
+
+# Add Node.js repository and install Node.js
+RUN curl -fsSL https://deb.nodesource.com/gpgkey/nodesource.gpg.key | gpg --dearmor -o /usr/share/keyrings/nodesource-archive-keyring.gpg && \
+    echo "deb [signed-by=/usr/share/keyrings/nodesource-archive-keyring.gpg] https://deb.nodesource.com/node_14.x $(lsb_release -sc) main" | tee /etc/apt/sources.list.d/nodesource.list && \
+    apt-get update && apt-get install -y nodejs unzip p7zip-full && npm install -g nodemon
+
+# Create symbolic links for specific binaries
+RUN ln -s /code/SuperBuild/install/bin/untwine /usr/bin/untwine && \
     ln -s /code/SuperBuild/install/bin/entwine /usr/bin/entwine && \
     ln -s /code/SuperBuild/install/bin/pdal /usr/bin/pdal
 
+# Configure CUDA
 RUN echo /usr/local/cuda-11.2/compat >> /etc/ld.so.conf.d/989_cuda-11.conf && ldconfig
 
+# Create working directory and set permissions
 RUN mkdir /var/www
-
 WORKDIR "/var/www"
 RUN useradd -m -d "/home/odm" -s /bin/bash odm
 COPY --chown=odm:odm . /var/www
 
-RUN npm install --production && mkdir -p tmp
+# Ensure dependencies are installed
+RUN npm install --production && npm rebuild
 
 RUN chown -R odm:odm /var/www
 RUN chown -R odm:odm /code
