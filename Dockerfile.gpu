@@ -1,5 +1,5 @@
 FROM opendronemap/odm:gpu
-MAINTAINER Piero Toffanin <pt@masseranolabs.com>
+LABEL maintainer="Piero Toffanin <pt@masseranolabs.com>"
 
 EXPOSE 3000
 
@@ -23,6 +23,8 @@ RUN npm install --production && mkdir -p tmp
 
 RUN chown -R odm:odm /var/www
 RUN chown -R odm:odm /code
+
+RUN apt-get remove -y cuda-libraries-11-2 cuda-cudart-11-2 cuda-compat-11-2 cuda-nvrtc-11-2 cuda-nvtx-11-2
 
 USER odm
 
