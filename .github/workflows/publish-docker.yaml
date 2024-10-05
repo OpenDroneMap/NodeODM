@@ -1,45 +1,88 @@
-name: Publish Docker
+name: Build, Test and Publish Docker
 
 on:
   push:
     branches:
-    - master
+      - master
     tags:
-    - v*
-  
+      - v*
+  pull_request:
+
   # Triggered by ODM build (after docker push)
   workflow_dispatch:
 
 jobs:
   build:
+    strategy:
+      matrix:
+        variant:
+          - dockerfile: ./Dockerfile
+            platforms: linux/amd64,linux/arm64
+            tag: latest
+          - dockerfile: ./Dockerfile.gpu
+            platforms: linux/amd64
+            tag: gpu
+          - dockerfile: ./Dockerfile.gpu.intel
+            platforms: linux/amd64
+            tag: gpu.intel
+    name: build ${{ matrix.variant.dockerfile }}
     runs-on: ubuntu-latest
+    env:
+      DOCKERHUB_CREDENTIALS_AVAILABLE: ${{ secrets.DOCKERHUB_USERNAME != '' && secrets.DOCKERHUB_TOKEN != '' }}
+    permissions:
+      contents: read
+      packages: write
     steps:
-    - name: Checkout
-      uses: actions/checkout@v2
-    - name: Set up QEMU
-      uses: docker/setup-qemu-action@v1
-    - name: Set up Docker Buildx
-      uses: docker/setup-buildx-action@v1
-    - name: Login to DockerHub
-      uses: docker/login-action@v1
-      with:
-        username: ${{ secrets.DOCKERHUB_USERNAME }}
-        password: ${{ secrets.DOCKERHUB_TOKEN }}
-    # Use the repository information of the checked-out code to format docker tags
-    - name: Docker meta
-      id: docker_meta
-      uses: crazy-max/ghaction-docker-meta@v1
-      with:
-        images: opendronemap/nodeodm
-        tag-semver: |
-          {{version}}
-    - name: Build and push Docker image
-      id: docker_build
-      uses: docker/build-push-action@v2
-      with:
-        file: ./Dockerfile
-        platforms: linux/amd64,linux/arm64
-        push: true
-        tags: |
-          ${{ steps.docker_meta.outputs.tags }}
-          opendronemap/nodeodm:latest
+      - name: Set up QEMU
+        uses: docker/setup-qemu-action@v3
+      - name: Set up Docker Buildx
+        uses: docker/setup-buildx-action@v3
+      - name: Login to GitHub Container Registry
+        uses: docker/login-action@v3
+        with:
+          registry: ghcr.io
+          username: ${{ github.actor }}
+          password: ${{ secrets.GITHUB_TOKEN }}
+      - name: Login to DockerHub
+        if: env.DOCKERHUB_CREDENTIALS_AVAILABLE == 'true'
+        uses: docker/login-action@v3
+        with:
+          username: ${{ secrets.DOCKERHUB_USERNAME }}
+          password: ${{ secrets.DOCKERHUB_TOKEN }}
+      # Use the repository information of the checked-out code to format docker tags
+      - name: Docker meta
+        id: docker_meta
+        uses: docker/metadata-action@v5
+        with:
+          images: |
+            ghcr.io/${{ github.repository }}
+            ${{ env.DOCKERHUB_CREDENTIALS_AVAILABLE == 'true' && 'opendronemap/nodeodm' || '' }}
+          # semver tag is only generated for the cpu version
+          tags: |
+            ${{ matrix.variant.tag == 'latest' && 'type=semver,pattern={{version}}' || '' }}
+            type=raw,value=${{ matrix.variant.tag }}
+      - name: Build and export Docker image
+        id: docker_build
+        uses: docker/build-push-action@v6
+        with:
+          file: ${{ matrix.variant.dockerfile }}
+          # exporting is only supported for the native platform
+          # avoid rebuilding after the test
+          cache-to: type=gha,mode=max
+          # make the image available to the docker command
+          load: true
+          labels: ${{ steps.docker_meta.outputs.labels }}
+          tags: ${{ steps.docker_meta.outputs.tags }}
+      - name: Test Powercycle
+        run: |
+          docker run --rm ${{ steps.docker_build.outputs.imageid }} --powercycle
+      - name: Push cached Docker image
+        uses: docker/build-push-action@v6
+        if: github.event_name != 'pull_request'
+        with:
+          file: ${{ matrix.variant.dockerfile }}
+          platforms: ${{ matrix.variant.platforms }}
+          cache-from: type=gha
+          push: true
+          labels: ${{ steps.docker_meta.outputs.labels }}
+          tags: ${{ steps.docker_meta.outputs.tags }}
