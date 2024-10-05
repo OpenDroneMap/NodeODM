@@ -1,4 +1,4 @@
-name: Publish Docker
+name: Build, Test and Publish Docker
 
 on:
   push:
@@ -6,12 +6,26 @@ on:
       - master
     tags:
       - v*
-  
+  pull_request:
+
   # Triggered by ODM build (after docker push)
   workflow_dispatch:
 
 jobs:
   build:
+    strategy:
+      matrix:
+        variant:
+          - dockerfile: ./Dockerfile
+            platforms: linux/amd64,linux/arm64
+            tag: latest
+          - dockerfile: ./Dockerfile.gpu
+            platforms: linux/amd64
+            tag: gpu
+          - dockerfile: ./Dockerfile.gpu.intel
+            platforms: linux/amd64
+            tag: gpu.intel
+    name: build ${{ matrix.variant.dockerfile }}
     runs-on: ubuntu-latest
     steps:
       - name: Checkout
@@ -33,13 +47,30 @@ jobs:
           images: opendronemap/nodeodm
           tag-semver: |
             {{version}}
-      - name: Build and push Docker image
+      - name: Build and export Docker image
         id: docker_build
         uses: docker/build-push-action@v6
         with:
-          file: ./Dockerfile
-          platforms: linux/amd64,linux/arm64
+          file: ${{ matrix.variant.dockerfile }}
+          # exporting is only supported for the native platform
+          # avoid rebuilding after the test
+          cache-to: type=gha,mode=max
+          # make the image available to the docker command
+          load: true
+          tags: |
+            ${{ matrix.variant.tag == 'latest' && steps.docker_meta.outputs.tags || '' }}
+            opendronemap/nodeodm:${{ matrix.variant.tag }}
+      - name: Test Powercycle
+        run: |
+          docker run --rm ${{ steps.docker_build.outputs.imageid }} --powercycle
+      - name: Push cached Docker image
+        uses: docker/build-push-action@v6
+        if: github.event_name != 'pull_request'
+        with:
+          file: ${{ matrix.variant.dockerfile }}
+          platforms: ${{ matrix.variant.platforms }}
+          cache-from: type=gha
           push: true
           tags: |
-            ${{ steps.docker_meta.outputs.tags }}
-            opendronemap/nodeodm:latest
+            ${{ matrix.variant.tag == 'latest' && steps.docker_meta.outputs.tags || '' }}
+            opendronemap/nodeodm:${{ matrix.variant.tag }}
