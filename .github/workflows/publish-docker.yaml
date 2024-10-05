@@ -42,11 +42,14 @@ jobs:
       # Use the repository information of the checked-out code to format docker tags
       - name: Docker meta
         id: docker_meta
-        uses: crazy-max/ghaction-docker-meta@v1
+        uses: docker/metadata-action@v5
         with:
-          images: opendronemap/nodeodm
-          tag-semver: |
-            {{version}}
+          images: |
+            opendronemap/nodeodm
+          # semver tag is only generated for the cpu version
+          tags: |
+            ${{ matrix.variant.tag == 'latest' && 'type=semver,pattern={{version}}' || '' }}
+            type=raw,value=${{ matrix.variant.tag }}
       - name: Build and export Docker image
         id: docker_build
         uses: docker/build-push-action@v6
@@ -57,9 +60,8 @@ jobs:
           cache-to: type=gha,mode=max
           # make the image available to the docker command
           load: true
-          tags: |
-            ${{ matrix.variant.tag == 'latest' && steps.docker_meta.outputs.tags || '' }}
-            opendronemap/nodeodm:${{ matrix.variant.tag }}
+          labels: ${{ steps.docker_meta.outputs.labels }}
+          tags: ${{ steps.docker_meta.outputs.tags }}
       - name: Test Powercycle
         run: |
           docker run --rm ${{ steps.docker_build.outputs.imageid }} --powercycle
@@ -71,6 +73,5 @@ jobs:
           platforms: ${{ matrix.variant.platforms }}
           cache-from: type=gha
           push: true
-          tags: |
-            ${{ matrix.variant.tag == 'latest' && steps.docker_meta.outputs.tags || '' }}
-            opendronemap/nodeodm:${{ matrix.variant.tag }}
+          labels: ${{ steps.docker_meta.outputs.labels }}
+          tags: ${{ steps.docker_meta.outputs.tags }}
