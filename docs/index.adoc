@@ -678,6 +678,8 @@ _required_|Milliseconds that have elapsed since the task started being processed
 _required_||<<_task_uuid_info_get_status,status>>
 |*uuid* +
 _required_|UUID|string
+|*progress* +
+_required_|The progress of this Task.From 0 to 100.|integer
 |===
 
 [[_task_uuid_info_get_options]]
