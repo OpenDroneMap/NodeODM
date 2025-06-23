@@ -128,7 +128,7 @@ module.exports = {
             env.ODM_OPTIONS_TMP_FILE = utils.tmpPath(".json");
             env.ODM_PATH = config.odm_path;
             let childProcess = spawn(pythonExe, [path.join(__dirname, "..", "helpers", "odmOptionsToJson.py"),
-                    "--project-path", config.odm_path, "bogusname"], { env });
+                    "--project-path", config.odm_path, "bogusname"], { env, stdio: 'inherit', shell: true });
     
             // Cleanup on done
             let handleResult = (err, result) => {
