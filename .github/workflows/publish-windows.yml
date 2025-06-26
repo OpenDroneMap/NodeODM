@@ -20,12 +20,12 @@ jobs:
     - name: Setup Env
       run: |
         npm i
-        npm i -g nexe
+        npm i -g nexe@4.0.0-rc.7
     - name: Build bundle
       run: |
         npm run winbundle
     - name: Upload Bundle File
-      uses: actions/upload-artifact@v2
+      uses: actions/upload-artifact@v4
       with:
         name: Bundle
         path: dist\*.zip
