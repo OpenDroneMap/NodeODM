@@ -122,13 +122,16 @@ module.exports = {
             return; // Skip rest
         }
 
-        const getOdmOptions = (pythonExe, done) => {
+        const getOdmOptions = (pythonExe, useShell, done) => {
             // Launch
             const env = utils.clone(process.env);
             env.ODM_OPTIONS_TMP_FILE = utils.tmpPath(".json");
             env.ODM_PATH = config.odm_path;
-            let childProcess = spawn(pythonExe, [path.join(__dirname, "..", "helpers", "odmOptionsToJson.py"),
-                    "--project-path", config.odm_path, "bogusname"], { env, stdio: 'inherit', shell: true });
+            const helper = path.join(__dirname, "..", "helpers", "odmOptionsToJson.py");
+            const helperSanitized = useShell ? `"${helper}"` : helper; 
+            const odmSanitized = useShell ? `"${config.odm_path}"` : config.odm_path; 
+            let childProcess = spawn(pythonExe, [helperSanitized,
+                    "--project-path", odmSanitized, "bogusname"], { env, stdio: 'inherit', shell: useShell });
     
             // Cleanup on done
             let handleResult = (err, result) => {
@@ -160,11 +163,11 @@ module.exports = {
         }
         
         if (os.platform() === "win32"){
-            getOdmOptions("helpers\\odm_python.bat", done);
+            getOdmOptions("helpers\\odm_python.bat", true, done);
         }else{
             // Try Python3 first
-            getOdmOptions("python3", (err, result) => {
-                if (err) getOdmOptions("python", done);
+            getOdmOptions("python3", false, (err, result) => {
+                if (err) getOdmOptions("python", false, done);
                 else done(null, result);
             });
         }
