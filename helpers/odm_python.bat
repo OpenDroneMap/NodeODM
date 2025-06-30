@@ -2,7 +2,7 @@
 
 setlocal
 
-call %ODM_PATH%\win32env.bat
+call "%ODM_PATH%\win32env.bat"
 python %*
 
 endlocal
