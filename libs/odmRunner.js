@@ -127,17 +127,13 @@ module.exports = {
             const env = utils.clone(process.env);
             env.ODM_OPTIONS_TMP_FILE = utils.tmpPath(".json");
             env.ODM_PATH = config.odm_path;
-            const shEscape = s =>  {
-                if (/[^A-Za-z0-9_\/:=-]/.test(s)) {
-                    s = "'"+s.replace(/'/g,"'\\''")+"'";
-                    s = s.replace(/^(?:'')+/g, '')
-                    .replace(/\\'''/g, "\\'" );
-                }
-                return s;
+            const shQuote = s =>  {
+                s = s.replace(/"/g, "")
+                return `"${s}"`;
             }
 
-            let childProcess = spawn(pythonExe, [path.join(__dirname, "..", "helpers", "odmOptionsToJson.py"),
-                    "--project-path", shEscape(`"${config.odm_path}"`), "bogusname"], { env, stdio: 'inherit', shell: true });
+            let childProcess = spawn(pythonExe, [shQuote(path.join(__dirname, "..", "helpers", "odmOptionsToJson.py")),
+                    "--project-path", shQuote(config.odm_path), "bogusname"], { env, stdio: 'inherit', shell: true });
     
             // Cleanup on done
             let handleResult = (err, result) => {
