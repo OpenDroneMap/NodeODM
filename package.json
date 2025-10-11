@@ -40,7 +40,8 @@
     "systeminformation": "3.42.0",
     "tree-kill": "^1.2.1",
     "uuid": "^3.3.2",
-    "winston": "^3.3.3"
+    "winston": "3.17.0",
+    "@dabh/diagnostics": "2.0.3"
   },
   "devDependencies": {
     "grunt": "^1.0.3",
