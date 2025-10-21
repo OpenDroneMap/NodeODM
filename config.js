@@ -58,7 +58,7 @@ Options:
 	--max_concurrency   <number>	Place a cap on the max-concurrency option to use for each task. (default: no limit)
 	--max_runtime	<number> Number of minutes (approximate) that a task is allowed to run before being forcibly canceled (timeout). (default: no limit)
 Log Levels: 
-error | debug | info | verbose | debug | silly 
+error | warn | info | verbose | debug | silly 
 `);
 	process.exit(0);
 }
