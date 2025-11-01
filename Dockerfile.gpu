@@ -4,12 +4,15 @@ MAINTAINER Piero Toffanin <pt@masseranolabs.com>
 EXPOSE 3000
 
 USER root
-RUN apt-get update && apt-get install -y curl gpg-agent ca-certificates
-RUN curl --silent --location https://deb.nodesource.com/setup_14.x | bash -
-RUN apt-get install -y nodejs unzip p7zip-full && npm install -g nodemon && \
+
+ENV NVM_DIR /usr/local/nvm
+ENV NODE_VERSION 14
+
+RUN bash install_deps.sh && \
     ln -s /code/SuperBuild/install/bin/untwine /usr/bin/untwine && \
     ln -s /code/SuperBuild/install/bin/entwine /usr/bin/entwine && \
-    ln -s /code/SuperBuild/install/bin/pdal /usr/bin/pdal
+    ln -s /code/SuperBuild/install/bin/pdal /usr/bin/pdal && \
+    ln -s /var/www/node.sh /usr/bin/node
 
 RUN echo /usr/local/cuda-11.2/compat >> /etc/ld.so.conf.d/989_cuda-11.conf && ldconfig
 
@@ -19,7 +22,7 @@ WORKDIR "/var/www"
 RUN useradd -m -d "/home/odm" -s /bin/bash odm
 COPY --chown=odm:odm . /var/www
 
-RUN npm install --production && mkdir -p tmp
+RUN npm install --production && mkdir -p tmp && node index.js --powercycle
 
 RUN chown -R odm:odm /var/www
 RUN chown -R odm:odm /code
