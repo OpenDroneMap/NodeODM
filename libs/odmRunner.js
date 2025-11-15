@@ -133,7 +133,7 @@ module.exports = {
             }
 
             let childProcess = spawn(pythonExe, [shQuote(path.join(__dirname, "..", "helpers", "odmOptionsToJson.py")),
-                    "--project-path", shQuote(config.odm_path), "bogusname"], { env, stdio: 'inherit', shell: true });
+                    "--project-path", shQuote(config.odm_path), "bogusname"], { env, shell: true });
     
             // Cleanup on done
             let handleResult = (err, result) => {
