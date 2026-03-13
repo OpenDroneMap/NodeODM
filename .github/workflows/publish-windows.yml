@@ -7,9 +7,14 @@ on:
     tags:
     - v*
 
+permissions:
+  contents: read
+  id-token: write
+
 jobs:
   build:
     runs-on: windows-latest
+    environment: azuresigning
     steps:
     - name: Checkout
       uses: actions/checkout@v2
@@ -21,9 +26,21 @@ jobs:
       run: |
         npm i
         npm i -g nexe@4.0.0-rc.7
+    - name: Retrieve the metadata and decode it to a file
+      env:
+        AZURESIGNING_METADATA: ${{ secrets.AZURESIGNING_METADATA }}
+      run: |
+        echo $AZURESIGNING_METADATA | base64 --decode > "$RUNNER_TEMP\metadata.json"
+      shell: bash
+    - name: Azure login
+      uses: azure/login@v1
+      with:
+        client-id: ${{ secrets.AZURE_CLIENT_ID }}
+        tenant-id: ${{ secrets.AZURE_TENANT_ID }}
+        subscription-id: ${{ secrets.AZURE_SUBSCRIPTION_ID }}
     - name: Build bundle
       run: |
-        npm run winbundle
+        npm run winbundle -- --signtool-path "C:\Program Files (x86)\Windows Kits\10\bin\10.0.26100.0\x64\signtool.exe" --azure-signing-metadata "%RUNNER_TEMP%\metadata.json"
     - name: Upload Bundle File
       uses: actions/upload-artifact@v4
       with:
