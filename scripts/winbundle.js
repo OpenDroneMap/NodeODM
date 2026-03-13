@@ -5,8 +5,11 @@ const request = require('request');
 const async = require('async');
 const nodeUnzip = require('node-unzip-2');
 const archiver = require('archiver');
+const os = require('os');
 
 const bundleName = "nodeodm-windows-x64.zip";
+
+const scratch = 'RUNNER_TEMP' in process.env ? process.env.RUNNER_TEMP : os.tmpdir();
 
 const download = function(uri, filename, callback) {
     console.log(`Downloading ${uri}`);
@@ -69,11 +72,40 @@ async.series([
         downloadApp(path.join("apps", "unzip"), "https://github.com/OpenDroneMap/NodeODM/releases/download/v2.1.0/unzip600.zip", cb);
     },
     cb => {
+        downloadApp(path.join(scratch, "azuresigning"), "https://www.nuget.org/api/v2/package/Microsoft.ArtifactSigning.Client/1.0.115", cb);
+    },
+    cb => {
         console.log("Building executable");
-        const code = spawnSync('nexe.cmd', ['index.js', '-t', 'windows-x64-12.16.3', '-o', 'nodeodm.exe'], { stdio: "pipe"}).status;
+        const code = spawnSync('nexe.cmd', ['index.js', '-t', 'windows-x64-12.16.3', '-o', 'nodeodm.exe'], { stdio: "inherit", shell: true }).status;
 
         if (code === 0) cb();
         else cb(new Error(`nexe returned non-zero error code: ${code}`));
+    },
+    cb => {
+        let signtoolPath = null;
+        let metadataPath = null;
+
+        const signtoolPathArgIndex = process.argv.indexOf("--signtool-path");
+        if (signtoolPathArgIndex !== -1 && signtoolPathArgIndex + 1 < process.argv.length) {
+            signtoolPath = process.argv[signtoolPathArgIndex + 1];
+        }
+
+        const metadataPathArgIndex = process.argv.indexOf("--azure-signing-metadata");
+        if (metadataPathArgIndex !== -1 && metadataPathArgIndex + 1 < process.argv.length) {
+            metadataPath = process.argv[metadataPathArgIndex + 1];
+        }
+
+        if (signtoolPath && metadataPath) {
+            console.log("Signing executable");
+
+            const dlibPath = path.join(scratch, "azuresigning", "bin", "x64", "Azure.CodeSigning.Dlib.dll");
+            const code = spawnSync(signtoolPath, ['sign', '/v', '/debug', '/fd', 'SHA256', '/tr', 'http://timestamp.acs.microsoft.com', '/td', 'SHA256', '/dlib', dlibPath, '/dmdf', metadataPath, 'nodeodm.exe'], { stdio: "inherit" }).status;
+
+            if (code === 0) cb();
+            else cb(new Error(`signtool returned non-zero error code: ${code}`));
+        } else {
+            cb();
+        }
     },
     cb => {
         // Zip
