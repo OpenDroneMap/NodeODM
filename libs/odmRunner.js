@@ -30,8 +30,14 @@ module.exports = {
         assert(projectName !== undefined, "projectName must be specified");
         assert(options["project-path"] !== undefined, "project-path must be defined");
         
-        const command = '"' + path.join(config.odm_path, os.platform() === "win32" ? "run.bat" : "run.sh") + '"',
+        let command = path.join(config.odm_path, os.platform() === "win32" ? "run.bat" : "run.sh"),
               params = [];
+
+        if (os.platform() === "win32"){
+            // On Windows, we need to add quotes around the file path
+            // otherwise it doesn't work when there are spaces in the path
+            command = `"${command}"`;
+        }
 
         for (var name in options){
             let value = options[name];
