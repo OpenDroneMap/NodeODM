@@ -30,7 +30,7 @@ module.exports = {
         assert(projectName !== undefined, "projectName must be specified");
         assert(options["project-path"] !== undefined, "project-path must be defined");
         
-        const command = path.join(config.odm_path, os.platform() === "win32" ? "run.bat" : "run.sh"),
+        const command = '"' + path.join(config.odm_path, os.platform() === "win32" ? "run.bat" : "run.sh") + '"',
               params = [];
 
         for (var name in options){
