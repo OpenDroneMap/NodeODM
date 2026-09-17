@@ -34,17 +34,24 @@ def load_source(module_name, filename):
 
 dest_file = os.environ.get("ODM_OPTIONS_TMP_FILE")
 
-sys.path.append(sys.argv[2])
+if len(sys.argv) <= 2 or not sys.argv[2]:
+    sys.exit("Missing or invalid project path argument")
+
+project_path = os.path.realpath(sys.argv[2])
+if not os.path.isdir(project_path):
+    sys.exit("Project path does not exist or is not a directory: %s" % project_path)
+
+sys.path.append(project_path)
 
 try:
-    load_source('opendm', sys.argv[2] + '/opendm/__init__.py')
+    load_source('opendm', os.path.join(project_path, 'opendm', '__init__.py'))
 except:
     pass
 try:
-    load_source('context', sys.argv[2] + '/opendm/context.py')
+    load_source('context', os.path.join(project_path, 'opendm', 'context.py'))
 except:
     pass
-odm = load_source('config', sys.argv[2] + '/opendm/config.py')
+odm = load_source('config', os.path.join(project_path, 'opendm', 'config.py'))
 
 options = {}
 class ArgumentParserStub(argparse.ArgumentParser):
