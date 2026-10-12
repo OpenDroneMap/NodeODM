@@ -26,8 +26,16 @@ let logger = require('./logger');
 let utils = require('./utils');
 
 const shQuote = s =>  {
-    s = String(s).replace(/"/g, "")
-    return `"${s}"`;
+    s = String(s);
+    if (os.platform() === "win32"){
+        // cmd.exe: wrap in double quotes (double quotes inside values are not supported)
+        s = s.replace(/"/g, "");
+        return `"${s}"`;
+    }else{
+        // POSIX shell: single quotes keep the value literally (including double quotes,
+        // as needed by JSON options such as --boundary); escape embedded single quotes
+        return `'${s.replace(/'/g, `'\\''`)}'`;
+    }
 }
 
 module.exports = {
