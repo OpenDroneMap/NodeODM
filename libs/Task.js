@@ -1,6 +1,6 @@
 /*
-NodeODM App and REST API to access ODM.
-Copyright (C) 2016 NodeODM Contributors
+NodeODX App and REST API to access ODX.
+Copyright (C) 2026 NodeODX Contributors
 
 This program is free software: you can redistribute it and/or modify
 it under the terms of the GNU Affero General Public License as published by
@@ -293,7 +293,7 @@ module.exports = class Task{
         }
     }
 
-    // Starts processing the task with OpenDroneMap
+    // Starts processing the task with ODM
     // This will spawn a new process.
     start(done){
         const finished = err => {
@@ -662,7 +662,7 @@ module.exports = class Task{
         };
     }
 
-    // Returns the output of the OpenDroneMap process
+    // Returns the output of the ODM process
     // Optionally starting from a certain line number
     getOutput(startFromLine = 0){
         return this.output.slice(startFromLine, this.output.length);

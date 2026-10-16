@@ -1,11 +1,11 @@
 [Unit]
-Description=Start node-ODM Service Container
+Description=Start NodeODX Service Container
 
 [Service]
 Type=simple
-PIDFile=/run/nodeodm.pid
-User=odm
-Group=odm
+PIDFile=/run/nodeodx.pid
+User=odx
+Group=odx
 WorkingDirectory=/www
 ExecStart=/usr/bin/node index.js
 ExecStop=/bin/kill -s QUIT $MAINPID

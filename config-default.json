@@ -1,6 +1,7 @@
 {
-	"instance": "node-OpenDroneMap",
+	"instance": "NodeODX",
 	"odm_path": "/code",
+	"odx_path": "/code",
 
 	"logger": {
 		"level": "info",

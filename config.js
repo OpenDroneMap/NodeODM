@@ -1,6 +1,6 @@
 /*
-NodeODM App and REST API to access ODM.
-Copyright (C) 2016 NodeODM Contributors
+NodeODX App and REST API to access ODX.
+Copyright (C) 2026 NodeODX Contributors
 
 This program is free software: you can redistribute it and/or modify
 it under the terms of the GNU Affero General Public License as published by
@@ -30,7 +30,8 @@ Usage: node index.js [options]
 Options:
 	--config <path>	Path to the configuration file (default: config-default.json)	
 	-p, --port <number> 	Port to bind the server to, or "auto" to automatically find an available port (default: 3000)
-	--odm_path <path>	Path to ODM's code	(default: /code)
+	--odm_path <path>	Path to ODX's code (deprecated)	(default: /code)
+	--odx_path <path>	Path to ODX's code (default: /code)
 	--log_level <logLevel>	Set log level verbosity (default: info)
 	-d, --daemon 	Set process to run as a deamon
 	-q, --parallel_queue_processing <number> Number of simultaneous processing tasks (default: 2)
@@ -51,7 +52,6 @@ Options:
 	--s3_access_key <key>	S3 access key, required if --s3_endpoint is set. (default: none)
 	--s3_force_path_style  Whether to force path style URLs for S3 objects. (default: false)
 	--s3_secret_key <secret>	S3 secret key, required if --s3_endpoint is set. (default: none) 
-	--s3_signature_version <version>	S3 signature version. (default: 4)
 	--s3_acl <canned-acl> S3 object acl. Can specify "none" to skip. (default: public-read)
 	--s3_upload_everything	Upload all task results to S3. (default: upload only all.zip archive)
 	--s3_ignore_ssl Whether to ignore SSL errors while connecting to S3. (default: false)
@@ -63,7 +63,7 @@ error | warn | info | verbose | debug | silly
 	process.exit(0);
 }
 
-const allOpts = ["slice","help","config","odm_path","log_level","port","p",
+const allOpts = ["slice","help","config","odm_path","odx_path","log_level","port","p",
 "deamonize","daemon","d","parallel_queue_processing","q",
 "cleanup_tasks_after","cleanup_uploads_after","test","test_skip_orthophotos",
 "test_skip_dems","test_drop_uploads","test_fail_tasks","test_seconds",
@@ -105,8 +105,11 @@ function fromConfigFile(prop, defaultValue){
 }
 
 // Instance name - default name for this configuration
-config.instance = fromConfigFile("instance", 'node-OpenDroneMap');
-config.odm_path = argv.odm_path || fromConfigFile("odm_path", '/code');
+config.instance = fromConfigFile("instance", 'NodeODX');
+config.odx_path = argv.odx_path || argv.odm_path || fromConfigFile("odx_path", '/code') || fromConfigFile("odm_path", '/code');
+if (argv.odm_path){
+	console.log("(deprecation): odm_path is deprecated. Use --odx_path instead. --odm_path might be removed in the future.")
+}
 
 // Logging configuration
 config.logger = {};
@@ -136,7 +139,6 @@ config.s3Bucket = argv.s3_bucket || fromConfigFile("s3Bucket", "");
 config.s3ForcePathStyle = argv.s3_force_path_style || fromConfigFile("s3ForcePathStyle", false);
 config.s3AccessKey = argv.s3_access_key || fromConfigFile("s3AccessKey", process.env.AWS_ACCESS_KEY_ID || "")
 config.s3SecretKey = argv.s3_secret_key || fromConfigFile("s3SecretKey", process.env.AWS_SECRET_ACCESS_KEY || "")
-config.s3SignatureVersion = argv.s3_signature_version || fromConfigFile("s3SignatureVersion", "4")
 config.s3ACL = argv.s3_acl || fromConfigFile("s3_acl", "public-read")
 config.s3UploadEverything = argv.s3_upload_everything || fromConfigFile("s3UploadEverything", false);
 config.s3IgnoreSSL = argv.s3_ignore_ssl || fromConfigFile("s3IgnoreSSL", false);

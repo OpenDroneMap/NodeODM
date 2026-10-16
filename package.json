@@ -1,6 +1,6 @@
 {
-  "name": "NodeODM",
-  "version": "2.2.4",
+  "name": "NodeODX",
+  "version": "2.3.1",
   "description": "REST API to access ODM",
   "main": "index.js",
   "scripts": {
@@ -9,7 +9,7 @@
   },
   "repository": {
     "type": "git",
-    "url": "git+https://github.com/WebODM/NodeODM.git"
+    "url": "git+https://github.com/WebODM/NodeODX.git"
   },
   "keywords": [
     "webodm"
@@ -17,13 +17,16 @@
   "author": "Piero Toffanin",
   "license": "AGPL-3.0",
   "bugs": {
-    "url": "https://github.com/WebODM/NodeODM/issues"
+    "url": "https://github.com/WebODM/NodeODX/issues"
   },
-  "homepage": "https://github.com/WebODM/NodeODM#readme",
+  "homepage": "https://github.com/WebODM/NodeODX#readme",
   "dependencies": {
+    "@dabh/diagnostics": "2.0.3",
     "archiver": "^3.0.0",
     "async": "^2.6.1",
-    "aws-sdk": "^2.368.0",
+    "@aws-sdk/client-s3": "3.400.0",
+    "@aws-sdk/lib-storage": "3.400.0",
+    "@aws-sdk/node-http-handler": "3.374.0",
     "body-parser": "^1.18.3",
     "cors": "^2.8.5",
     "express": "^4.16.4",
@@ -40,8 +43,7 @@
     "systeminformation": "3.42.0",
     "tree-kill": "^1.2.1",
     "uuid": "^3.3.2",
-    "winston": "3.17.0",
-    "@dabh/diagnostics": "2.0.3"
+    "winston": "3.17.0"
   },
   "devDependencies": {
     "grunt": "^1.0.3",

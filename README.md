@@ -1,90 +1,87 @@
-# NodeODM
+# NodeODX
 
-[![Build Status](https://travis-ci.org/WebODM/NodeODM.svg?branch=master)](https://travis-ci.org/WebODM/NodeODM)
+![CPU Build](https://img.shields.io/github/actions/workflow/status/WebODM/NodeODX/publish-docker.yml?branch=master&label=docker%20CPU) ![GPU Build](https://img.shields.io/github/actions/workflow/status/WebODM/NodeODX/publish-docker-gpu.yml?branch=master&label=docker%20GPU) ![Windows Build](https://img.shields.io/github/actions/workflow/status/WebODM/NodeODX/publish-windows.yml?branch=master&label=windows) ![Version](https://img.shields.io/github/v/release/WebODM/NodeODX) ![License](https://img.shields.io/github/license/WebODM/NodeODX) ![Contributors](https://img.shields.io/github/contributors/WebODM/NodeODX) ![Updated](https://img.shields.io/github/last-commit/WebODM/NodeODX)
 
-NodeODM is a [standard API specification](https://github.com/WebODM/NodeODM/blob/master/docs/index.adoc) for processing aerial images with engines such as [ODM](https://github.com/OpenDroneMap/ODM). The API is used by clients such as [WebODM](https://github.com/OpenDroneMap/WebODM), [CloudODM](https://github.com/OpenDroneMap/CloudODM) and [PyODM](https://github.com/OpenDroneMap/PyODM). This repository contains a performant, production-ready reference implementation written in NodeJS.
+> **📢 Now with upgraded AWS SDK!** [Read the announcement](https://webodm.org/blog/announcement/)
 
-![image](https://user-images.githubusercontent.com/1951843/78455986-4805ab80-766f-11ea-8a79-1691e062600c.png)
+
+NodeODX is a [standard API specification](https://github.com/WebODM/NodeODX/blob/master/docs/index.adoc) for processing aerial images with engines such as [ODX](https://github.com/WebODM/ODX). The API is used by clients such as [WebODM](https://github.com/WebODM/WebODM), [CloudODX](https://github.com/WebODM/CloudODX) and [PyODX](https://github.com/WebODM/PyODX). This repository contains a performant, production-ready reference implementation written in NodeJS.
+
+<img width="915" height="254" alt="image" src="https://github.com/user-attachments/assets/3754a3b3-ba8c-4957-b2c6-59bc1bcafb8a" />
 
 ## Getting Started
 
-We recommend that you setup NodeODM using [Docker](https://www.docker.com/).
+We recommend that you setup NodeODX using [Docker](https://www.docker.com/).
 
-* From the Docker Quickstart Terminal (Windows / OSX) or from the command line (Linux) type:
+* From a command prompt / terminal type:
 ```
-docker run -p 3000:3000 WebODM/nodeodm
-```
-
-* If you're on Windows/OSX, find the IP of your Docker machine by running this command from your Docker Quickstart Terminal:
-
-```
-docker-machine ip
+docker run -p 3000:3000 webodm/nodeodx
 ```
 
 Linux users can connect to 127.0.0.1.
 
-* Open a Web Browser to `http://<yourDockerMachineIp>:3000`
-* Load [some images](https://github.com/OpenDroneMap/ODMdata)
+* Open a Web Browser to `http://127.0.0.1:3000`
+* Load [some images](https://webodm.org/datasets)
 * Press "Start Task"
 * Go for a walk :)
 
-If the computer running NodeODM is using an old or 32bit CPU, you need to compile OpenDroneMap from sources and setup NodeODM natively. You cannot use docker. Docker images work with CPUs with 64-bit extensions, MMX, SSE, SSE2, SSE3 and SSSE3 instruction set support or higher. Seeing a `Illegal instruction` error while processing images is an indication that your CPU is too old. 
+If the computer running NodeODX is using an old or 32bit CPU, you need to compile ODX from sources and setup NodeODX natively. You cannot use docker. Docker images work with CPUs with 64-bit extensions, MMX, SSE, SSE2, SSE3 and SSSE3 instruction set support or higher. Seeing a `Illegal instruction` error while processing images is an indication that your CPU is too old. 
 
 ### Building docker image
 
 If you need to test changes as a docker image, you can build easily as follows:
 
 ```
-docker build -t my_nodeodm_image --no-cache .
+docker build -t my_nodeodx_image --no-cache .
 ```
 
 Run as follows:
 
 ```
-docker run -p 3000:3000 my_nodeodm_image &
+docker run -p 3000:3000 mynodeodx &
 ```
 
 
-### Testing alternative ODM images through NodeODM
+### Testing alternative ODX images through NodeODX
 
-In order to test alternative ODM docker images in NodeODM, you will need to change the dockerfile for NodeODM to point to your ODM image. For example if you built an alternate ODM image as follows:
-
-```
-docker build -t my_odm_image --no-cache .
-```
-
-Then modify NodeODM's Dockerfile to point to the new ODM image in the first line:
+In order to test alternative docker images in NodeODX, you will need to change the dockerfile for NodeODX to point to your ODX image. For example if you built an alternate ODX image as follows:
 
 ```
-FROM my_odm_image
+docker build -t my_odx_image --no-cache .
+```
+
+Then modify NodeODX's Dockerfile to point to the new ODX image in the first line:
+
+```
+FROM my_odx_image
 MAINTAINER Piero Toffanin <pt@masseranolabs.com>
 
 EXPOSE 3000
 ...
 ```
 
-Then build the NodeODM image:
+Then build the NodeODX image:
 
 ```
-docker build -t my_nodeodm_image --no-cache .
+docker build -t my_nodeodx_image --no-cache .
 ```
 
 Finally run as follows:
 
 ```
-docker run -p 3000:3000 my_nodeodm_image &
+docker run -p 3000:3000 my_nodeodx_image &
 ```
 
 ### Running rootless
 
-* A rootless alternative to Docker is using [Apptainer](https://apptainer.org/). In order to run NodeODM together with ClusterODM in rootless environments, for example on HPC, we need a rootless alternative to Docker, and that's where Apptainer comes in to play. From the Linux command line, cd into the NodeODM folder and run the following commands to host a NodeODM instance:
+* A rootless alternative to Docker is using [Apptainer](https://apptainer.org/). In order to run NodeODX together with ClusterODX in rootless environments, for example on HPC, we need a rootless alternative to Docker, and that's where Apptainer comes in to play. From the Linux command line, cd into the NodeODX folder and run the following commands to host a NodeODX instance:
 
 ```
 apptainer build --sandbox node/ apptainer.def
 apptainer run --writable node/ 
 ```
 
-`apptainer build --sandbox` requires you to have root permission to build this apptainer container. Make sure someone with root permission build this for you. You will need to build this apptainer container if you want to work with ClusterODM on the HPC. Check for [ClusterODM](https://github.com/OpenDroneMap/ClusterODM) for more instructions on using SLURM to set it up.
+`apptainer build --sandbox` requires you to have root permission to build this apptainer container. Make sure someone with root permission build this for you. You will need to build this apptainer container if you want to work with ClusterODX on the HPC. Check for [ClusterODX](https://github.com/WebODM/ClusterODX) for more instructions on using SLURM to set it up.
 
 An apptainer.def file can be built directly from the dockerfile as needed:
 
@@ -95,30 +92,30 @@ spython recipe Dockerfile &> apptainer.def
 
 ## API Docs
 
-See the [API documentation page](https://github.com/WebODM/NodeODM/blob/master/docs/index.adoc).
+See the [API documentation page](https://github.com/WebODM/NodeODX/blob/master/docs/index.adoc).
 
-Some minor breaking changes exist from version `1.x` to `2.x` of the API. See [migration notes](https://github.com/WebODM/NodeODM/blob/master/MIGRATION.md).
+Some minor breaking changes exist from version `1.x` to `2.x` of the API. See [migration notes](https://github.com/WebODM/NodeODX/blob/master/MIGRATION.md).
 
 ## Run Tasks from the Command Line
 
-You can use [CloudODM](https://github.com/OpenDroneMap/CloudODM) to run tasks with NodeODM from the command line.
+You can use [CloudODX](https://github.com/WebODM/CloudODX) to run tasks with NodeODX from the command line.
 
 ## Using an External Hard Drive
 
 If you want to store results on a separate drive, map the `/var/www/data` folder to the location of your drive:
 
 ```bash
-docker run -p 3000:3000 -v /mnt/external_hd:/var/www/data WebODM/nodeodm
+docker run -p 3000:3000 -v /mnt/external_hd:/var/www/data webodm/nodeodx
 ```
 
 This can be also used to access the computation results directly from the file system.
 
 ## Using GPU Acceleration
 
-Since ODM has support [for GPU acceleration](https://github.com/OpenDroneMap/ODM#gpu-acceleration) you can use another base image for GPU processing. You need to use the `WebODM/nodeodm:gpu` docker image instead of `WebODM/nodeodm` and you need to pass the `--gpus all` flag:
+Since ODX has support [for GPU acceleration](https://github.com/https://github.com/WebODM/ODX#gpu-acceleration) you can use another base image for GPU processing. You need to use the `webodm/nodeodx:gpu` docker image instead of `webodm/nodeodx` and you need to pass the `--gpus all` flag:
 
 ```bash
-docker run -p 3000:3000 --gpus all WebODM/nodeodm:gpu
+docker run -p 3000:3000 --gpus all webodm/nodeodx:gpu
 ```
 
 The GPU implementation is CUDA-based, so will only work on NVIDIA GPUs.
@@ -146,15 +143,15 @@ See https://github.com/NVIDIA/nvidia-docker and https://docs.nvidia.com/datacent
 
 ### Windows Bundle
 
-NodeODM can run as a self-contained executable on Windows without the need for additional dependencies (except for [ODM](https://github.com/OpenDroneMap/ODM) which needs to be installed separately). You can download the latest `nodeodm-windows-x64.zip` bundle from the [releases](https://github.com/WebODM/NodeODM/releases) page. Extract the contents in a folder and run:
+NodeODX can run as a self-contained executable on Windows without the need for additional dependencies (except for [ODX](https://github.com/https://github.com/WebODM/ODX) which needs to be installed separately). You can download the latest `nodeodx-windows-x64.zip` bundle from the [releases](https://github.com/WebODM/NodeODX/releases) page. Extract the contents in a folder and run:
 
 ```bash
-nodeodm.exe --odm_path c:\path\to\ODM
+nodeodx.exe --odx_path c:\path\to\ODX
 ```
 
 ### Run it Natively
 
-If you are already running [ODM](https://github.com/OpenDroneMap/ODM) on Ubuntu natively you can follow these steps:
+If you are already running [ODX](https://github.com/https://github.com/WebODM/ODX) on Ubuntu natively you can follow these steps:
 
 1) Install Entwine: https://entwine.io/quickstart.html#installation
  
@@ -163,27 +160,27 @@ If you are already running [ODM](https://github.com/OpenDroneMap/ODM) on Ubuntu 
 ```bash
 sudo curl --silent --location https://deb.nodesource.com/setup_6.x | sudo bash -
 sudo apt-get install -y nodejs python-gdal p7zip-full unzip
-git clone https://github.com/WebODM/NodeODM
-cd NodeODM
+git clone https://github.com/WebODM/NodeODX
+cd NodeODX
 npm install
 ```
 
-3) Start NodeODM
+3) Start NodeODX
 
 ```bash
 node index.js
 ```
 
-You may need to specify your ODM project path to start the server:
+You may need to specify your ODX project path to start the server:
 
 ```
-node index.js --odm_path /home/username/OpenDroneMap
+node index.js --odx_path /home/username/ODX
 ```
 
-If you want to start node ODM on a different port you can do the following:
+If you want to start node ODX on a different port you can do the following:
 
 ```
-node index.js --port 8000 --odm_path /home/username/OpenDroneMap
+node index.js --port 8000 --odx_path /home/username/ODX
 ```
 
 For other command line options you can run:
@@ -224,13 +221,13 @@ You can monitor the process using `pm2 status`.
 
 ### Test Mode
 
-If you want to make a contribution, but don't want to setup OpenDroneMap, or perhaps you are working on a Windows machine, or if you want to run automated tests, you can turn test mode on:
+If you want to make a contribution, but don't want to setup ODX, or perhaps you are working on a Windows machine, or if you want to run automated tests, you can turn test mode on:
 
 ```
 node index.js --test
 ```
 
-While in test mode all calls to OpenDroneMap's code will be simulated (see the /tests directory for the mock data that is returned).
+While in test mode all calls to ODX code will be simulated (see the /tests directory for the mock data that is returned).
 
 ### Test Images
 
@@ -238,12 +235,9 @@ You can find some test drone images [here](https://github.com/dakotabenjamin/odm
 
 ## What if I need more functionality?
 
-NodeODM is meant to be a lightweight API. If you are looking for a more comprehensive solution to drone mapping, check out [WebODM](https://github.com/OpenDroneMap/WebODM), which uses NodeODM for processing.
+NodeODX is meant to be a lightweight API. If you are looking for a more comprehensive solution to drone mapping, check out [WebODM](https://github.com/WebODM/WebODM), which uses NodeODX for processing.
 
 ## Contributing
 
 Make a pull request for small contributions. For big contributions, please open a discussion first. Please use ES6 syntax while writing new Javascript code so that we can keep the code base uniform.
 
-## Roadmap
-
-See the [list of wanted features](https://github.com/WebODM/NodeODM/issues?q=is%3Aopen+is%3Aissue+label%3A%22new+feature%22).

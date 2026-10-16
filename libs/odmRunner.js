@@ -1,6 +1,6 @@
 /*
-NodeODM App and REST API to access ODM.
-Copyright (C) 2016 NodeODM Contributors
+NodeODX App and REST API to access ODX.
+Copyright (C) 2026 NodeODX Contributors
 
 This program is free software: you can redistribute it and/or modify
 it under the terms of the GNU Affero General Public License as published by
@@ -30,7 +30,7 @@ module.exports = {
         assert(projectName !== undefined, "projectName must be specified");
         assert(options["project-path"] !== undefined, "project-path must be defined");
         
-        const command = path.join(config.odm_path, os.platform() === "win32" ? "run.bat" : "run.sh"),
+        const command = path.join(config.odx_path, os.platform() === "win32" ? "run.bat" : "run.sh"),
               params = [];
 
         for (var name in options){
@@ -73,7 +73,7 @@ module.exports = {
         // Launch
         const env = utils.clone(process.env);
         env.ODM_NONINTERACTIVE = 1;
-        let childProcess = spawn(command, params, {cwd: config.odm_path, env});
+        let childProcess = spawn(command, params, {cwd: config.odx_path, env});
 
         childProcess
             .on('exit', (code, signal) => done(null, code, signal))
@@ -86,15 +86,15 @@ module.exports = {
     },
     
     getVersion: function(done){
-        fs.readFile(path.join(config.odm_path, 'VERSION'), {encoding: 'utf8'}, (err, content) => {
+        fs.readFile(path.join(config.odx_path, 'VERSION'), {encoding: 'utf8'}, (err, content) => {
             if (err) done(null, "?");
             else done(null, content.split("\n").map(l => l.trim())[0]);
         });
     },
 
     getEngine: function(done){
-        fs.readFile(path.join(config.odm_path, 'ENGINE'), {encoding: 'utf8'}, (err, content) => {
-            if (err) done(null, "odm"); // Assumed
+        fs.readFile(path.join(config.odx_path, 'ENGINE'), {encoding: 'utf8'}, (err, content) => {
+            if (err) done(null, "odx"); // Assumed
             else done(null, content.split("\n").map(l => l.trim())[0]);
         });
     },
@@ -125,21 +125,21 @@ module.exports = {
         const getOdmOptions = (pythonExe, done) => {
             // Launch
             const env = utils.clone(process.env);
-            env.ODM_OPTIONS_TMP_FILE = utils.tmpPath(".json");
-            env.ODM_PATH = config.odm_path;
+            env.ODX_OPTIONS_TMP_FILE = utils.tmpPath(".json");
+            env.ODX_PATH = config.odx_path;
             const shQuote = s =>  {
                 s = s.replace(/"/g, "")
                 return `"${s}"`;
             }
 
             let childProcess = spawn(pythonExe, [shQuote(path.join(__dirname, "..", "helpers", "odmOptionsToJson.py")),
-                    "--project-path", shQuote(config.odm_path), "bogusname"], { env, shell: true });
+                    "--project-path", shQuote(config.odx_path), "bogusname"], { env, shell: true });
     
             // Cleanup on done
             let handleResult = (err, result) => {
-                fs.exists(env.ODM_OPTIONS_TMP_FILE, exists => {
-                    if (exists) fs.unlink(env.ODM_OPTIONS_TMP_FILE, err => {
-                        if (err) console.warning(`Cannot cleanup ${env.ODM_OPTIONS_TMP_FILE}`);
+                fs.exists(env.ODX_OPTIONS_TMP_FILE, exists => {
+                    if (exists) fs.unlink(env.ODX_OPTIONS_TMP_FILE, err => {
+                        if (err) console.warning(`Cannot cleanup ${env.ODX_OPTIONS_TMP_FILE}`);
                     });
                 });
     
@@ -150,15 +150,15 @@ module.exports = {
             childProcess
                 .on('exit', (code, signal) => {
                     try{
-                        fs.readFile(env.ODM_OPTIONS_TMP_FILE, { encoding: "utf8" }, (err, data) => {
-                            if (err) handleResult(new Error(`Cannot read list of options from ODM (from temporary file). Is ODM installed in ${config.odm_path}?`));
+                        fs.readFile(env.ODX_OPTIONS_TMP_FILE, { encoding: "utf8" }, (err, data) => {
+                            if (err) handleResult(new Error(`Cannot read list of options from ODX (from temporary file). Is ODX installed in ${config.odx_path}?`));
                             else{
                                 let json = JSON.parse(data);
                                 handleResult(null, json);
                             }
                         });
                     }catch(err){
-                        handleResult(new Error(`Could not load list of options from ODM. Is ODM installed in ${config.odm_path}? Make sure that OpenDroneMap is installed and that --odm_path is set properly: ${err.message}`));
+                        handleResult(new Error(`Could not load list of options from ODX. Is ODX installed in ${config.odx_path}? Make sure that ODX is installed and that --odx_path is set properly: ${err.message}`));
                     }
                 })
                 .on('error', handleResult);

@@ -1,6 +1,6 @@
 /* 
-NodeODM App and REST API to access ODM. 
-Copyright (C) 2018 Node-OpenDroneMap Contributors
+NodeODX App and REST API to access ODX. 
+Copyright (C) 2018 Copyright (C) 2026 NodeODX ContributorsContributors
 
 This program is free software: you can redistribute it and/or modify
 it under the terms of the GNU Affero General Public License as published by

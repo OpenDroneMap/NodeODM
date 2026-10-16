@@ -1,6 +1,6 @@
 /*
-NodeODM App and REST API to access ODM.
-Copyright (C) 2016 NodeODM Contributors
+NodeODX App and REST API to access ODX.
+Copyright (C) 2026 NodeODX Contributors
 
 This program is free software: you can redistribute it and/or modify
 it under the terms of the GNU Affero General Public License as published by
@@ -94,7 +94,7 @@ const upload = multer({
 module.exports = {
     assignUUID: (req, res, next) => {
         // A user can optionally suggest a UUID instead of letting
-        // nodeODM pick one.
+        // nodeODX pick one.
         if (req.get('set-uuid')){
             const userUuid = req.get('set-uuid');
     

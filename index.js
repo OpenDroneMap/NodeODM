@@ -1,6 +1,6 @@
 /*
-NodeODM App and REST API to access ODM.
-Copyright (C) 2016 NodeODM Contributors
+NodeODX App and REST API to access ODX.
+Copyright (C) 2026 NodeODX Contributors
 
 This program is free software: you can redistribute it and/or modify
 it under the terms of the GNU Affero General Public License as published by
@@ -143,7 +143,7 @@ app.post('/task/new/init', authCheck, taskNew.assignUUID, formDataParser, taskNe
  *        -
  *          name: images
  *          in: formData
- *          description: Images to process, plus optional files such as a GEO file (geo.txt), image groups file (image_groups.txt), GCP file (*.txt), seed file (seed.zip) or alignment files (align.las, align.laz, align.tif). If included, the GCP file should have .txt extension. If included, the seed archive pre-polulates the task directory with its contents.
+ *          description: Images to process, plus optional files such as a GEO file (geo.txt), image groups file (image_groups.txt), GCP file (*.txt), seed file (seed.zip) or alignment files (align.las, align.laz, align.tif). If included, the GCP file should have .txt extension. If included, the seed archive pre-populates the task directory with its contents.
  *          required: true
  *          type: file
  *        -
@@ -210,7 +210,7 @@ app.post('/task/new/commit/:uuid', authCheck, taskNew.getUUID, taskNew.handleCom
  *        -
  *          name: images
  *          in: formData
- *          description: Images to process, plus optional files such as a GEO file (geo.txt), image groups file (image_groups.txt), GCP file (*.txt), seed file (seed.zip) or alignment files (align.las, align.laz, align.tif). If included, the GCP file should have .txt extension. If included, the seed archive pre-polulates the task directory with its contents.
+ *          description: Images to process, plus optional files such as a GEO file (geo.txt), image groups file (image_groups.txt), GCP file (*.txt), seed file (seed.zip) or alignment files (align.las, align.laz, align.tif). If included, the GCP file should have .txt extension. If included, the seed archive pre-populates the task directory with its contents.
  *          required: false
  *          type: file
  *        -
@@ -430,7 +430,7 @@ app.get('/task/:uuid/info', authCheck, getTaskFromUuid, (req, res) => {
 /** @swagger
  *  /task/{uuid}/output:
  *     get:
- *       description: Retrieves the console output of the OpenDroneMap's process. Useful for monitoring execution and to provide updates to the user.
+ *       description: Retrieves the console output of the ODM process. Useful for monitoring execution and to provide updates to the user.
  *       tags: [task]
  *       parameters:
  *        -
@@ -469,7 +469,7 @@ app.get('/task/:uuid/output', authCheck, getTaskFromUuid, (req, res) => {
 /** @swagger
  *  /task/{uuid}/download/{asset}:
  *    get:
- *      description: Retrieves an asset (the output of OpenDroneMap's processing) associated with a task
+ *      description: Retrieves an asset (the output of ODM processing) associated with a task
  *      tags: [task]
  *      produces: [application/zip]
  *      parameters:
@@ -679,7 +679,7 @@ app.post('/task/restart', urlEncodedBodyParser, jsonBodyParser, authCheck, uuidC
  *             properties:
  *               name:
  *                 type: string
- *                 description: Command line option (exactly as it is passed to the OpenDroneMap process, minus the leading '--')
+ *                 description: Command line option (exactly as it is passed to the ODM process, minus the leading '--')
  *               type:
  *                 type: string
  *                 description: Datatype of the value of this option

@@ -1,6 +1,6 @@
 /*
-NodeODM App and REST API to access ODM.
-Copyright (C) 2016 NodeODM Contributors
+NodeODX App and REST API to access ODX.
+Copyright (C) 2026 NodeODX Contributors
 
 This program is free software: you can redistribute it and/or modify
 it under the terms of the GNU Affero General Public License as published by
@@ -17,7 +17,9 @@ along with this program.  If not, see <http://www.gnu.org/licenses/>.
 */
 "use strict";
 const async = require('async');
-const AWS = require('aws-sdk');
+const { S3Client, PutObjectCommand } = require('@aws-sdk/client-s3');
+const { Upload } = require('@aws-sdk/lib-storage');
+const { NodeHttpHandler } = require('@aws-sdk/node-http-handler');
 const fs = require('fs');
 const glob = require('glob');
 const path = require('path');
@@ -35,46 +37,50 @@ module.exports = {
 
     initialize: function(cb){
         if (config.s3Endpoint && config.s3Bucket){
+            // Ensure the endpoint has a protocol prefix
+            let endpoint = config.s3Endpoint;
+            if (!/^https?:\/\//i.test(endpoint)){
+                endpoint = 'https://' + endpoint;
+            }
+
+            const s3Config = {
+                endpoint: endpoint,
+                forcePathStyle: config.s3ForcePathStyle,
+                region: 'us-east-1',
+            };
+
+            // If we are not using IAM roles then we need to pass access key and secret key in our config
+            if (config.s3AccessKey && config.s3SecretKey) {
+                s3Config.credentials = {
+                    accessKeyId: config.s3AccessKey,
+                    secretAccessKey: config.s3SecretKey,
+                };
+            }else{
+                logger.info("Secret Key and Access ID not passed. Using the IAM role");
+            }
+
             if (config.s3IgnoreSSL){
-                AWS.config.update({
-                    httpOptions: {
-                      agent: new https.Agent({
-                        rejectUnauthorized: false
-                      })
-                    }
+                s3Config.requestHandler = new NodeHttpHandler({
+                    httpsAgent: new https.Agent({
+                        rejectUnauthorized: false,
+                    }),
                 });
             }
 
-            const spacesEndpoint = new AWS.Endpoint(config.s3Endpoint);
-
-            const s3Config = {
-                endpoint: spacesEndpoint,
-                signatureVersion: ('v' + config.s3SignatureVersion) || 'v4',
-                s3ForcePathStyle: config.s3ForcePathStyle,
-            };
-            
-            // If we are not using IAM roles then we need to pass access key and secret key in our config
-            if (config.s3AccessKey && config.s3SecretKey) {
-                s3Config['accessKeyId'] =  config.s3AccessKey;
-                s3Config['secretAccessKey'] =  config.s3SecretKey;
-            }else{
-                logger.info("Secret Key and Access ID not passed. Using the IAM role");
-            };
-            
-            s3 = new AWS.S3(s3Config);
+            s3 = new S3Client(s3Config);
 
             // Test connection
-            s3.putObject({
+            const testCmd = new PutObjectCommand({
                 Bucket: config.s3Bucket,
                 Key: 'test.txt',
-                Body: ''
-            }, err => {
-                if (!err){
-                    logger.info("Connected to S3");
-                    cb();
-                }else{
-                    cb(new Error(`Cannot connect to S3. Check your S3 configuration: ${err.message} (${err.code})`));
-                }
+                Body: '',
+            });
+
+            s3.send(testCmd).then(() => {
+                logger.info("Connected to S3");
+                cb();
+            }).catch(err => {
+                cb(new Error(`Cannot connect to S3. Check your S3 configuration: ${err.message} (${err.Code || err.name})`));
             });
         }else cb();
     },
@@ -118,44 +124,55 @@ module.exports = {
                 const filename = path.basename(file.dest);
                 progress[filename] = 0;
 
-                let uploadCfg = {
+                let uploadParams = {
                     Bucket: bucket,
                     Key: file.dest,
-                    Body: fs.createReadStream(file.src)
-                }
-                
+                    Body: fs.createReadStream(file.src),
+                };
+
                 if (config.s3ACL != "none") {
-                    uploadCfg.ACL = config.s3ACL;
+                    uploadParams.ACL = config.s3ACL;
                 }
 
-                s3.upload(uploadCfg, {partSize, queueSize: concurrency}, err => {
-                    if (err){
-                        logger.debug(err);
-                        const msg = `Cannot upload file to S3: ${err.message} (${err.code}), retrying... ${file.retries}`;
-                        if (onOutput) onOutput(msg);
-                        if (file.retries < MAX_RETRIES){
-                            file.retries++;
-                            concurrency = Math.max(1, Math.floor(concurrency * 0.66));
-                            progress[filename] = 0;
-    
-                            setTimeout(() => {
-                                q.push(file, errHandler);
-                                done();
-                            }, (2 ** file.retries) * 1000);
-                        }else{
-                            done(new Error(msg));
-                        }
-                    }else done();
-                }).on('httpUploadProgress', p => {
-                    const perc = Math.round((p.loaded / p.total) * 100)
-                    if (perc % 5 == 0 && progress[filename] < perc){
-                        progress[filename] = perc;
-                        if (onOutput) {
-                            onOutput(`Uploading ${filename}... ${progress[filename]}%`);
-                            if (progress[filename] == 100){
-                                onOutput(`Finalizing ${filename} upload, this could take a bit...`);
+                const upload = new Upload({
+                    client: s3,
+                    params: uploadParams,
+                    queueSize: concurrency,
+                    partSize: partSize,
+                });
+
+                upload.on('httpUploadProgress', p => {
+                    if (p.total){
+                        const perc = Math.round((p.loaded / p.total) * 100);
+                        if (perc % 5 == 0 && progress[filename] < perc){
+                            progress[filename] = perc;
+                            if (onOutput) {
+                                onOutput(`Uploading ${filename}... ${progress[filename]}%`);
+                                if (progress[filename] == 100){
+                                    onOutput(`Finalizing ${filename} upload, this could take a bit...`);
+                                }
                             }
                         }
+                    }
+                });
+
+                upload.done().then(() => {
+                    done();
+                }).catch(err => {
+                    logger.debug(err);
+                    const msg = `Cannot upload file to S3: ${err.message} (${err.Code || err.name}), retrying... ${file.retries}`;
+                    if (onOutput) onOutput(msg);
+                    if (file.retries < MAX_RETRIES){
+                        file.retries++;
+                        concurrency = Math.max(1, Math.floor(concurrency * 0.66));
+                        progress[filename] = 0;
+
+                        setTimeout(() => {
+                            q.push(file, errHandler);
+                            done();
+                        }, (2 ** file.retries) * 1000);
+                    }else{
+                        done(new Error(msg));
                     }
                 });
             }, PARALLEL_UPLOADS);

@@ -1,14 +1,14 @@
-= NodeODM
+= NodeODX
 
 
 [[_overview]]
 == Overview
-REST API to access ODM
+REST API to access ODX
 
 
 === Version information
 [%hardbreaks]
-_Version_ : 2.2.1
+_Version_ : 2.3.1
 
 
 === Contact information
@@ -238,7 +238,7 @@ _required_|Valid range of values (for example, "positive integer" or "float &gt;
 |*help* +
 _required_|Description of what this option does|string
 |*name* +
-_required_|Command line option (exactly as it is passed to the OpenDroneMap process, minus the leading '–')|string
+_required_|Command line option (exactly as it is passed to the ODM process, minus the leading '–')|string
 |*type* +
 _required_|Datatype of the value of this option|enum (int, float, string, bool)
 |*value* +
@@ -340,7 +340,7 @@ _optional_|Token required for authentication (when authentication is required).|
 |*FormData*|*dateCreated* +
 _optional_|An optional timestamp overriding the default creation date of the task.|integer|
 |*FormData*|*images* +
-_optional_|Images to process, plus optional files such as a GEO file (geo.txt), image groups file (image_groups.txt), GCP file (*.txt), seed file (seed.zip) or alignment files (align.las, align.laz, align.tif). If included, the GCP file should have .txt extension. If included, the seed archive pre-polulates the task directory with its contents.|file|
+_optional_|Images to process, plus optional files such as a GEO file (geo.txt), image groups file (image_groups.txt), GCP file (*.txt), seed file (seed.zip) or alignment files (align.las, align.laz, align.tif). If included, the GCP file should have .txt extension. If included, the seed archive pre-populates the task directory with its contents.|file|
 |*FormData*|*name* +
 _optional_|An optional name to be associated with the task|string|
 |*FormData*|*options* +
@@ -503,7 +503,7 @@ _required_|UUID of the task|string|
 |*Query*|*token* +
 _optional_|Token required for authentication (when authentication is required).|string|
 |*FormData*|*images* +
-_required_|Images to process, plus optional files such as a GEO file (geo.txt), image groups file (image_groups.txt), GCP file (*.txt), seed file (seed.zip) or alignment files (align.las, align.laz, align.tif). If included, the GCP file should have .txt extension. If included, the seed archive pre-polulates the task directory with its contents.|file|
+_required_|Images to process, plus optional files such as a GEO file (geo.txt), image groups file (image_groups.txt), GCP file (*.txt), seed file (seed.zip) or alignment files (align.las, align.laz, align.tif). If included, the GCP file should have .txt extension. If included, the seed archive pre-populates the task directory with its contents.|file|
 |===
 
 
@@ -589,7 +589,7 @@ _required_|UUID of the task|string|
 === GET /task/{uuid}/download/{asset}
 
 ==== Description
-Retrieves an asset (the output of OpenDroneMap's processing) associated with a task
+Retrieves an asset (the output of ODM processing) associated with a task
 
 
 ==== Parameters
@@ -678,8 +678,6 @@ _required_|Milliseconds that have elapsed since the task started being processed
 _required_||<<_task_uuid_info_get_status,status>>
 |*uuid* +
 _required_|UUID|string
-|*progress* +
-_required_|The progress of this Task.From 0 to 100.|integer
 |===
 
 [[_task_uuid_info_get_options]]
@@ -714,7 +712,7 @@ _required_|Status code (10 = QUEUED, 20 = RUNNING, 30 = FAILED, 40 = COMPLETED, 
 === GET /task/{uuid}/output
 
 ==== Description
-Retrieves the console output of the OpenDroneMap's process. Useful for monitoring execution and to provide updates to the user.
+Retrieves the console output of the ODM process. Useful for monitoring execution and to provide updates to the user.
 
 
 ==== Parameters

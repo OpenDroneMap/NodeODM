@@ -1,7 +1,7 @@
 version: '3.8'
 services:
   node-odm:
-    image: webodm/nodeodm:gpu
+    image: webodm/nodeodx:gpu
     ports:
       - "3000:3000"
     volumes:

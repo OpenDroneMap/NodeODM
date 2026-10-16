@@ -6,7 +6,7 @@ const async = require('async');
 const nodeUnzip = require('node-unzip-2');
 const archiver = require('archiver');
 
-const bundleName = "nodeodm-windows-x64.zip";
+const bundleName = "nodeodx-windows-x64.zip";
 
 const download = function(uri, filename, callback) {
     console.log(`Downloading ${uri}`);
@@ -63,14 +63,14 @@ async.series([
     },
 
     cb => {
-        downloadApp(path.join("apps", "7z"), "https://github.com/OpenDroneMap/NodeODM/releases/download/v2.1.0/7z19.zip", cb);
+        downloadApp(path.join("apps", "7z"), "https://github.com/WebODM/NodeODX/releases/download/v2.3.0/7z19.zip", cb);
     },
     cb => {
-        downloadApp(path.join("apps", "unzip"), "https://github.com/OpenDroneMap/NodeODM/releases/download/v2.1.0/unzip600.zip", cb);
+        downloadApp(path.join("apps", "unzip"), "https://github.com/WebODM/NodeODX/releases/download/v2.3.0/unzip600.zip", cb);
     },
     cb => {
         console.log("Building executable");
-        const code = spawnSync('nexe.cmd', ['index.js', '-t', 'windows-x64-12.16.3', '-o', 'nodeodm.exe'], { stdio: "pipe"}).status;
+        const code = spawnSync('nexe.cmd', ['index.js', '-t', 'windows-x64-14.15.3', '-o', 'nodeodx.exe'], { stdio: "pipe"}).status;
 
         if (code === 0) cb();
         else cb(new Error(`nexe returned non-zero error code: ${code}`));
@@ -108,7 +108,7 @@ async.series([
             "LICENSE",
             "SOURCE",
             "package.json",
-            "nodeodm.exe"
+            "nodeodx.exe"
         ];
 
         archive.pipe(output);

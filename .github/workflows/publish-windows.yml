@@ -1,0 +1,44 @@
+name: Publish Windows Bundle
+
+on:
+  push:
+    branches:
+    - master
+    tags:
+    - v*
+
+permissions:
+  contents: write
+
+jobs:
+  build:
+    runs-on: windows-latest
+    steps:
+    - name: Checkout
+      uses: actions/checkout@v2
+    - name: Setup NodeJS
+      uses: actions/setup-node@v2
+      with:
+        node-version: '14'
+    - name: Setup Env
+      run: |
+        npm i
+        npm i -g nexe@4.0.0-rc.7
+    - name: Build bundle
+      run: |
+        npm run winbundle
+      shell: cmd
+    - name: Upload Bundle File
+      uses: actions/upload-artifact@v4
+      with:
+        name: Bundle
+        path: dist\*.zip
+    - name: Upload Bundle to Release
+      uses: svenstaro/upload-release-action@v2
+      if: startsWith(github.ref, 'refs/tags/')
+      with:
+        repo_token: ${{ secrets.GITHUB_TOKEN }}
+        file: dist/*.zip
+        file_glob: true
+        tag: ${{ github.ref }}
+        overwrite: true

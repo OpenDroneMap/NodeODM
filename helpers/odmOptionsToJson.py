@@ -1,7 +1,7 @@
 #!/usr/bin/env python
 '''
-NodeODM App and REST API to access ODM. 
-Copyright (C) 2016 NodeODM Contributors
+NodeODX App and REST API to access ODX. 
+Copyright (C) 2026 NodeODX Contributors
 
 This program is free software: you can redistribute it and/or modify
 it under the terms of the GNU Affero General Public License as published by
@@ -35,7 +35,7 @@ def load_source(module_name, filename):
     loader.exec_module(module)
     return module
 
-dest_file = os.environ.get("ODM_OPTIONS_TMP_FILE")
+dest_file = os.environ.get("ODX_OPTIONS_TMP_FILE")
 
 sys.path.append(sys.argv[2])
 config = None
